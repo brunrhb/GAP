@@ -1,0 +1,68 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  font-family: system-ui, 'Roboto', sans-serif;
+  background-color: #ECE8E3; /* fallback */
+}
+
+/* BACKGROUND - layer 1 */
+.background-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  background-color: #ECE8E3;
+  background-image: radial-gradient(
+    circle at 20% 30%,
+    #F0DDC9 0%,
+    #DCE7F0 35%,
+    #D6D3E2 70%,
+    #ECE8E3 100%
+  );
+}
+
+/* grain subtil (optionnel) */
+.background-layer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.12'/%3E%3C/svg%3E");
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* contenu au-dessus du fond */
+.content {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+  color: #1a1a1a;
+}
+
+h1 {
+  font-size: clamp(2rem, 8vw, 5rem);
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.tagline {
+  font-size: clamp(1rem, 4vw, 2rem);
+  margin-top: 1rem;
+  font-style: italic;
+}

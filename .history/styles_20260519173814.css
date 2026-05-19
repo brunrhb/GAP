@@ -48,62 +48,50 @@ body {
 
 
 /* #region AURA FIXE (première méthode : deux calques CSS) */
-
-.aura-core {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle at 55% 45%, 
-    #F5B88C 0%, 
-    #F5B88C 50%, 
-    rgba(245,184,140,0) 100%);
-  border-radius: 50%;
-  filter: blur(12px);
-  opacity: 0.9;
-  z-index: 3;
-  pointer-events: none;
-}
-
 .aura {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 2; /* entre fond et contenu */
+  z-index: 2;
   pointer-events: none;
 }
 
-/* calque de base (spread large, moins chaud) */
+/* Spread : flou réduit, dégradé plus marqué */
 .aura::before {
   content: "";
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle at 30% 40%, #F0DDC9, #D6D3E2);
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle at 30% 80%, 
+    #F0DDC9 0%, 
+    #D6D3E2 60%, 
+    rgba(214,211,226,0) 100%);
   border-radius: 55% 45% 60% 40% / 50% 55% 45% 50%;
   transform: translate(-50%, -50%) scale(1.2);
-  filter: blur(70px);
-  opacity: 0.66;
+  filter: blur(80px);  /* moins de flou */
+  opacity: 0.1;
 }
 
-/* calque cœur (plus petit, plus chaud) */
+/* Cœur : plus petit, presque pas de flou, forte opacité */
 .aura::after {
   content: "";
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle at 60% 30%, #F5B88C, #E8A87C);
-  border-radius: 45% 55% 40% 60% / 55% 45% 60% 40%;
-  transform: translate(-50%, -50%) scale(1);
-  filter: blur(70px);
-  opacity: 0.66;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle at 60% 30%, 
+    #F5B88C 0%, 
+    #F5B88C 45%, 
+    #E8A87C 80%, 
+    rgba(232,168,124,0) 100%);
+  border-radius: 45% 55% 80% 60% / 55% 45% 60% 9%;
+  transform: translate(-50%, -50%);
+  filter: blur(8px);
+  opacity: 0.95;
 }
 
 /* #endregion */

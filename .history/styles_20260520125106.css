@@ -14,16 +14,6 @@ body {
 
 /* #region AURA - contact fixe quelle que soit la taille de l'écran */
 
-:root {
-  --aura-scale: min(8vw, 2000px); /* valeur de base pour les décalages */
-  --spread-size: clamp(200px, 45vw, 500px);
-  --core-size: clamp(70px, 16vw, 180px);
-  --nucleus-size: clamp(80px, 18vw, 200px);
-  --spread-blur: clamp(50px, 4vw, 40px);
-  --core-blur: clamp(3px, 0.8vw, 8px);
-  --nucleus-blur: clamp(50px, 1.2vw, 120px);
-}
-
 /* Structure de base */
 .aura {
   position: fixed;
@@ -73,33 +63,16 @@ body {
   opacity: 0.9;
 }
 
-
-
-/* Animations de dérive pour chaque aura */
-@keyframes drift1 {
-  0% { transform: translate(calc(-50% + 100px), calc(-50% - 50px)) rotate(33deg); }
-  100% { transform: translate(calc(-50% - 100px), calc(-50% + 75px)) rotate(-33deg); }
-}
-
-@keyframes drift2 {
-  0% { transform: translate(calc(-50% - 100px), calc(-50% + 50px) rotate(0deg)); }
-  100% { transform: translate(calc(-50% + 100px), calc(-50% - 75px)rotate(-5deg)); }
-}
-
 /* Positionnement : les deux aures sont centrées par rapport à la fenêtre,
    puis décalées horizontalement et verticalement par des valeurs fixes (en pixels) */
 .aura-1, .core-1 {
- top: calc(50% + 0.1vh + 0.1vw );
- left: calc(50% + 0.1vh + 0.1vw );
-  animation: drift1 12s ease-in-out infinite alternate
+  top: calc(10% - 120px);
+  left: calc(10% - 120px);
 }
 .aura-2, .core-2 {
- top: calc(50% - 0.1vh - 0.1vw );
-  left: calc(50% - 0.1vh - 0.1vw );
-  animation: drift2 16s ease-in-out infinite alternate-reverse
+  top: calc(90% + 120px);
+  left: calc910% + 120px);
 }
-
-
 
 /* Déformations individuelles (pour un effet organique) */
 .aura-1::before {

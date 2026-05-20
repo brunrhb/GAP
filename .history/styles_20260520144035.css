@@ -19,9 +19,9 @@ body {
   --spread-size: clamp(200px, 45vw, 500px);
   --core-size: clamp(70px, 16vw, 180px);
   --nucleus-size: clamp(80px, 18vw, 200px);
-  --spread-blur: clamp(50px, 4vw, 40px);
+  --spread-blur: clamp(15px, 4vw, 40px);
   --core-blur: clamp(3px, 0.8vw, 8px);
-  --nucleus-blur: clamp(50px, 1.2vw, 120px);
+  --nucleus-blur: clamp(5px, 1.2vw, 120px);
 }
 
 /* Structure de base */
@@ -77,13 +77,13 @@ body {
 
 /* Animations de dérive pour chaque aura */
 @keyframes drift1 {
-  0% { transform: translate(calc(-50% + 100px), calc(-50% - 50px)) rotate(33deg); }
-  100% { transform: translate(calc(-50% - 100px), calc(-50% + 75px)) rotate(-33deg); }
+  0% { transform: translate(calc(-50% + 100px), calc(-50% - 50px)) rotate(0deg); }
+  100% { transform: translate(calc(-50% - 50px), calc(-50% + 50px)) rotate(0deg); }
 }
 
 @keyframes drift2 {
-  0% { transform: translate(calc(-50% - 100px), calc(-50% + 50px) rotate(0deg)); }
-  100% { transform: translate(calc(-50% + 100px), calc(-50% - 75px)rotate(-5deg)); }
+  0% { transform: translate(calc(-50% - 50px), calc(-50% + 50px) rotate(0deg)); }
+  100% { transform: translate(calc(-50% + 50px), calc(-50% - 50px)rotate(-5deg)); }
 }
 
 /* Positionnement : les deux aures sont centrées par rapport à la fenêtre,
@@ -96,7 +96,7 @@ body {
 .aura-2, .core-2 {
  top: calc(50% - 0.1vh - 0.1vw );
   left: calc(50% - 0.1vh - 0.1vw );
-  animation: drift2 16s ease-in-out infinite alternate-reverse
+  animation: drift2 7s ease-in-out infinite alternate-reverse
 }
 
 

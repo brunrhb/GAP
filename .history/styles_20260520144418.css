@@ -78,12 +78,12 @@ body {
 /* Animations de dérive pour chaque aura */
 @keyframes drift1 {
   0% { transform: translate(calc(-50% + 100px), calc(-50% - 50px)) rotate(33deg); }
-  100% { transform: translate(calc(-50% - 100px), calc(-50% + 75px)) rotate(-33deg); }
+  100% { transform: translate(calc(-50% - 100px), calc(-50% + 50px)) rotate(-33deg); }
 }
 
 @keyframes drift2 {
   0% { transform: translate(calc(-50% - 100px), calc(-50% + 50px) rotate(0deg)); }
-  100% { transform: translate(calc(-50% + 100px), calc(-50% - 75px)rotate(-5deg)); }
+  100% { transform: translate(calc(-50% + 100px), calc(-50% - 50px)rotate(-5deg)); }
 }
 
 /* Positionnement : les deux aures sont centrées par rapport à la fenêtre,

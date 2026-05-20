@@ -70,7 +70,7 @@ body {
     --drift-offset-Aura2-x: 130px; --drift-offset-Aura2-x2: 130px;
     --drift-offset-Aura2-y: 130px; --drift-offset-Aura2-y2: 130px;
 
-    --drift-duration-1: 10s; --drift-duration-2: 12s;
+    --drift-duration-1: 12s; --drift-duration-2: 12s;
   }
 }
 

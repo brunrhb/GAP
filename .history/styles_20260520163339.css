@@ -46,31 +46,30 @@ body {
     --spread-blur: 200px; --core-blur: 4px; --nucleus-blur: 30px;
     --drift-offset: 250px; --drift-offset-y: 125px; --drift-offset-y2: 188px;
     --drift-duration-1: 30s; --drift-duration-2: 40s;
+    --core-offset-x: 38px; --core-offset-y: 25px;
+    --core2-offset-x: -30px; --core2-offset-y: -20px;
   }
 }
 /* Écran moyen large 1201‑1400px */
 @media (max-width: 1400px) and (min-width: 1201px) {
   :root {
-    --spread-size: 1360px; --core-size: 300px; --nucleus-size: 425px;
-    --spread-blur: 170px; --core-blur: 4px; --nucleus-blur: 26px;
+    --spread-size: 1360px; --core-size: 383px; --nucleus-size: 425px;
+    --spread-blur: 10px; --core-blur: 4px; --nucleus-blur: 26px;
     --drift-offset: 213px; --drift-offset-y: 106px; --drift-offset-y2: 160px;
     --drift-duration-1: 25.5s; --drift-duration-2: 34s;
+    --core-offset-x: 32px; --core-offset-y: 21px;
+    --core2-offset-x: -26px; --core2-offset-y: -17px;
   }
 }
 /* Écran moyen petit 1001‑1200px */
 @media (max-width: 1200px) and (min-width: 1001px) {
   :root {
- --core-size: 300px; --core-blur: 20px;
- --nucleus-size: 700px; --nucleus-blur: 70px;
- --spread-size: 1000px;  --spread-blur: 50px; 
-
-    --drift-offset-Aura1-x: 100px; --drift-offset-Aura1-x2: 100px; 
-    --drift-offset-Aura1-y: 100px; --drift-offset-Aura1-y2: 100px;
-
-    --drift-offset-Aura2-x: 100px; --drift-offset-Aura2-x2: 100px; 
-    --drift-offset-Aur2-y: 100px; --drift-offset-Aura2-y2: 100px;
-
-    --drift-duration-1: 13s; --drift-duration-2: 16s;
+    --spread-size: 1120px; --core-size: 315px; --nucleus-size: 350px;
+    --spread-blur: 140px; --core-blur: 4px; --nucleus-blur: 21px;
+    --drift-offset: 175px; --drift-offset-y: 88px; --drift-offset-y2: 132px;
+    --drift-duration-1: 21s; --drift-duration-2: 28s;
+    --core-offset-x: 27px; --core-offset-y: 18px;
+    --core2-offset-x: -21px; --core2-offset-y: -14px;
   }
 }
 /* Mobile ≤800px */
@@ -80,146 +79,108 @@ body {
     --spread-blur: 75px; --core-blur: 4px; --nucleus-blur: 12px;
     --drift-offset: 100px; --drift-offset-y: 50px; --drift-offset-y2: 75px;
     --drift-duration-1: 12s; --drift-duration-2: 16s;
+    --core-offset-x: 15px; --core-offset-y: 10px;
+    --core2-offset-x: -12px; --core2-offset-y: -8px;
   }
 }
 /* #endregion */
-/* #region 2. STRUCTURE & VISUELS (couches indépendantes) */
 
-/* Base commune à toutes les couches */
-.spread, .core, .nucleus {
+/* #region 2. STRUCTURE & VISUELS (aura, core, spreads) */
+.aura {
   position: fixed;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  pointer-events: none;
+}
+.core {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  pointer-events: none;
+}
+.aura::before,
+.aura::after {
+  content: "";
+  position: absolute;
   top: 50%;
   left: 50%;
-  pointer-events: none;
-  will-change: transform;
 }
-
-/* Styles spécifiques */
-
-.core {
-  width: var(--core-size);
-  height: var(--core-size);
-  background: radial-gradient(circle at 50% 50%, #F45800 0%, #F47B00 100%);        /* ← à remplacer par couleur chaude intermédiaire */
-  border-radius: 45% 55% 40% 60% / 55% 45% 60% 40%;
-  filter: blur(var(--core-blur));
+.aura::before {
+  width: var(--spread-size);
+  height: var(--spread-size);
+  background: radial-gradient(circle at 30% 40%, #000000, #D6D3E2);
+  border-radius: 55% 45% 60% 40% / 50% 55% 45% 50%;
+  transform: translate(-50%, -50%) scale(1.2);
+  filter: blur(var(--spread-blur));
   opacity: 0.8;
 }
-.nucleus {
+.aura::after {
+  width: var(--core-size);
+  height: var(--core-size);
+background: radial-gradient(circle at 60% 30%, #FFB347 0%, #FFB347 55%, #FF8C42 85%, rgba(255,140,66,0) 100%);
+  border-radius: 45% 55% 40% 60% / 55% 45% 60% 40%;
+  transform: translate(-50%, -50%);
+  filter: blur(var(--core-blur));
+  opacity: 0.95;
+}
+.core {
   width: var(--nucleus-size);
   height: var(--nucleus-size);
-  background: radial-gradient(circle at 50% 50%, #F47B00 0%, #FFCBA4 100%) ;      /* ← à remplacer par couleur très chaude (noyau) */
+  background: radial-gradient(circle at 55% 45%, #F5B88C 0%, #F5B88C 50%, rgba(245,184,140,0) 100%);
+  border-radius: 50%;
   filter: blur(var(--nucleus-blur));
   opacity: 0.9;
 }
-
-.spread {
-  width: var(--spread-size);
-  height: var(--spread-size);
- background: radial-gradient(circle at 50% 50%, #FFCBA4 0%, rgba(255, 203, 164, 0) 100%);       /* ← à remplacer par couleur froide finale */
-  border-radius: 55% 45% 60% 40% / 50% 55% 45% 50%;
-  filter: blur(var(--spread-blur));
-  opacity: 0.7;
-}
-
-/* Positions individuelles (top/left) 
-.spread-1, .core-1, .nucleus-1 {
-  top: 30%;
-  left: 50%;
-}
-.spread-2, .core-2, .nucleus-2 {
-  top: 80%;
-  left: 50%;
-}*/
-
-/* Z-index : chaque niveau (spread, core, nucleus) a la même valeur pour les deux auras */
-.spread-1, .spread-2   { z-index: 1; }
-.nucleus-1, .nucleus-2 { z-index: 2; }
-.core-1, .core-2 { z-index: 3; }
-
-/* Si tu veux des intercalages plus fins (ex: nucleus-2 sous spread-1), ajoute des règles spécifiques après */
-/* .nucleus-2 { z-index: 0; }  */
-
-/* #endregion */
-
-
-/* #region 2b. FORMES & DÉFORMATIONS STATIQUES (individualisées) */
-
-/* AURA 1 */
-
-.core-1 {
- border-radius: 70% 30% 55% 45% / 60% 40% 45% 55%;
-  transform: translate(-50%, -50%) scale(1.1, 0.9) rotate(-25deg);
-}
-.nucleus-1 {
- border-radius: 70% 30% 55% 45% / 60% 40% 45% 55%;
-  transform: translate(-50%, -50%) scale(1.1, 0.9) rotate(-25deg);
-}
-
-.spread-1 {
- border-radius: 70% 30% 55% 45% / 60% 40% 45% 55%;
-  transform: translate(-50%, -50%) scale(1.1, 0.9) rotate(-25deg);
-}
-
-/* AURA 2 */
-
-.core-2 {
- border-radius: 70% 30% 55% 45% / 60% 40% 45% 55%;
-  transform: translate(-50%, -50%) scale(1.1, 0.9) rotate(-70deg);
-}
-.nucleus-2 {
- border-radius: 70% 30% 55% 45% / 60% 40% 45% 55%;
-  transform: translate(-50%, -50%) scale(1.1, 0.9) rotate(-25deg);
-}
-
-.spread-2 {
- border-radius: 70% 30% 55% 45% / 60% 40% 45% 55%;
-  transform: translate(-50%, -50%) scale(1.1, 0.9) rotate(-25deg);
-}
-
 /* #endregion */
 
 
 
-/* #region 3. ANIMATIONS & DÉFORMATIONS (commenté) */
-
-
+/* #region 3. ANIMATIONS & DÉFORMATIONS */
 @keyframes drift1 {
-  0% { transform: translate(calc(-50% + var(--drift-offset-Aura1-x)), calc(-50% - var(--drift-offset-au))) rotate(0deg); }
-  100% { transform: translate(calc(-50% - var(--drift-offset-Aura1-x2)), calc(-50% + var(--drift-offset-y2))) rotate(-360deg); }
+  0% { transform: translate(calc(-50% + var(--drift-offset)), calc(-50% - var(--drift-offset-y))) rotate(33deg); }
+  100% { transform: translate(calc(-50% - var(--drift-offset)), calc(-50% + var(--drift-offset-y2))) rotate(-33deg); }
 }
 @keyframes drift2 {
-  0% { transform: translate(calc(-50% - var(--drift-offset-Aura2-x)), calc(-50% + var(--drift-offset-Aur2-y))) rotate(360deg); }
-  100% { transform: translate(calc(-50% + var(--drift-offset-Aura2-x2)), calc(-50% - var(--drift-offset-Aura2-y2))) rotate(0deg); }
+  0% { transform: translate(calc(-50% - var(--drift-offset)), calc(-50% + var(--drift-offset-y))) rotate(0deg); }
+  100% { transform: translate(calc(-50% + var(--drift-offset)), calc(-50% - var(--drift-offset-y2))) rotate(-5deg); }
 }
-
-.spread-1, .core-1, .nucleus-1 {
+.aura-1, .core-1 {
+  top: calc(50% + 0.1vh + 0.1vw);
+  left: calc(50% + 0.1vh + 0.1vw);
   animation: drift1 var(--drift-duration-1) ease-in-out infinite alternate;
 }
-.spread-2, .core-2, .nucleus-2 {
+.aura-2, .core-2 {
+  top: calc(50% - 0.1vh - 0.1vw);
+  left: calc(50% - 0.1vh - 0.1vw);
   animation: drift2 var(--drift-duration-2) ease-in-out infinite alternate-reverse;
 }
-
-.spread-1 {
+.aura-1::before {
+  border-radius: 70% 30% 55% 45% / 45% 65% 35% 55%;
   transform: translate(-50%, -50%) scale(1.3, 0.9) rotate(15deg);
 }
-.core-1 {
+.aura-1::after {
+  border-radius: 60% 40% 50% 50% / 50% 55% 45% 50%;
   transform: translate(-50%, -50%) scale(1.1, 0.85) rotate(5deg);
 }
-.nucleus-1 {
-  transform: translate(calc(-50% + 38px), calc(-50% + 25px)) scale(1.2, 0.8) rotate(-10deg);
+.core-1 {
+  border-radius: 55% 45% 60% 40% / 45% 55% 40% 60%;
+  transform: translate(calc(-50% + var(--core-offset-x)), calc(-50% + var(--core-offset-y))) scale(1.2, 0.8) rotate(-10deg);
 }
-.spread-2 {
+.aura-2::before {
+  border-radius: 45% 55% 60% 40% / 55% 45% 65% 35%;
   transform: translate(-50%, -50%) scale(0.9, 1.3) rotate(-20deg);
 }
-.core-2 {
+.aura-2::after {
+  border-radius: 50% 50% 45% 55% / 60% 40% 55% 45%;
   transform: translate(-50%, -50%) scale(0.85, 1.1) rotate(-5deg);
 }
-.nucleus-2 {
-  transform: translate(calc(-50% - 30px), calc(-50% - 20px)) scale(0.9, 1.2) rotate(15deg);
+.core-2 {
+  border-radius: 40% 60% 50% 50% / 55% 45% 60% 40%;
+  transform: translate(calc(-50% + var(--core2-offset-x)), calc(-50% + var(--core2-offset-y))) scale(0.9, 1.2) rotate(15deg);
 }
-
-
 /* #endregion */
+/* #endregion */
+
 
 /* #region Layout principal (wrapper pour le contenu texte) */
 /* On retire le padding du body pour ne pas décaler les auras,

@@ -184,12 +184,12 @@ body {
 
 
 @keyframes drift1 {
-  0% { transform: translate(calc(-50% + var(--drift-offset-Aura1-x)), calc(-50% - var(--drift-offset-au))) rotate(0deg); }
-  100% { transform: translate(calc(-50% - var(--drift-offset-Aura1-x2)), calc(-50% + var(--drift-offset-y2))) rotate(-360deg); }
+  0% { transform: translate(calc(-50% + var(--drift-offset-Aura1-x)), calc(-50% - var(--drift-offset-au))) rotate(33deg); }
+  100% { transform: translate(calc(-50% - var(--drift-offset-Aura1-x2)), calc(-50% + var(--drift-offset-y2))) rotate(-33deg); }
 }
 @keyframes drift2 {
-  0% { transform: translate(calc(-50% - var(--drift-offset-Aura2-x)), calc(-50% + var(--drift-offset-Aur2-y))) rotate(360deg); }
-  100% { transform: translate(calc(-50% + var(--drift-offset-Aura2-x2)), calc(-50% - var(--drift-offset-Aura2-y2))) rotate(0deg); }
+  0% { transform: translate(calc(-50% - var(--drift-offset-Aura2-x)), calc(-50% + var(--drift-offset-Aur2-y))) rotate(0deg); }
+  100% { transform: translate(calc(-50% + var(--drift-offset-Aura2-x2)), calc(-50% - var(--drift-offset-Aura2-y2))) rotate(-5deg); }
 }
 
 .spread-1, .core-1, .nucleus-1 {

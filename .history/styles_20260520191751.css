@@ -60,17 +60,10 @@ body {
 /* Écran moyen petit 1001‑1200px */
 @media (max-width: 1200px) and (min-width: 1001px) {
   :root {
- --core-size: 300px; --core-blur: 20px;
- --nucleus-size: 700px; --nucleus-blur: 70px;
- --spread-size: 1000px;  --spread-blur: 50px; 
-
-    --drift-offset-Aura1-x: 100px; --drift-offset-Aura1-x2: 100px; 
-    --drift-offset-Aura1-y: 100px; --drift-offset-Aura1-y2: 100px;
-
-    --drift-offset-Aura2-x: 100px; --drift-offset-Aura2-x2: 100px; 
-    --drift-offset-Aur2-y: 100px; --drift-offset-Aura2-y2: 100px;
-
-    --drift-duration-1: 13s; --drift-duration-2: 16s;
+    --spread-size: 1120px; --core-size: 250px; --nucleus-size: 500px;
+    --spread-blur: 50px; --core-blur: 20px; --nucleus-blur: 50px;
+    --drift-offset: 175px; --drift-offset-y: 88px; --drift-offset-y2: 132px;
+    --drift-duration-1: 21s; --drift-duration-2: 28s;
   }
 }
 /* Mobile ≤800px */
@@ -99,29 +92,30 @@ body {
 .core {
   width: var(--core-size);
   height: var(--core-size);
-  background: radial-gradient(circle at 50% 50%, #F45800 0%, #F47B00 100%);        /* ← à remplacer par couleur chaude intermédiaire */
+  background: #1c8f22;        /* ← à remplacer par couleur chaude intermédiaire */
   border-radius: 45% 55% 40% 60% / 55% 45% 60% 40%;
   filter: blur(var(--core-blur));
-  opacity: 0.8;
+  opacity: 1;
 }
 .nucleus {
   width: var(--nucleus-size);
   height: var(--nucleus-size);
-  background: radial-gradient(circle at 50% 50%, #F47B00 0%, #FFCBA4 100%) ;      /* ← à remplacer par couleur très chaude (noyau) */
+  background: #520f91;        /* ← à remplacer par couleur très chaude (noyau) */
+  border-radius: 50%;
   filter: blur(var(--nucleus-blur));
-  opacity: 0.9;
+  opacity: 1;
 }
 
 .spread {
   width: var(--spread-size);
   height: var(--spread-size);
- background: radial-gradient(circle at 50% 50%, #FFCBA4 0%, rgba(255, 203, 164, 0) 100%);       /* ← à remplacer par couleur froide finale */
+  background: #000000;        /* ← à remplacer par couleur froide finale */
   border-radius: 55% 45% 60% 40% / 50% 55% 45% 50%;
   filter: blur(var(--spread-blur));
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
-/* Positions individuelles (top/left) 
+/* Positions individuelles (top/left) */
 .spread-1, .core-1, .nucleus-1 {
   top: 30%;
   left: 50%;
@@ -129,7 +123,7 @@ body {
 .spread-2, .core-2, .nucleus-2 {
   top: 80%;
   left: 50%;
-}*/
+}
 
 /* Z-index : chaque niveau (spread, core, nucleus) a la même valeur pour les deux auras */
 .spread-1, .spread-2   { z-index: 1; }
@@ -182,14 +176,14 @@ body {
 
 /* #region 3. ANIMATIONS & DÉFORMATIONS (commenté) */
 
-
+/*
 @keyframes drift1 {
-  0% { transform: translate(calc(-50% + var(--drift-offset-Aura1-x)), calc(-50% - var(--drift-offset-au))) rotate(0deg); }
-  100% { transform: translate(calc(-50% - var(--drift-offset-Aura1-x2)), calc(-50% + var(--drift-offset-y2))) rotate(-360deg); }
+  0% { transform: translate(calc(-50% + var(--drift-offset)), calc(-50% - var(--drift-offset-y))) rotate(33deg); }
+  100% { transform: translate(calc(-50% - var(--drift-offset)), calc(-50% + var(--drift-offset-y2))) rotate(-33deg); }
 }
 @keyframes drift2 {
-  0% { transform: translate(calc(-50% - var(--drift-offset-Aura2-x)), calc(-50% + var(--drift-offset-Aur2-y))) rotate(360deg); }
-  100% { transform: translate(calc(-50% + var(--drift-offset-Aura2-x2)), calc(-50% - var(--drift-offset-Aura2-y2))) rotate(0deg); }
+  0% { transform: translate(calc(-50% - var(--drift-offset)), calc(-50% + var(--drift-offset-y))) rotate(0deg); }
+  100% { transform: translate(calc(-50% + var(--drift-offset)), calc(-50% - var(--drift-offset-y2))) rotate(-5deg); }
 }
 
 .spread-1, .core-1, .nucleus-1 {
@@ -200,24 +194,30 @@ body {
 }
 
 .spread-1 {
+  border-radius: 70% 30% 55% 45% / 45% 65% 35% 55%;
   transform: translate(-50%, -50%) scale(1.3, 0.9) rotate(15deg);
 }
 .core-1 {
+  border-radius: 60% 40% 50% 50% / 50% 55% 45% 50%;
   transform: translate(-50%, -50%) scale(1.1, 0.85) rotate(5deg);
 }
 .nucleus-1 {
+  border-radius: 55% 45% 60% 40% / 45% 55% 40% 60%;
   transform: translate(calc(-50% + 38px), calc(-50% + 25px)) scale(1.2, 0.8) rotate(-10deg);
 }
 .spread-2 {
+  border-radius: 45% 55% 60% 40% / 55% 45% 65% 35%;
   transform: translate(-50%, -50%) scale(0.9, 1.3) rotate(-20deg);
 }
 .core-2 {
+  border-radius: 50% 50% 45% 55% / 60% 40% 55% 45%;
   transform: translate(-50%, -50%) scale(0.85, 1.1) rotate(-5deg);
 }
 .nucleus-2 {
+  border-radius: 40% 60% 50% 50% / 55% 45% 60% 40%;
   transform: translate(calc(-50% - 30px), calc(-50% - 20px)) scale(0.9, 1.2) rotate(15deg);
 }
-
+*/
 
 /* #endregion */
 

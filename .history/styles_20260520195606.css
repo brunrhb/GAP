@@ -64,11 +64,11 @@ body {
  --nucleus-size: 700px; --nucleus-blur: 70px;
  --spread-size: 1000px;  --spread-blur: 50px; 
 
-    --drift-offset-Aura1-x: 100px; --drift-offset-Aura1-x2: 100px; 
-    --drift-offset-Aura1-y: 100px; --drift-offset-Aura1-y2: 100px;
+    --drift-offset-Aura1-x: 175px; --drift-offset-Aura1-x2: 175px; 
+    --drift-offset-Aura1-y: 88px; --drift-offset-Aura1-y2: 132px;
 
-    --drift-offset-Aura2-x: 100px; --drift-offset-Aura2-x2: 100px; 
-    --drift-offset-Aur2-y: 100px; --drift-offset-Aura2-y2: 100px;
+    --drift-offset-Aura2-x: 175px; --drift-offset-Aura2-x2: 175px; 
+    --drift-offset-Aur2-y: 88px; --drift-offset-Aura2-y2: 132px;
 
     --drift-duration-1: 13s; --drift-duration-2: 16s;
   }
@@ -184,12 +184,12 @@ body {
 
 
 @keyframes drift1 {
-  0% { transform: translate(calc(-50% + var(--drift-offset-Aura1-x)), calc(-50% - var(--drift-offset-au))) rotate(0deg); }
-  100% { transform: translate(calc(-50% - var(--drift-offset-Aura1-x2)), calc(-50% + var(--drift-offset-y2))) rotate(-360deg); }
+  0% { transform: translate(calc(-50% + var(--drift-offset-Aura1-x)), calc(-50% - var(--drift-offset-au))) rotate(33deg); }
+  100% { transform: translate(calc(-50% - var(--drift-offset-Aura1-x2)), calc(-50% + var(--drift-offset-y2))) rotate(-33deg); }
 }
 @keyframes drift2 {
-  0% { transform: translate(calc(-50% - var(--drift-offset-Aura2-x)), calc(-50% + var(--drift-offset-Aur2-y))) rotate(360deg); }
-  100% { transform: translate(calc(-50% + var(--drift-offset-Aura2-x2)), calc(-50% - var(--drift-offset-Aura2-y2))) rotate(0deg); }
+  0% { transform: translate(calc(-50% - var(--drift-offset-Aura2-x)), calc(-50% + var(--drift-offset-Aur2-y))) rotate(0deg); }
+  100% { transform: translate(calc(-50% + var(--drift-offset-Aura2-x2)), calc(-50% - var(--drift-offset-Aura2-y2))) rotate(-5deg); }
 }
 
 .spread-1, .core-1, .nucleus-1 {

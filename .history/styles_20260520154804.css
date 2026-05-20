@@ -1,0 +1,445 @@
+/* =========================================================
+   The Gap Group BXL — styles complets (auras incluses)
+   Organisation par régions pour faciliter la navigation
+   ========================================================= */
+
+/* #region Reset & base */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, 'Roboto', sans-serif;
+  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+  line-height: 1.6;
+  color: #1a1a1a;
+  min-height: 100vh;
+  background: linear-gradient(to top, #ECE8E3 0%, #DCE7F0 50%, #F0DDC9 100%) fixed;
+  /* Les marges latérales sont déplacées dans un conteneur wrapper pour ne pas décentrer les auras */
+}
+/* #endregion */
+
+/* #region Typographie & police */
+@font-face {
+  font-family: 'DINdong';
+  src: url('fonts/DINdong.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+/* #endregion */
+
+/* =========================================================
+   #region AURA - système complet (responsive + animations)
+   ========================================================= */
+
+   /* -----------------------------------------
+      SOUS-RÉGION 1 : Variables globales (défaut grand écran)
+      ----------------------------------------- */
+   :root {
+     --spread-size: 1250px;
+     --core-size: 450px;
+     --nucleus-size: 500px;
+     --spread-blur: 100px;
+     --core-blur: 20px;
+     --nucleus-blur: 30px;
+     --drift-offset: 250px;
+     --drift-offset-y: 125px;
+     --drift-offset-y2: 188px;
+     --core-offset-x: 38px;
+     --core-offset-y: 25px;
+     --core2-offset-x: -30px;
+     --core2-offset-y: -20px;
+   }
+
+   /* -----------------------------------------
+      SOUS-RÉGION 2 : Breakpoints (moyen et petit écran)
+      ----------------------------------------- */
+   @media (max-width: 1400px) {
+     :root {
+       --spread-size: 800px;
+       --core-size: 300px;
+       --nucleus-size: 330px;
+       --spread-blur: 64px;
+       --core-blur: 13px;
+       --nucleus-blur: 20px;
+       --drift-offset: 160px;
+       --drift-offset-y: 80px;
+       --drift-offset-y2: 120px;
+       --core-offset-x: 24px;
+       --core-offset-y: 16px;
+       --core2-offset-x: -19px;
+       --core2-offset-y: -13px;
+     }
+   }
+
+   @media (max-width: 800px) {
+     :root {
+       --spread-size: 500px;
+       --core-size: 180px;
+       --nucleus-size: 200px;
+       --spread-blur: 40px;
+       --core-blur: 8px;
+       --nucleus-blur: 12px;
+       --drift-offset: 100px;
+       --drift-offset-y: 50px;
+       --drift-offset-y2: 75px;
+       --core-offset-x: 15px;
+       --core-offset-y: 10px;
+       --core2-offset-x: -12px;
+       --core2-offset-y: -8px;
+     }
+   }
+
+   /* -----------------------------------------
+      SOUS-RÉGION 3 : Structure de base
+      ----------------------------------------- */
+   .aura {
+     position: fixed;
+     transform: translate(-50%, -50%);
+     z-index: 2;
+     pointer-events: none;
+   }
+   .core {
+     position: fixed;
+     transform: translate(-50%, -50%);
+     z-index: 3;
+     pointer-events: none;
+   }
+
+   /* -----------------------------------------
+      SOUS-RÉGION 4 : Spread, cœur et noyau (contenus visuels)
+      ----------------------------------------- */
+   .aura::before,
+   .aura::after {
+     content: "";
+     position: absolute;
+     top: 50%;
+     left: 50%;
+   }
+   .aura::before {
+     width: var(--spread-size);
+     height: var(--spread-size);
+     background: radial-gradient(circle at 30% 40%, #F0DDC9, #D6D3E2);
+     border-radius: 55% 45% 60% 40% / 50% 55% 45% 50%;
+     transform: translate(-50%, -50%) scale(1.2);
+     filter: blur(var(--spread-blur));
+     opacity: 0.8;
+   }
+   .aura::after {
+     width: var(--core-size);
+     height: var(--core-size);
+     background: radial-gradient(circle at 60% 30%, #F5B88C 0%, #F5B88C 45%, #E8A87C 80%, rgba(232,168,124,0) 100%);
+     border-radius: 45% 55% 40% 60% / 55% 45% 60% 40%;
+     transform: translate(-50%, -50%);
+     filter: blur(var(--core-blur));
+     opacity: 0.95;
+   }
+   .core {
+     width: var(--nucleus-size);
+     height: var(--nucleus-size);
+     background: radial-gradient(circle at 55% 45%, #F5B88C 0%, #F5B88C 50%, rgba(245,184,140,0) 100%);
+     border-radius: 50%;
+     filter: blur(var(--nucleus-blur));
+     opacity: 0.9;
+   }
+
+   /* -----------------------------------------
+      SOUS-RÉGION 5 : Keyframes (animations de dérive)
+      ----------------------------------------- */
+   @keyframes drift1 {
+     0% { transform: translate(calc(-50% + var(--drift-offset)), calc(-50% - var(--drift-offset-y))) rotate(33deg); }
+     100% { transform: translate(calc(-50% - var(--drift-offset)), calc(-50% + var(--drift-offset-y2))) rotate(-33deg); }
+   }
+   @keyframes drift2 {
+     0% { transform: translate(calc(-50% - var(--drift-offset)), calc(-50% + var(--drift-offset-y))) rotate(0deg); }
+     100% { transform: translate(calc(-50% + var(--drift-offset)), calc(-50% - var(--drift-offset-y2))) rotate(-5deg); }
+   }
+
+   /* -----------------------------------------
+      SOUS-RÉGION 6 : Positionnement des deux aures (avec animation)
+      ----------------------------------------- */
+   .aura-1, .core-1 {
+     top: calc(50% + 0.1vh + 0.1vw);
+     left: calc(50% + 0.1vh + 0.1vw);
+     animation: drift1 12s ease-in-out infinite alternate;
+   }
+   .aura-2, .core-2 {
+     top: calc(50% - 0.1vh - 0.1vw);
+     left: calc(50% - 0.1vh - 0.1vw);
+     animation: drift2 16s ease-in-out infinite alternate-reverse;
+   }
+
+   /* -----------------------------------------
+      SOUS-RÉGION 7 : Déformations individuelles (organiques)
+      ----------------------------------------- */
+   .aura-1::before {
+     border-radius: 70% 30% 55% 45% / 45% 65% 35% 55%;
+     transform: translate(-50%, -50%) scale(1.3, 0.9) rotate(15deg);
+   }
+   .aura-1::after {
+     border-radius: 60% 40% 50% 50% / 50% 55% 45% 50%;
+     transform: translate(-50%, -50%) scale(1.1, 0.85) rotate(5deg);
+   }
+   .core-1 {
+     border-radius: 55% 45% 60% 40% / 45% 55% 40% 60%;
+     transform: translate(calc(-50% + var(--core-offset-x)), calc(-50% + var(--core-offset-y))) scale(1.2, 0.8) rotate(-10deg);
+   }
+   .aura-2::before {
+     border-radius: 45% 55% 60% 40% / 55% 45% 65% 35%;
+     transform: translate(-50%, -50%) scale(0.9, 1.3) rotate(-20deg);
+   }
+   .aura-2::after {
+     border-radius: 50% 50% 45% 55% / 60% 40% 55% 45%;
+     transform: translate(-50%, -50%) scale(0.85, 1.1) rotate(-5deg);
+   }
+   .core-2 {
+     border-radius: 40% 60% 50% 50% / 55% 45% 60% 40%;
+     transform: translate(calc(-50% + var(--core2-offset-x)), calc(-50% + var(--core2-offset-y))) scale(0.9, 1.2) rotate(15deg);
+   }
+
+/* #endregion */
+
+/* #region Layout principal (wrapper pour le contenu texte) */
+/* On retire le padding du body pour ne pas décaler les auras,
+   et on l’applique à un conteneur interne */
+body {
+  padding: 0;  /* override des marges précédentes */
+}
+.page-wrap {
+  padding: 0 5vw 0 15vw;
+  position: relative;
+  z-index: 4;  /* au-dessus des auras (z-index 2 et 3) */
+}
+/* #endregion */
+
+/* #region Header & navigation */
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 0;
+  gap: 1rem;
+  position: relative;
+  z-index: 4;
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  color: inherit;
+  font-size: clamp(1rem, 0.9rem + 0.4vw, 1.2rem);
+}
+
+.main-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.nav-list {
+  list-style: none;
+  display: flex;
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-list a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+.nav-list a:hover,
+.nav-list a[aria-current="page"] {
+  border-bottom-color: currentColor;
+}
+
+.lang-switch {
+  display: flex;
+  gap: 0.25rem;
+}
+.lang-switch button {
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.3);
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  color: inherit;
+  border-radius: 2px;
+}
+.lang-switch button.active {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+.nav-toggle {
+  display: none;
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.3);
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+/* #endregion */
+
+/* #region Hero (page d'accueil) */
+.hero {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4rem 0;
+  position: relative;
+  z-index: 4;
+}
+
+.hero-title {
+  font-family: 'DINdong', system-ui, sans-serif;
+  font-weight: 900;
+  font-size: clamp(2.5rem, 6vw + 1rem, 7rem);
+  line-height: 0.95;
+  margin: 0 0 1rem 0;
+  letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+  font-size: clamp(1.25rem, 1.5vw + 0.8rem, 2rem);
+  font-weight: 600;
+  margin: 0 0 2rem 0;
+  letter-spacing: 0.05em;
+}
+
+.hero-hook {
+  font-size: clamp(1rem, 0.5vw + 0.9rem, 1.25rem);
+  margin: 0 0 2.5rem 0;
+  max-width: 50ch;
+  opacity: 0.85;
+}
+/* #endregion */
+
+/* #region Pages génériques (About, Programme) */
+.page {
+  padding: 2rem 0 4rem;
+  max-width: 70ch;
+  position: relative;
+  z-index: 4;
+}
+
+.page h1 {
+  font-family: 'DINdong', system-ui, sans-serif;
+  font-size: clamp(2rem, 3vw + 1rem, 3.5rem);
+  line-height: 1.05;
+  margin: 0 0 1.5rem 0;
+}
+.page h2 {
+  font-size: clamp(1.25rem, 1vw + 1rem, 1.75rem);
+  margin: 2.5rem 0 0.75rem;
+}
+.page p { margin: 0 0 1rem; }
+.page ul {
+  padding-left: 1.25rem;
+  margin: 0 0 1rem;
+}
+.page li { margin-bottom: 0.5rem; }
+
+.lede {
+  font-size: clamp(1.1rem, 0.7vw + 1rem, 1.35rem);
+  font-weight: 500;
+  margin-bottom: 2rem;
+}
+
+.cta-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.partners {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  font-style: italic;
+}
+/* #endregion */
+
+/* #region Boutons */
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: #1a1a1a;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border-radius: 2px;
+  transition: opacity 0.2s;
+  align-self: flex-start;
+}
+.btn:hover { opacity: 0.85; }
+/* #endregion */
+
+/* #region Footer */
+.site-footer {
+  padding: 3rem 0 2rem;
+  border-top: 1px solid rgba(0,0,0,0.15);
+  margin-top: 4rem;
+  font-size: 0.9rem;
+  opacity: 0.8;
+  position: relative;
+  z-index: 4;
+}
+.site-footer p { margin: 0.25rem 0; }
+.site-footer a { color: inherit; }
+/* #endregion */
+
+/* #region Gestion des langues (affichage sélectif) */
+.lang-fr, .lang-en, .lang-nl { display: none; }
+html.show-fr .lang-fr { display: revert; }
+html.show-en .lang-en { display: revert; }
+html.show-nl .lang-nl { display: revert; }
+html.show-fr span.lang-fr,
+html.show-en span.lang-en,
+html.show-nl span.lang-nl { display: inline; }
+/* #endregion */
+
+/* #region Responsive (mobile) */
+@media (max-width: 800px) {
+  .page-wrap {
+    padding: 0 1rem;
+  }
+  .nav-toggle {
+    display: inline-block;
+  }
+  .nav-list {
+    display: none;
+    flex-basis: 100%;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 0;
+    order: 3;
+  }
+  .main-nav.open .nav-list {
+    display: flex;
+  }
+  .hero {
+    min-height: 60vh;
+    padding: 2rem 0;
+  }
+  .site-footer {
+    margin-top: 2rem;
+  }
+}
+/* #endregion */

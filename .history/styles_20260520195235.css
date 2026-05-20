@@ -60,15 +60,15 @@ body {
 /* Écran moyen petit 1001‑1200px */
 @media (max-width: 1200px) and (min-width: 1001px) {
   :root {
- --core-size: 300px; --core-blur: 20px;
- --nucleus-size: 700px; --nucleus-blur: 70px;
+ --core-size: 250px; --core-blur: 20px;
+ --nucleus-size: 500px; --nucleus-blur: 50px;
  --spread-size: 1000px;  --spread-blur: 50px; 
 
-    --drift-offset-Aura1-x: 100px; --drift-offset-Aura1-x2: 100px; 
-    --drift-offset-Aura1-y: 100px; --drift-offset-Aura1-y2: 100px;
+    --drift-offset-Aura1-x: 175px; --drift-offset-Aura1-x2: 175px; 
+    --drift-offset-Aura1-y: 88px; --drift-offset-Aura1-y2: 132px;
 
-    --drift-offset-Aura2-x: 100px; --drift-offset-Aura2-x2: 100px; 
-    --drift-offset-Aur2-y: 100px; --drift-offset-Aura2-y2: 100px;
+    --drift-offset-Aura2-x: 175px; --drift-offset-Aura2-x2: 175px; 
+    --drift-offset-Aur2-y: 88px; --drift-offset-Aura2-y2: 132px;
 
     --drift-duration-1: 13s; --drift-duration-2: 16s;
   }
@@ -109,7 +109,7 @@ body {
   height: var(--nucleus-size);
   background: radial-gradient(circle at 50% 50%, #F47B00 0%, #FFCBA4 100%) ;      /* ← à remplacer par couleur très chaude (noyau) */
   filter: blur(var(--nucleus-blur));
-  opacity: 0.9;
+  opacity: 0.7;
 }
 
 .spread {
@@ -118,7 +118,7 @@ body {
  background: radial-gradient(circle at 50% 50%, #FFCBA4 0%, rgba(255, 203, 164, 0) 100%);       /* ← à remplacer par couleur froide finale */
   border-radius: 55% 45% 60% 40% / 50% 55% 45% 50%;
   filter: blur(var(--spread-blur));
-  opacity: 0.7;
+  opacity: 0.5;
 }
 
 /* Positions individuelles (top/left) 
@@ -184,12 +184,12 @@ body {
 
 
 @keyframes drift1 {
-  0% { transform: translate(calc(-50% + var(--drift-offset-Aura1-x)), calc(-50% - var(--drift-offset-au))) rotate(0deg); }
-  100% { transform: translate(calc(-50% - var(--drift-offset-Aura1-x2)), calc(-50% + var(--drift-offset-y2))) rotate(-360deg); }
+  0% { transform: translate(calc(-50% + var(--drift-offset-Aura1-x)), calc(-50% - var(--drift-offset-au))) rotate(33deg); }
+  100% { transform: translate(calc(-50% - var(--drift-offset-Aura1-x2)), calc(-50% + var(--drift-offset-y2))) rotate(-33deg); }
 }
 @keyframes drift2 {
-  0% { transform: translate(calc(-50% - var(--drift-offset-Aura2-x)), calc(-50% + var(--drift-offset-Aur2-y))) rotate(360deg); }
-  100% { transform: translate(calc(-50% + var(--drift-offset-Aura2-x2)), calc(-50% - var(--drift-offset-Aura2-y2))) rotate(0deg); }
+  0% { transform: translate(calc(-50% - var(--drift-offset-Aura2-x)), calc(-50% + var(--drift-offset-Aur2-y))) rotate(0deg); }
+  100% { transform: translate(calc(-50% + var(--drift-offset-Aura2-x2)), calc(-50% - var(--drift-offset-Aura2-y2))) rotate(-5deg); }
 }
 
 .spread-1, .core-1, .nucleus-1 {

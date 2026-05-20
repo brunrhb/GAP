@@ -27,8 +27,6 @@ body {
 /* #endregion */
 
 /* #region Typographie & police */
-
-
 @font-face {
   font-family: 'DINdong';
   src: url('fonts/DINdong.woff2') format('woff2');
@@ -36,65 +34,7 @@ body {
   font-style: normal;
   font-display: swap;
 }
-
-.hero-title, .hero-subtitle {
-  font-family: "obviously-extended", sans-serif;
-  font-weight: 700;  /* ou 400 selon ton goût */
-  font-style: normal;
-}
-
 /* #endregion */
-
-
-/* #region SPLIT-A - découpe des A en deux moitiés avec traits horizontaux */
-
-.split-a {
-  display: inline-flex;
-  align-items: center;
-  white-space: nowrap;
-  animation: splitMove 3s ease-in-out infinite;
-}
-
-.a-half {
-  display: inline-block;
-  transition: transform 0.3s ease;
-}
-.a-left {
-  transform: translateX(0);
-}
-.a-right {
-  transform: translateX(0);
-}
-.a-bar {
-  display: inline-block;
-  width: 12px;
-  height: 4px;
-  background: currentColor;
-  margin: 0 2px;
-  transition: width 0.3s ease;
-}
-
-@keyframes splitMove {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(8px); }
-}
-
-@keyframes barGrow {
-  0%, 100% { width: 12px; }
-  50% { width: 28px; }
-}
-
-.split-a .a-left,
-.split-a .a-right {
-  animation: splitMove 3s ease-in-out infinite;
-}
-
-.split-a .a-bar {
-  animation: barGrow 3s ease-in-out infinite;
-}
-
-/* #endregion */
-
 
 /* #region AURA - 4 breakpoints proportionnels */
 
@@ -175,8 +115,8 @@ body {
 /* Base commune à toutes les couches */
 .spread, .core, .nucleus {
   position: fixed;
-  top: 35%;
-  left: 40%;
+  top: 50%;
+  left: 50%;
   pointer-events: none;
   will-change: transform;
 }

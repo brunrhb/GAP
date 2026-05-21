@@ -90,7 +90,7 @@ body {
 @media (max-width: 1400px) and (min-width: 1201px) {
   :root {
     --core-size: 390px; --core-blur: 26px;
-    --nucleus-size: 400px; --nucleus-blur: 70px;
+    --nucleus-size: 910px; --nucleus-blur: 91px;
     --spread-size: 1300px; --spread-blur: 65px;
 
     --drift-offset-Aura1-x: 130px; --drift-offset-Aura1-x2: 130px;

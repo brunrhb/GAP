@@ -71,7 +71,53 @@ body {
 
 
 
+/* #partenaire show */
+/* Section soutien partenaires */
+.support-section {
+  margin: 2rem 0 1rem;
+  text-align: center;
+}
 
+.support-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+  margin-bottom: 1rem;
+}
+
+.support-logos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+}
+
+.support-logo {
+  height: 2.5rem;
+  width: auto;
+  max-width: 130px;
+  object-fit: contain;
+  filter: grayscale(0.2);
+  transition: filter 0.2s ease;
+}
+
+.support-logo:hover {
+  filter: grayscale(0);
+}
+
+/* Mobile */
+@media (max-width: 800px) {
+  .support-logos {
+    gap: 1rem;
+  }
+  .support-logo {
+    height: 2rem;
+    max-width: 100px;
+  }
+}
+/* #endregion */
 
 
 

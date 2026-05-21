@@ -71,7 +71,78 @@ body {
 
 
 
+/* #partenaire show */
+/* Section soutien partenaires */
+/* Footer — section partenaires (alignée à gauche, tailles différenciées) */
+.footer-support {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  justify-content: flex-start; /* aligné à gauche */
+}
 
+.footer-support-text {
+  font-size: 0.75rem;
+  opacity: 0.6;
+  letter-spacing: 0.03em;
+  text-transform: lowercase;
+}
+
+.footer-logos {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.footer-logo {
+  height: auto;
+  object-fit: contain;
+  filter: grayscale(0.15);
+  transition: filter 0.2s;
+}
+
+.footer-logo:hover {
+  filter: grayscale(0);
+}
+
+/* Tailles individuelles */
+.footer-logo.sota {
+  height: 1.6rem;      /* plus grand */
+  width: auto;
+}
+.footer-logo.kunstenpunt {
+  height: 1.3rem;      /* intermédiaire */
+  width: auto;
+}
+.footer-logo.lavallee {
+  height: 1rem;        /* plus petit */
+  width: auto;
+}
+
+/* Ajustement mobile */
+@media (max-width: 800px) {
+  .footer-support {
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .footer-logo.sota {
+    height: 4rem;
+  }
+  .footer-logo.kunstenpunt {
+    height: 1rem;
+  }
+  .footer-logo.lavallee {
+    height: 0.8rem;
+  }
+  .footer-support-text {
+    font-size: 0.7rem;
+  }
+}
+
+/* #endregion */
 
 
 

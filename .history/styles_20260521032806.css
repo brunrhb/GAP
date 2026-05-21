@@ -49,9 +49,6 @@ body {
   display: flex;
 }
 
-.hero-row {
-  margin-top:2vw ;
-}
 
 .hero-svg-subtitle {
   display: block;

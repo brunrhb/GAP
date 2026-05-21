@@ -39,19 +39,16 @@ body {
 
 /* #region TITRE - */
 .hero-svg-title {
+display: flex;  
+}
+
+.hero-row {
   display: block;
   width: clamp(400px, 50vw, 600px);
   height: auto;
   margin-bottom: 1rem;
 }
 
-.hero-row {
-  display: flex;
-}
-
-.hero-row {
-  margin-top:2vw ;
-}
 
 .hero-svg-subtitle {
   display: block;
@@ -59,7 +56,6 @@ body {
   width: 40vw;
   height: auto;
   margin-left: clamp(100px, 30vw , 300px);
-  margin-left: 10vw;
   margin-top: 0rem;
   margin-bottom: 1rem;
 }

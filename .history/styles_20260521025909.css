@@ -40,26 +40,16 @@ body {
 /* #region TITRE - */
 .hero-svg-title {
   display: block;
-  width: clamp(400px, 50vw, 600px);
+  width: clamp(400px, calc(25vw + 20vh), 500px);
   height: auto;
   margin-bottom: 1rem;
 }
 
-.hero-row {
-  display: flex;
-}
-
-.hero-row {
-  margin-top:2vw ;
-}
-
 .hero-svg-subtitle {
   display: block;
-  width: clamp(300px, 40vw, 500px);
-  width: 40vw;
+  width: 500px;
   height: auto;
-  margin-left: clamp(100px, 30vw , 300px);
-  margin-left: 10vw;
+  margin-left: 200px;
   margin-top: 0rem;
   margin-bottom: 1rem;
 }

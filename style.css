@@ -1,0 +1,33 @@
+*, *::before, *::after {
+  margin: 0; padding: 0; box-sizing: border-box;
+}
+
+:root {
+  --paper : #f0ece4;
+  --ink   : #0f0e0c;
+}
+
+html, body { height: 100%; }
+
+body {
+  background : var(--paper);
+  display    : flex;
+  align-items: center;
+  justify-content: center;
+  cursor     : pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#scene {
+  width: min(88vw, 80vh);
+}
+
+svg {
+  display: block;
+  width  : 100%;
+  height : auto;
+}
+
+path { fill: var(--ink); }
+#a-cible { display: none; }

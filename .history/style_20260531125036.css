@@ -64,7 +64,4 @@ body {
 .h2 .line {
   font-size              : calc(var(--main) / var(--phi));
   font-variation-settings: "ital" 0, "wght" 699, "wdth" 121 ;
-    display         : block;
-  transform       : scaleY(0.88);
-  transform-origin: bottom left;
 }

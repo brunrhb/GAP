@@ -44,9 +44,6 @@ body {
 .h1 .inner {
   font-size              : var(--main);
   font-variation-settings: "ital" 0, "wght" 803, "wdth" 121 ;
-    display         : block;
-  transform       : scaleY(0.88);
-  transform-origin: bottom left;
 }
 
 /* ── H1 extérieur : THE / BXL — deux sauts de graisse ── */
@@ -54,9 +51,6 @@ body {
 .h1 .outer {
   font-size              : calc(var(--main) / var(--phi));
   font-variation-settings: "ital" 0, "wght" 500, "wdth" 100 ;
-    display         : block;
-  transform       : scaleY(0.88);
-  transform-origin: bottom left;
 }
 
 /* ── H2 : PAIRING / IS CARING ── */
@@ -64,7 +58,4 @@ body {
 .h2 .line {
   font-size              : calc(var(--main) / var(--phi));
   font-variation-settings: "ital" 0, "wght" 699, "wdth" 121 ;
-    display         : block;
-  transform       : scaleY(0.88);
-  transform-origin: bottom left;
 }

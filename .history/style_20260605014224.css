@@ -26,30 +26,25 @@
 
 html, body { height: 100%; }
 
-/* ── Header aligné avec le contenu, marges ajustées, police discrète ── */
+/* ── Header (from V1) ───────────────────────── */
 .site-header {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  padding: 1.5rem 0;
   gap: 1rem;
-  width: min(calc(960 * var(--u)), 92vw);
-  margin-inline: auto;
-  padding-top: calc(30 * var(--u));
-  padding-bottom: calc(10 * var(--u));
-  flex-shrink: 0;
   position: relative;
   z-index: 10;
+  flex-shrink: 0;
 }
 
 .brand {
-  font-family: inherit;
-  font-size: calc(15 * var(--u));
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: 0.05em;
   text-decoration: none;
   color: inherit;
-  line-height: 1;
+  font-size: clamp(1rem, 0.9rem + 0.4vw, 1.2rem);
 }
 
 .main-nav {
@@ -59,22 +54,18 @@ html, body { height: 100%; }
 }
 
 .nav-list {
+  list-style: none;
   display: flex;
   gap: 1.25rem;
-  list-style: none;
   margin: 0;
   padding: 0;
 }
 
 .nav-list a {
-  font-size: calc(13 * var(--u));
-  font-weight: 400;
-  text-decoration: none;
   color: inherit;
+  text-decoration: none;
   border-bottom: 1px solid transparent;
-  transition: border-color 0.2s;
 }
-
 .nav-list a:hover,
 .nav-list a[aria-current="page"] {
   border-bottom-color: currentColor;
@@ -84,20 +75,16 @@ html, body { height: 100%; }
   display: flex;
   gap: 0.25rem;
 }
-
 .lang-switch button {
   background: transparent;
-  border: 1px solid rgba(0, 0, 0, 0.3);
-  padding: calc(4 * var(--u)) calc(8 * var(--u));
-  font-size: calc(13 * var(--u));
-  font-weight: 400;
-  font-family: inherit;
+  border: 1px solid rgba(0,0,0,0.3);
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
   color: inherit;
   border-radius: 2px;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
 }
-
 .lang-switch button.active {
   background: #1a1a1a;
   color: #fff;
@@ -107,14 +94,13 @@ html, body { height: 100%; }
 .nav-toggle {
   display: none;
   background: transparent;
-  border: 1px solid rgba(0, 0, 0, 0.3);
-  padding: calc(4 * var(--u)) calc(8 * var(--u));
-  font-size: calc(18 * var(--u));
+  border: 1px solid rgba(0,0,0,0.3);
+  padding: 0.25rem 0.6rem;
   cursor: pointer;
-  line-height: 1;
+  font-size: 1.2rem;
 }
 
-/* Responsive */
+/* responsive menu */
 @media (max-width: 800px) {
   .nav-toggle {
     display: inline-block;

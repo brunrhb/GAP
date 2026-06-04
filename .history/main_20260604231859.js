@@ -129,7 +129,7 @@ class AnimatedA {
    ─────────────────────────────────────────────────────── */
 
 const VELOCITY = {
-  gap     : 250,
+  gap     : 280,
   pairing : 180,
   caring  : 180
 };
@@ -161,7 +161,7 @@ class AController {
     });
   }
 
-_build() {
+  _build() {
     const gap     = this.pool.find(i => i.id === 'gap');
     const pairing = this.pool.find(i => i.id === 'pairing');
     const caring  = this.pool.find(i => i.id === 'caring');
@@ -175,32 +175,22 @@ _build() {
 
     const go = gap.obj, po = pairing.obj, co = caring.obj;
     const IN  = 'none';
-    const OUT = 'none';
+    const OUT = 'sine.out';
+
+    const t1 = Dg;
+    const t2 = Dg + Dp;
+    const t3 = Dg + Dp + Dc;
 
     if (this.masterTl) this.masterTl.kill();
 
     this.masterTl = gsap.timeline({ repeat: -1, delay: 1.2, repeatDelay: 0.4 });
 
-    // — GAP aller-retour complet, seul —
-    let t = 0;
-    this.masterTl.to(go, { p:1, duration:Dg, ease:IN,  onUpdate: () => gap.apply(go.p) }, t);
-    t += Dg;
-    this.masterTl.to(go, { p:0, duration:Dg, ease:OUT, onUpdate: () => gap.apply(go.p) }, t);
-    t += Dg;
-
-    // — PAIRING part et reste étendu —
-    this.masterTl.to(po, { p:1, duration:Dp, ease:IN,  onUpdate: () => pairing.apply(po.p) }, t);
-    t += Dp;
-    // (PAIRING reste à p=1 — aucun tween de retour pour l'instant)
-
-    // — Dès PAIRING arrivé : CARING aller-retour complet —
-    this.masterTl.to(co, { p:1, duration:Dc, ease:IN,  onUpdate: () => caring.apply(co.p) }, t);
-    t += Dc;
-    this.masterTl.to(co, { p:0, duration:Dc, ease:OUT, onUpdate: () => caring.apply(co.p) }, t);
-    t += Dc;
-
-    // — Dès CARING revenu : PAIRING repart (retour seul) —
-    this.masterTl.to(po, { p:0, duration:Dp, ease:OUT, onUpdate: () => pairing.apply(po.p) }, t);
+    this.masterTl.to(go, { p:1, duration:Dg, ease:IN,  onUpdate: () => gap.apply(go.p) }, 0);
+    this.masterTl.to(go, { p:0, duration:Dg, ease:OUT, onUpdate: () => gap.apply(go.p) }, t1);
+    this.masterTl.to(po, { p:1, duration:Dp, ease:IN,  onUpdate: () => pairing.apply(po.p) }, t1);
+    this.masterTl.to(po, { p:0, duration:Dp, ease:OUT, onUpdate: () => pairing.apply(po.p) }, t2);
+    this.masterTl.to(co, { p:1, duration:Dc, ease:IN,  onUpdate: () => caring.apply(co.p) }, t2);
+    this.masterTl.to(co, { p:0, duration:Dc, ease:OUT, onUpdate: () => caring.apply(co.p) }, t3);
 
     gap.tl = pairing.tl = caring.tl = this.masterTl;
   }

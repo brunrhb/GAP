@@ -120,7 +120,7 @@ main {
    ────────────────────────────────────────────────────────── */
 :root {
   --logo-sota  : 40px;  /* le plus aéré → le plus grand */
-  --logo-kunst : 15px;  /* étiré, capitale fine */
+  --logo-kunst : 17px;  /* étiré, capitale fine */
   --logo-vallee: 17px;  /* dense → maintenu plus petit */
 }
 

@@ -110,34 +110,3 @@ main {
   transform              : scaleY(0.88);
   transform-origin       : bottom left;
 }
-
-/* ── Partenaires — rangée, alignement optique par masse ──────
-   Hauteurs DIFFÉRENTES pour un poids visuel ÉQUIVALENT :
-   · SOTA   fin et aéré       → plus grand
-   · KUNST  capitale étirée   → moyen
-   · VALLÉE noir et dense     → plus petit
-   Réglables via les 3 variables ci-dessous.
-   ────────────────────────────────────────────────────────── */
-:root {
-  --logo-sota  : 40px;  /* le plus aéré → le plus grand */
-  --logo-kunst : 15px;  /* étiré, capitale fine */
-  --logo-vallee: 17px;  /* dense → maintenu plus petit */
-}
-
-.partners {
-  display    : flex;
-  align-items: center;          /* médiane horizontale commune */
-  gap        : clamp(1.5rem, 3vw, 2.75rem);
-  flex-wrap  : wrap;            /* passe à la ligne sur très petit écran */
-}
-
-.logo {
-  width        : auto;
-  display      : block;
-  /* opacité légère pour ne pas voler le bouton (couleur gérée plus tard) */
-  opacity      : 0.85;
-}
-
-.logo-sota   { height: var(--logo-sota);   }
-.logo-kunst  { height: var(--logo-kunst);  }
-.logo-vallee { height: var(--logo-vallee); }

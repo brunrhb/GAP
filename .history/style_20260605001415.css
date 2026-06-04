@@ -119,8 +119,8 @@ main {
    Réglables via les 3 variables ci-dessous.
    ────────────────────────────────────────────────────────── */
 :root {
-  --logo-sota  : 40px;  /* le plus aéré → le plus grand */
-  --logo-kunst : 15px;  /* étiré, capitale fine */
+  --logo-sota  : 35px;  /* le plus aéré → le plus grand */
+  --logo-kunst : 17px;  /* étiré, capitale fine */
   --logo-vallee: 17px;  /* dense → maintenu plus petit */
 }
 

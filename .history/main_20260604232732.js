@@ -174,8 +174,8 @@ _build() {
     const Dc = dur(caring,  VELOCITY.caring);
 
     const go = gap.obj, po = pairing.obj, co = caring.obj;
-    const IN  = 'none';
-    const OUT = 'none';
+    const IN  = 'sine.in';
+    const OUT = 'sine.out';
 
     if (this.masterTl) this.masterTl.kill();
 

@@ -175,7 +175,7 @@ _build() {
 
     const go = gap.obj, po = pairing.obj, co = caring.obj;
     const IN  = 'none';
-    const OUT = 'none';
+    const OUT = 'sine.out';
 
     if (this.masterTl) this.masterTl.kill();
 

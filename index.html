@@ -5,27 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>The Gap Group BXL — Pairing is Caring</title>
   <meta name="description" content="The Gap Group BXL — collectif d'artistes à Bruxelles. Pairing is Caring : soutien aux artistes émergent·e·s." />
+  <!-- Feuilles de style -->
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="newstyle.css" />
+  <!-- Police obviously-variable (déjà dans styles.css ? on la rappelle au cas où) -->
+  <link rel="stylesheet" href="https://use.typekit.net/scu0dna.css" />
 </head>
 <body>
 
-  <!-- Auras (ajoutées manuellement) -->
-<!-- AURA 1 -->
-<div class="spread spread-1"></div>
-<div class="core core-1"></div>
-<div class="nucleus nucleus-1"></div>
+  <!-- AURAS (reprises de la V1) -->
+  <div class="spread spread-1"></div>
+  <div class="core core-1"></div>
+  <div class="nucleus nucleus-1"></div>
 
-<!-- AURA 2 -->
-<div class="spread spread-2"></div>
-<div class="core core-2"></div>
-<div class="nucleus nucleus-2"></div>
+  <div class="spread spread-2"></div>
+  <div class="core core-2"></div>
+  <div class="nucleus nucleus-2"></div>
 
-  <!-- Conteneur principal pour le contenu texte (avec marges et z-index > auras) -->
   <div class="page-wrap">
     <header class="site-header">
       <a href="index.html" class="brand">THE GAP GROUP BXL</a>
-      
-      
       <nav class="main-nav" aria-label="Navigation principale">
         <button class="nav-toggle" aria-expanded="false" aria-controls="primary-menu" aria-label="Ouvrir le menu">☰</button>
         <ul id="primary-menu" class="nav-list">
@@ -38,43 +37,53 @@
           <button data-lang-btn="nl">NL</button>
         </div>
       </nav>
-
-      
     </header>
 
     <main class="hero">
-  <!-- Logo SVG principal -->
-  <div class="hero-title">
-    <img src="logo.svg" alt="The Gap Group BXL" class="hero-svg-title">
-  </div>
+      <!-- Nouveau contenu animé -->
+      <div class="block h1" role="heading" aria-level="1">
+        <div class="line outer">THE</div>
+        <div class="line inner">G<span data-a-anim data-no-wrap data-a-id="gap">A</span>P</div>
+        <div class="line inner">GROUP</div>
+        <div class="line outer">BXL</div>
+      </div>
 
-  <!-- Sous-titre SVG -->
-  
-  
+      <div class="block h2" role="heading" aria-level="2">
+        <div class="line align-right">P<span data-a-anim data-no-wrap data-a-id="pairing" data-dir="-1">A</span>IRING</div>
+        <div class="line align-left">IS C<span data-a-anim data-no-wrap data-a-id="caring">A</span>RING</div>
+      </div>
 
+      <p class="call">
+        <span class="lang-fr">Soutien aux artistes émergent·e·s <br> — Call for mentors 2026/2027</span>
+        <span class="lang-en">Support for emerging artists <br> — Call for mentors 2026/2027</span>
+        <span class="lang-nl">Steun voor opkomende kunstenaars <br> — Call for mentors 2026/2027</span>
+      </p>
 
-    <div class="hero-subtitle">
-      <img src="pgm.svg" alt="Pairing is Caring" class="hero-svg-subtitle">
-    </div>
-
-
-      <p class="lang-fr hero-hook">Soutien aux artistes émergent·e·s — Call for mentors 2026/2027</p>
-      <p class="lang-en hero-hook">Support for emerging artists — Call for mentors 2026/2027</p>
-      <p class="lang-nl hero-hook">Steun voor opkomende kunstenaars — Call for mentors 2026/2027</p>
-
-    <a href="programme.html" class="btn">
+      <a href="programme.html" class="btn">
         <span class="lang-fr">Devenir mentor·e</span>
         <span class="lang-en">Become a mentor</span>
         <span class="lang-nl">Word mentor</span>
       </a>
+
+      <div class="partners">
+        <img class="logo logo-sota"  src="sota.png"        alt="State of the Arts">
+        <img class="logo logo-kunst" src="kunstenpunt.png" alt="Kunstenpunt">
+        <img class="logo logo-vallee" src="lavallee.png"   alt="La Vallée">
+      </div>
     </main>
 
-    <footer class="site-footer">
-      <p><a href="mailto:opencall-thegap@protonmail.com">opencall-thegap@protonmail.com</a></p>
-      <p>The Gap Group BXL — Pairing is Caring</p>
-    </footer>
+    <!-- Footer personnalisé (remplace l'ancien .site-footer) -->
+    <div class="custom-footer">
+      <div class="footer-inner">
+        <a href="mailto:opencall-thegap@protonmail.com">opencall-thegap@protonmail.com</a>
+        <span>The Gap Group BXL — Pairing is Caring</span>
+      </div>
+    </div>
   </div>
 
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script src="main.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

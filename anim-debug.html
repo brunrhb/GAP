@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GAP — Anim A1/A2 debug</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #f0ece4;
+      overflow: hidden;
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    canvas {
+      display: block;
+      position: fixed;
+      inset: 0;
+    }
+
+    #ui {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(15, 14, 12, 0.78);
+      color: #f0ece4;
+      padding: 0.75rem 1rem;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      min-width: 220px;
+      backdrop-filter: blur(6px);
+      z-index: 10;
+    }
+
+    .label { opacity: 0.5; font-size: 11px; margin-bottom: 0.1rem; }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .row label { opacity: 0.75; white-space: nowrap; }
+
+    input[type=range] {
+      flex: 1;
+      accent-color: #E87040;
+      cursor: pointer;
+    }
+
+    .val {
+      width: 44px;
+      text-align: right;
+      opacity: 0.9;
+      font-size: 11px;
+    }
+
+    #info {
+      margin-top: 0.25rem;
+      opacity: 0.4;
+      font-size: 11px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 0.4rem;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<div id="ui">
+  <div class="label">A1 / A2 — physique + orbite debug</div>
+
+  <div class="row">
+    <label>attraction</label>
+    <input type="range" id="sAttr" min="0.5" max="20" step="0.1" value="5">
+    <span class="val" id="vAttr">5</span>
+  </div>
+
+  <div class="row">
+    <label>friction</label>
+    <input type="range" id="sFric" min="0.1" max="12" step="0.1" value="1.0">
+    <span class="val" id="vFric">1.0</span>
+  </div>
+
+  <div class="row">
+    <label>répulsion</label>
+    <input type="range" id="sRep" min="1000" max="5000000" step="1000" value="1500000">
+    <span class="val" id="vRep">1.5M</span>
+  </div>
+
+  <div class="row">
+    <label>orbite</label>
+    <input type="range" id="sCurl" min="0" max="3000" step="10" value="1500">
+    <span class="val" id="vCurl">1500</span>
+  </div>
+
+  <div class="row">
+    <label>rebond</label>
+    <input type="range" id="sRest" min="0" max="1" step="0.05" value="0.55">
+    <span class="val" id="vRest">0.55</span>
+  </div>
+
+  <div class="row">
+    <label>seuil orbite</label>
+    <input type="range" id="sProx" min="1.5" max="8" step="0.1" value="3.5">
+    <span class="val" id="vProx">3.5×</span>
+  </div>
+
+  <div id="info">dist: — px</div>
+</div>
+
+<script>
+/* ── GAP — Anim debug A1/A2
+   Physique : attraction curseur + répulsion mutuelle + orbite asymétrique + rebond élastique
+   Rendu   : cercles pleins (phase A — membranes en phase B)
+   ──────────────────────────────────────────────────────────────────────── */
+
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+
+// ── Paramètres physiques ─────────────────────────────────
+const P = {
+  attrK      : 5,        // attraction vers curseur (1/s²)
+  fricK      : 1.0,      // friction (1/s) — bas pour laisser l'orbite vivre
+  repK       : 1500000,  // répulsion radiale (px³/s²) — 1/d²
+  curlK      : 1500,     // force orbitale tangentielle de base (px²/s²)
+  restitution: 0.55,     // coefficient de rebond (0 = mou, 1 = parfaitement élastique)
+  radius     : 150,      // rayon visuel (px) — phase A seulement
+  proxMult   : 3.5,      // seuil de proximité = proxMult × radius
+};
+
+// ── Asymétrie orbitale ───────────────────────────────────
+const CURL_BEHIND = 2.2;   // challenger : plus de force tangentielle
+const CURL_FRONT  = 0.6;   // dominant   : moins
+
+// Attraction modulée par proximité (pour la particule challengeuse) :
+//   proches → 0.15× (répulsion prime → arc orbital forcé)
+//   loin    → 2.8×  (sprint violent vers curseur)
+const ATTR_FAR_CLOSE = 0.15;
+const ATTR_FAR_FAR   = 2.8;
+
+// ── Inertie de rôle ──────────────────────────────────────
+// dominance[i] ∈ [0,1] : 0 = dominant (near), 1 = challenger (far)
+// Transite lentement → le gagnant jouit encore de son élan
+const dominance   = [0.0, 1.0]; // init : p0 devant, p1 derrière
+const SWITCH_SPEED = 1.2;        // unités/s — plus bas = délai plus long
+
+// ── État ─────────────────────────────────────────────────
+let W = 0, H = 0;
+let cursor = null;
+let lastTs = null;
+
+const particles = [
+  { x: 0, y: 0, vx: 0, vy: 0 },
+  { x: 0, y: 0, vx: 0, vy: 0 },
+];
+
+// ── Resize ────────────────────────────────────────────────
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  if (particles[0].x === 0) {
+    particles[0].x = W / 2 - 200;
+    particles[0].y = H / 2;
+    particles[1].x = W / 2 + 200;
+    particles[1].y = H / 2;
+  }
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ── Curseur ───────────────────────────────────────────────
+window.addEventListener('mousemove', e => {
+  cursor = { x: e.clientX, y: e.clientY };
+});
+
+function getCursor() {
+  return cursor ?? { x: W / 2, y: H / 2 };
+}
+
+// ── Physique ──────────────────────────────────────────────
+function physics(dt) {
+  const c = getCursor();
+  const [a, b] = particles;
+
+  const dx   = b.x - a.x;
+  const dy   = b.y - a.y;
+  const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
+  const nx   = dx / dist;
+  const ny   = dy / dist;
+
+  const repMag  = P.repK  / (dist * dist);
+  const curlMag = P.curlK / dist;
+
+  // perpendiculaire à l'axe A→B
+  const tx = -ny;
+  const ty =  nx;
+
+  // laquelle est derrière (plus loin du curseur) ?
+  const dA = Math.sqrt((c.x - a.x) ** 2 + (c.y - a.y) ** 2);
+  const dB = Math.sqrt((c.x - b.x) ** 2 + (c.y - b.y) ** 2);
+  const farIdx = dA > dB ? 0 : 1; // index de la particule la plus loin
+
+  // Seuil de proximité entre elles
+  const threshold = P.radius * P.proxMult;
+  // proximity : 0 = très proches, 1 = au seuil ou au-delà
+  const proximity = Math.min(dist / threshold, 1);
+
+  // attrFactor[farIdx] : 0.25 quand proches (répulsion prime → orbite)
+  //                      1.9  quand loin     (sprint vers curseur)
+  // attrFactor[nearIdx] : 1.0 constant
+  const attrFactors = [1.0, 1.0];
+  attrFactors[farIdx] = ATTR_FAR_CLOSE + proximity * (ATTR_FAR_FAR - ATTR_FAR_CLOSE);
+
+  // orbite : derrière reçoit plus de force tangentielle
+  const curlFactors = [CURL_FRONT, CURL_FRONT];
+  curlFactors[farIdx] = CURL_BEHIND;
+
+  for (let i = 0; i < 2; i++) {
+    const p    = particles[i];
+    const sign = i === 0 ? -1 : 1;
+
+    const fax = (c.x - p.x) * P.attrK * attrFactors[i];
+    const fay = (c.y - p.y) * P.attrK * attrFactors[i];
+
+    const frx = sign * nx * repMag;
+    const fry = sign * ny * repMag;
+
+    const fcx = sign * tx * curlMag * curlFactors[i];
+    const fcy = sign * ty * curlMag * curlFactors[i];
+
+    const fdx = -p.vx * P.fricK;
+    const fdy = -p.vy * P.fricK;
+
+    p.vx += (fax + frx + fcx + fdx) * dt;
+    p.vy += (fay + fry + fcy + fdy) * dt;
+    p.x  += p.vx * dt;
+    p.y  += p.vy * dt;
+  }
+}
+
+// ── Collision élastique ───────────────────────────────────
+function collide() {
+  const [a, b] = particles;
+  const dx   = b.x - a.x;
+  const dy   = b.y - a.y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  const minD = P.radius * 2;
+
+  if (dist < minD && dist > 0.01) {
+    const nx = dx / dist;
+    const ny = dy / dist;
+
+    // séparer hors d'overlap
+    const overlap = (minD - dist) * 0.5;
+    a.x -= nx * overlap;
+    a.y -= ny * overlap;
+    b.x += nx * overlap;
+    b.y += ny * overlap;
+
+    // vitesse relative le long de la normale
+    const dvx = b.vx - a.vx;
+    const dvy = b.vy - a.vy;
+    const dvn = dvx * nx + dvy * ny;
+
+    if (dvn < 0) {
+      const impulse = -(1 + P.restitution) * dvn * 0.5;
+      a.vx -= impulse * nx;
+      a.vy -= impulse * ny;
+      b.vx += impulse * nx;
+      b.vy += impulse * ny;
+    }
+  }
+}
+
+// ── Rendu ─────────────────────────────────────────────────
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  const [a, b] = particles;
+  const r = P.radius;
+
+  // ligne inter-particules (debug léger)
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.strokeStyle = 'rgba(180, 90, 40, 0.12)';
+  ctx.lineWidth   = 1;
+  ctx.stroke();
+
+  // cercles : core plein (r/2) + limite membrane en pointillés (r)
+  const fills = ['rgba(232, 112, 64, 0.88)', 'rgba(200, 85, 45, 0.80)'];
+  for (let i = 0; i < 2; i++) {
+    const p = particles[i];
+
+    // — core plein (moitié du rayon) —
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r * 0.5, 0, Math.PI * 2);
+    ctx.fillStyle = fills[i];
+    ctx.fill();
+
+    // — limite membrane (debug) : pointillés fins au rayon complet —
+    ctx.save();
+    ctx.setLineDash([6, 5]);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    ctx.strokeStyle = fills[i].replace(/[\d.]+\)$/, '0.25)');
+    ctx.lineWidth   = 1;
+    ctx.stroke();
+    ctx.restore();
+
+    // — centre debug —
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fill();
+  }
+}
+
+// ── Boucle principale ─────────────────────────────────────
+function loop(ts) {
+  const dt = lastTs === null
+    ? 0.016
+    : Math.min((ts - lastTs) / 1000, 0.05);
+  lastTs = ts;
+
+  physics(dt);
+  collide();
+  draw();
+
+  const [a, b] = particles;
+  const dx = b.x - a.x, dy = b.y - a.y;
+  document.getElementById('info').textContent =
+    `dist: ${Math.sqrt(dx*dx + dy*dy).toFixed(0)} px`;
+
+  requestAnimationFrame(loop);
+}
+
+// ── Sliders ───────────────────────────────────────────────
+function bindSlider(sliderId, valId, key, fmt) {
+  const s = document.getElementById(sliderId);
+  const v = document.getElementById(valId);
+  v.textContent = fmt ? fmt(P[key]) : P[key];
+  s.addEventListener('input', () => {
+    P[key] = parseFloat(s.value);
+    v.textContent = fmt ? fmt(P[key]) : P[key];
+  });
+}
+
+bindSlider('sAttr', 'vAttr', 'attrK');
+bindSlider('sFric', 'vFric', 'fricK');
+bindSlider('sRep',  'vRep',  'repK',
+  v => v >= 1000000 ? (v/1000000).toFixed(1)+'M' : (v/1000).toFixed(0)+'k');
+bindSlider('sCurl', 'vCurl', 'curlK');
+bindSlider('sRest', 'vRest', 'restitution');
+bindSlider('sProx', 'vProx', 'proxMult', v => v.toFixed(1) + '×');
+
+// ── Démarrage ─────────────────────────────────────────────
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

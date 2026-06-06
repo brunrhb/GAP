@@ -1,0 +1,109 @@
+/* pages.css — The Gap Group BXL
+   Styles des pages intérieures (about, programme).
+   Dépend de style.css (système --u, header, footer, nav, btn).
+   ----------------------------------------------------------- */
+
+/* ── Overrides body pour pages de contenu ── */
+body.is-page {
+  cursor: default;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* ── Gestion des langues ── */
+.lang-fr,
+.lang-en,
+.lang-nl { display: none; }
+
+html.show-fr .lang-fr { display: revert; }
+html.show-en .lang-en { display: revert; }
+html.show-nl .lang-nl { display: revert; }
+
+/* Pour les éléments inline dans un article visible */
+html.show-fr article.lang-fr,
+html.show-en article.lang-en,
+html.show-nl article.lang-nl { display: block; }
+
+/* ── Layout main pour pages ── */
+main.page {
+  justify-content: flex-start;
+  padding-top    : calc(60 * var(--u));
+  padding-bottom : calc(80 * var(--u));
+}
+
+/* ── Conteneur article (une langue à la fois) ── */
+main.page article {
+  max-width: calc(720 * var(--u));
+  width: 100%;
+}
+
+/* ── H1 : grand, même famille que le display de la home ── */
+main.page h1 {
+  font-size              : calc(72 * var(--u));
+  font-variation-settings: "ital" 0, "wght" 803, "wdth" 121;
+  line-height            : 1;
+  transform              : scaleY(0.88);
+  transform-origin       : bottom left;
+  margin-bottom          : calc(48 * var(--u));
+}
+
+/* ── H2 : intermédiaire ── */
+main.page h2 {
+  font-size              : calc(30 * var(--u));
+  font-variation-settings: "ital" 0, "wght" 650, "wdth" 110;
+  line-height            : 1.1;
+  margin-top             : calc(52 * var(--u));
+  margin-bottom          : calc(16 * var(--u));
+}
+
+/* ── Corps de texte : clamp pour plancher lisible sur mobile ── */
+main.page p,
+main.page li {
+  font-size              : clamp(14px, calc(16 * var(--u)), 20px);
+  font-variation-settings: "ital" 0, "wght" 400, "wdth" 100;
+  line-height            : 1.65;
+  margin-bottom          : calc(14 * var(--u));
+}
+
+main.page ul {
+  padding-left  : 1.2em;
+  margin-bottom : calc(16 * var(--u));
+}
+
+main.page li { margin-bottom: 0.5em; }
+
+/* ── Chapeau (lede) ── */
+.lede {
+  font-size              : clamp(16px, calc(21 * var(--u)), 28px);
+  font-variation-settings: "ital" 0, "wght" 500, "wdth" 100;
+  line-height            : 1.4;
+  margin-bottom          : calc(36 * var(--u));
+}
+
+/* ── Ligne CTA (bouton + lien mail) ── */
+.cta-line {
+  display    : flex;
+  flex-wrap  : wrap;
+  align-items: center;
+  gap        : calc(20 * var(--u));
+  margin     : calc(32 * var(--u)) 0;
+}
+
+.cta-line a:not(.btn) {
+  font-size              : clamp(13px, calc(15 * var(--u)), 18px);
+  font-variation-settings: "ital" 0, "wght" 400, "wdth" 100;
+  color                  : inherit;
+  text-decoration        : underline;
+  text-underline-offset  : 3px;
+  opacity                : 0.6;
+  transition             : opacity 0.2s;
+}
+.cta-line a:not(.btn):hover { opacity: 1; }
+
+/* ── Ligne partenaires (texte, pas logos) ── */
+p.partners {
+  font-size              : clamp(12px, calc(14 * var(--u)), 17px);
+  font-variation-settings: "ital" 0, "wght" 350, "wdth" 100;
+  opacity                : 0.55;
+  font-style             : italic;
+}

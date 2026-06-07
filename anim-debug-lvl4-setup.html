@@ -83,6 +83,24 @@
     input[type=range] { flex:1; cursor:pointer; height:0.8em; min-width:0; }
     .val { width:2.8em; text-align:right; opacity:0.72; font-size:0.82em; flex-shrink:0; }
 
+    /* ── Scènes ─── */
+    #p-scenes .panel-header { border-left-color:rgba(180,160,220,0.6); }
+    .scene-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.32em; }
+    .btn-scene {
+      background:rgba(255,255,255,0.04);
+      border:1px solid var(--sc,rgba(255,255,255,0.18));
+      color:var(--sc,#f0ece4);
+      font-family:monospace; font-size:0.82em;
+      padding:0.38em 0.4em; border-radius:0.25em; cursor:pointer;
+      text-align:center; transition:background 0.12s, box-shadow 0.12s;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .btn-scene:hover {
+      background:color-mix(in srgb, var(--sc,#fff) 18%, transparent);
+      box-shadow:0 0 0 1px var(--sc,#fff);
+    }
+    .btn-scene:active { filter:brightness(1.3); }
+
     /* ── Rando ─── */
     .rando-intensity-row {
       display:flex; align-items:center; gap:0.4em; margin-bottom:0.1em;
@@ -149,6 +167,17 @@
 </div>
 
 <div id="content">
+
+<!-- ═══ SCÈNES ═══ -->
+<div class="panel" id="p-scenes">
+  <div class="panel-header">
+    <span class="panel-title" style="color:#b0a0d8;">◈ Scènes</span>
+    <button class="panel-toggle">▾</button>
+  </div>
+  <div class="panel-body">
+    <div class="scene-grid" id="scene-grid"></div>
+  </div>
+</div>
 
 <!-- ═══ RANDO ═══ -->
 <div class="panel" id="p-rando">
@@ -264,6 +293,115 @@ window.addEventListener('storage',e=>{
     try{ absorbConfig(JSON.parse(e.newValue)); flashSync(); }catch(err){}
   }
 });
+
+// ── Scènes ────────────────────────────────────────────────
+const SCENES = [
+  {
+    name: 'Méduse', color: '#6080d0',
+    cfg: {
+      P: { attrK:4, fricK:0.8, repK:1200000, curlK:2200, restitution:0.4,
+           proxMult:4, contourStr:0.5, coreR:55, coreColor:'#3050a0',
+           coreOpacity:0.55, coreBlur:12, limitR:300, limitOpacity:0.15 },
+      M: { memR:155, nbPts:14, ampli:38, vitesse:1.0, twist:0.12,
+           bulge:18, tentacleStr:85, tentacleDecay:0.22,
+           color:'#6080c8', opacity:0.28, blur:5 },
+      L3: { scale:1.5,  color:'#80a8e8', opacity:0.18, blur:14, ellipse:0.55 },
+      L4: { scale:2.2,  color:'#a060c0', opacity:0.11, blur:26, ellipse:0.75, compress:0.08 },
+      L5: { scale:3.5,  color:'#40b8c0', opacity:0.05, blur:48, ellipse:0.85, compress:0.0 },
+      switchSpeed: 1.6,
+    }
+  },
+  {
+    name: 'Soleil', color: '#ff8030',
+    cfg: {
+      P: { attrK:8, fricK:1.2, repK:1600000, curlK:1800, restitution:0.5,
+           proxMult:3, contourStr:0.4, coreR:135, coreColor:'#ff5010',
+           coreOpacity:0.92, coreBlur:18, limitR:280, limitOpacity:0.1 },
+      M: { memR:145, nbPts:8, ampli:20, vitesse:0.35, twist:0.03,
+           bulge:70, tentacleStr:15, tentacleDecay:0.55,
+           color:'#ff8030', opacity:0.45, blur:10 },
+      L3: { scale:1.3,  color:'#ffa030', opacity:0.28, blur:22, ellipse:0.04 },
+      L4: { scale:1.9,  color:'#ff4010', opacity:0.15, blur:40, ellipse:0.03, compress:0 },
+      L5: { scale:2.8,  color:'#ffd020', opacity:0.07, blur:65, ellipse:0.02, compress:0 },
+      switchSpeed: 0.7,
+    }
+  },
+  {
+    name: 'Cellule', color: '#60c870',
+    cfg: {
+      P: { attrK:4, fricK:3.5, repK:1400000, curlK:1500, restitution:0.3,
+           proxMult:3, contourStr:0.7, coreR:75, coreColor:'#40b050',
+           coreOpacity:0.8, coreBlur:0, limitR:240, limitOpacity:0.2 },
+      M: { memR:125, nbPts:18, ampli:32, vitesse:1.8, twist:0.18,
+           bulge:50, tentacleStr:70, tentacleDecay:0.3,
+           color:'#70d080', opacity:0.44, blur:2 },
+      L3: { scale:1.18, color:'#40b855', opacity:0.30, blur:4,  ellipse:0.28 },
+      L4: { scale:1.42, color:'#289048', opacity:0.20, blur:9,  ellipse:0.32, compress:0.12 },
+      L5: { scale:1.72, color:'#186838', opacity:0.10, blur:16, ellipse:0.38, compress:0.18 },
+      switchSpeed: 2.2,
+    }
+  },
+  {
+    name: 'Fantôme', color: '#b8b4ac',
+    cfg: {
+      P: { attrK:3, fricK:0.5, repK:900000, curlK:2400, restitution:0.65,
+           proxMult:4.5, contourStr:0.3, coreR:88, coreColor:'#e0dcd4',
+           coreOpacity:0.28, coreBlur:28, limitR:300, limitOpacity:0.1 },
+      M: { memR:138, nbPts:10, ampli:38, vitesse:0.45, twist:0.06,
+           bulge:28, tentacleStr:42, tentacleDecay:0.42,
+           color:'#d0ccc4', opacity:0.18, blur:18 },
+      L3: { scale:1.6,  color:'#e8e4dc', opacity:0.10, blur:32, ellipse:0.14 },
+      L4: { scale:2.4,  color:'#f0ece4', opacity:0.06, blur:50, ellipse:0.18, compress:0 },
+      L5: { scale:3.8,  color:'#ffffff', opacity:0.03, blur:75, ellipse:0.08, compress:0 },
+      switchSpeed: 0.9,
+    }
+  },
+  {
+    name: 'Magnétique', color: '#ff40a0',
+    cfg: {
+      P: { attrK:9, fricK:0.6, repK:2000000, curlK:2940, restitution:0.65,
+           proxMult:3, contourStr:0.75, coreR:95, coreColor:'#c03070',
+           coreOpacity:0.88, coreBlur:0, limitR:260, limitOpacity:0.25 },
+      M: { memR:108, nbPts:8, ampli:12, vitesse:0.9, twist:0.05,
+           bulge:55, tentacleStr:28, tentacleDecay:0.48,
+           color:'#c03070', opacity:0.52, blur:0 },
+      L3: { scale:1.35, color:'#4080ff', opacity:0.28, blur:6,  ellipse:0.72 },
+      L4: { scale:2.0,  color:'#40c8ff', opacity:0.18, blur:14, ellipse:0.95, compress:0.28 },
+      L5: { scale:3.0,  color:'#80ff80', opacity:0.09, blur:28, ellipse:1.1,  compress:0.4 },
+      switchSpeed: 0.5,
+    }
+  },
+  {
+    name: 'Nébuleuse', color: '#a060e0',
+    cfg: {
+      P: { attrK:5, fricK:0.9, repK:1300000, curlK:2600, restitution:0.5,
+           proxMult:3.5, contourStr:0.55, coreR:68, coreColor:'#7030b8',
+           coreOpacity:0.72, coreBlur:12, limitR:290, limitOpacity:0.15 },
+      M: { memR:118, nbPts:12, ampli:24, vitesse:0.28, twist:0.1,
+           bulge:22, tentacleStr:38, tentacleDecay:0.5,
+           color:'#c060e0', opacity:0.32, blur:7 },
+      L3: { scale:1.7,  color:'#40b8ff', opacity:0.18, blur:22, ellipse:0.35 },
+      L4: { scale:2.6,  color:'#ff40a0', opacity:0.11, blur:42, ellipse:0.52, compress:0.12 },
+      L5: { scale:4.2,  color:'#4040e8', opacity:0.05, blur:75, ellipse:0.65, compress:0.22 },
+      switchSpeed: 1.1,
+    }
+  },
+];
+
+(function buildScenes(){
+  const grid = document.getElementById('scene-grid');
+  SCENES.forEach(scene => {
+    const btn = document.createElement('button');
+    btn.className = 'btn-scene';
+    btn.textContent = scene.name;
+    btn.style.setProperty('--sc', scene.color);
+    btn.addEventListener('click', () => {
+      absorbConfig(scene.cfg);
+      broadcast();
+    });
+    grid.appendChild(btn);
+  });
+})();
 
 // ── Rando ─────────────────────────────────────────────────
 const RANDO_PHYSICS=[

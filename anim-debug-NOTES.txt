@@ -1,0 +1,126 @@
+GAP — ANIM DEBUG : NOTES DE DÉVELOPPEMENT
+==========================================
+Mis à jour : 2026-06-07
+Branche active : DYNAMIC-COLOR-ANIM
+Fichier courant : anim-debug-lvl4.html
+
+
+── FICHIERS ──────────────────────────────────────────────────────────────────
+
+  anim-debug.html        Physique de base (orbite asymétrique, 2 cercles)
+  anim-debug-lvl2.html   + Membrane (forme organique L2, bleue)
+  anim-debug-lvl3.html   + Aura verte L3 + Aura mauve L4, panneaux flottants
+  anim-debug-lvl4.html   + Système de presets (save/restore via localStorage)
+
+
+── SYSTÈME DE COUCHES ────────────────────────────────────────────────────────
+
+  L1 — Core       : cercle plein, couleur de base, rayon coreR
+  L2 — Membrane   : forme organique, N points, animée (noise + tentacule)
+  L3 — Aura verte : membrane × scale L3, couleur/opacité/flou indépendants
+  L4 — Aura mauve : membrane × scale L4, couleur/opacité/flou indépendants
+
+  Ordre de rendu par particule : L4 → L3 → L2 → debug circle → L1 → dot
+
+
+── PHYSIQUE ──────────────────────────────────────────────────────────────────
+
+  Attraction curseur : attrFactor modulé par dominance (rôle) et proximity
+  Répulsion mutuelle : 1/d², equilibre à R³ = repK / (4 × attrK)
+  Orbite             : force tangentielle curlK/d, asymétrique (CURL_BEHIND vs CURL_FRONT)
+  Inertie de rôle    : dominance[i] lerp lent vers 0 (dominant/proche) ou 1 (challengeur/loin)
+  Collision élastique: impulsion = -(1+restitution) × dvn × 0.5, séparation dure
+  Contour            : déviation de l'attraction le long du périmètre de l'autre particule
+
+
+── MEMBRANE ──────────────────────────────────────────────────────────────────
+
+  membranePoints(p, other, phases, t)
+    → N points en anneau autour de p
+    → noise : 2 harmoniques sinus (ratio φ=1.618)
+    → bulge : gonflement vers other (cos de l'angle)
+    → leader : point le plus proche de other, tentaculaire
+    → voisins du leader : énergie redistribuée (×0.18) pour mouvement perpétuel
+    → twist : rotation légère par point
+
+  drawSmoothClosed(pts) : courbe fermée lisse via bezier quadratique (midpoints)
+
+  Auras L3/L4 : pts.map(pt => scale depuis center p) → même drawSmoothClosed
+
+
+── FENÊTRES FLOTTANTES (lvl3+) ───────────────────────────────────────────────
+
+  CSS : .fp { position:fixed; width:14em; font-size:11px; resize:horizontal }
+  Drag : mousedown header → mousemove → mouseup (bornes = viewport)
+  Collapse : toggle .collapsed → max-height transition
+  z-index : ++zTop à chaque mousedown (bring to front)
+  Positions initiales : centrées en haut, espacées de 12px
+
+  Panneaux :
+    #fp-presets  (jaune)  — save/restore presets
+    #fp4         (mauve)  — Niv.4 Aura
+    #fp3         (vert)   — Niv.3 Aura
+    #fp2         (bleu)   — Niv.2 Membrane
+    #fp1         (orange) — Niv.1 Core + Physique
+
+
+── SYSTÈME PRESETS (lvl4) ────────────────────────────────────────────────────
+
+  Stockage : localStorage, clé = "gap_lvl4_preset__<nom>"
+  Données  : JSON({ P, M, L3, L4, switchSpeed })
+
+  getConfig()         → sérialise P, M, L3, L4, switchSpeed
+  setConfig(cfg)      → applique aux objets ET resync tous les sliders/couleurs via dispatchEvent('input')
+  savePreset(name)    → setItem + re-render liste
+  restorePreset(name) → getItem + setConfig
+  deletePreset(name)  → removeItem + re-render liste
+  renderPresets()     → reconstruit le DOM #preset-list depuis localStorage
+
+  Entrée clavier : Enter dans le champ nom = sauvegarder
+
+
+── PARAMÈTRES COURANTS (défaut lvl4) ────────────────────────────────────────
+
+  P = {
+    attrK:5, fricK:1.0, repK:1500000, curlK:2940, restitution:0.55,
+    proxMult:3.5, contourStr:0.65,
+    coreR:112, coreColor:'#e87040', coreOpacity:0.88, coreBlur:0,
+    limitR:270, limitOpacity:0.22
+  }
+  M = {
+    memR:155, nbPts:10, ampli:18, vitesse:0.6, twist:0.08,
+    bulge:35, tentacleStr:50, tentacleDecay:0.4,
+    color:'#a0cde6', opacity:0.38, blur:0
+  }
+  L3 = { scale:1.4, color:'#64c878', opacity:0.22, blur:0 }
+  L4 = { scale:1.8, color:'#9b6abf', opacity:0.16, blur:0 }
+
+
+── CONSTANTES PHYSIQUES ──────────────────────────────────────────────────────
+
+  CURL_BEHIND   = 3.0    (tangentiel challengeur)
+  CURL_FRONT    = 0.25   (tangentiel dominant)
+  ATTR_FAR_CLOSE= 0.05   (attrFactor quand particules proches)
+  ATTR_FAR_FAR  = 4.0    (attrFactor quand particules éloignées)
+  SWITCH_SPEED  = 1.2/s  (vitesse de transition des rôles, slider "délai rôle")
+
+
+── PROCHAINES ÉTAPES POSSIBLES ───────────────────────────────────────────────
+
+  [ ] Interaction entre membranes (déformation mutuelle à courte distance)
+  [ ] Couleur dynamique (teinte selon distance / vitesse / rôle)
+  [ ] Troisième particule (satellite / lune)
+  [ ] Fond vivant (gradient ou texture réactif)
+  [ ] Export preset en fichier JSON (download)
+  [ ] Intégration index.html avec système --u (NOUVELLE-BASE)
+  [ ] Fallback mobile : dérive autonome sans curseur
+
+
+── GIT ───────────────────────────────────────────────────────────────────────
+
+  Branches :
+    NOUVELLE-BASE      → pages statiques (about.html, programme.html, pages.css, script.js)
+    DYNAMIC-COLOR-ANIM → fichiers anim-debug-*.html
+
+  Note : vérifier git index.lock avant le prochain commit sur DYNAMIC-COLOR-ANIM
+    → rm .git/index.lock  si le lock est orphelin

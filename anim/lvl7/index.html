@@ -6,7 +6,7 @@
   <title>GAP — Anim lvl5</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { background:#C4BEC8; overflow:hidden; font-family:monospace; }
+    body { background: linear-gradient(to top, #ECE8E3 0%, #C4BEC8 50%, #D4BEB0 100%) fixed; overflow:hidden; font-family:monospace; }
     canvas { display:block; position:fixed; inset:0; z-index:1; }
     #btn-bar {
       position:fixed; bottom:1rem; right:1rem; z-index:999;
@@ -28,54 +28,88 @@
       pointer-events:none;
     }
 
-    /* ── Auras CSS organiques — derrière le canvas ── */
-    .aura-css {
+    /* ── Wrappers de position — pilotés par JS ── */
+    .aura-wrap {
       position      : fixed;
-      left          : 0; top: 0;
-      width         : 560px; height: 560px;
-      border-radius : 50%;
+      left: 0; top: 0;
       pointer-events: none;
       z-index       : 0;
-      will-change   : transform, scale;
+      will-change   : transform;
     }
-    #aura-css-0 {
-      width     : 560px; height: 420px;
-      background: radial-gradient(ellipse, rgba(217,80,48,0.75) 0%, rgba(217,80,48,0) 68%);
-      filter    : blur(72px);
-      transform : translate(calc(var(--p0x, 50vw) - 280px), calc(var(--p0y, 50vh) - 210px));
-      animation : breathe-a 5.4s ease-in-out infinite,
-                  rotate-a  18s linear infinite;
+    #aura-wrap-0 { transform: translate(var(--p0x, 50vw), var(--p0y, 50vh)); }
+    #aura-wrap-1 { transform: translate(var(--p1x, 50vw), var(--p1y, 50vh)); }
+
+    /* ── Couches visuelles — centrées sur le point ── */
+    .aura-spread, .aura-nucleus, .aura-core {
+      position      : absolute;
+      top: 0; left: 0;
+      border-radius : 70% 30% 55% 45% / 60% 40% 45% 55%;
+      pointer-events: none;
     }
-    #aura-css-1 {
-      width     : 460px; height: 580px;
-      background: radial-gradient(ellipse, rgba(240,160,120,0.65) 0%, rgba(240,160,120,0) 68%);
-      filter    : blur(90px);
-      transform : translate(calc(var(--p1x, 50vw) - 230px), calc(var(--p1y, 50vh) - 290px));
-      animation : breathe-b 7.2s ease-in-out infinite,
-                  rotate-b  24s linear infinite;
+
+    /* Spread — grande nappe */
+    .aura-spread {
+      width : 720px; height: 540px;
+      filter: blur(88px);
+      transform: translate(-50%, -50%) scaleX(1.3) scaleY(0.88);
     }
+    /* Nucleus — couche intermédiaire */
+    .aura-nucleus {
+      width : 380px; height: 320px;
+      filter: blur(44px);
+      transform: translate(-50%, -50%) scaleX(1.1) scaleY(0.82);
+    }
+    /* Core — noyau dense */
+    .aura-core {
+      width : 200px; height: 175px;
+      filter: blur(16px);
+      transform: translate(-50%, -50%) scaleX(1.05) scaleY(0.9);
+    }
+
+    /* ── Couleurs aura 0 (terracotta) ── */
+    #aura-wrap-0 .aura-spread  { background: radial-gradient(circle, rgba(209,70,30,0.45) 0%, rgba(209,70,30,0) 100%); }
+    #aura-wrap-0 .aura-nucleus { background: radial-gradient(circle, rgba(217,80,48,0.72) 0%, rgba(240,120,70,0) 100%); }
+    #aura-wrap-0 .aura-core    { background: radial-gradient(circle, rgba(235,95,45,0.92) 0%, rgba(217,80,48,0.2) 100%); }
+
+    /* ── Couleurs aura 1 (blush pêche) ── */
+    #aura-wrap-1 .aura-spread  { background: radial-gradient(circle, rgba(240,160,110,0.38) 0%, rgba(240,160,110,0) 100%); }
+    #aura-wrap-1 .aura-nucleus { background: radial-gradient(circle, rgba(244,170,120,0.65) 0%, rgba(244,160,110,0) 100%); }
+    #aura-wrap-1 .aura-core    { background: radial-gradient(circle, rgba(248,185,140,0.88) 0%, rgba(244,170,120,0.2) 100%); }
+
+    /* ── Rotations de base + spin lent (propriété CSS indépendante) ── */
+    #aura-wrap-0 .aura-spread  { rotate: 15deg;  animation: spin-cw  22s linear infinite, breathe-a 6.1s ease-in-out infinite; }
+    #aura-wrap-0 .aura-nucleus { rotate: -10deg; animation: spin-ccw 17s linear infinite, breathe-b 5.4s ease-in-out infinite; }
+    #aura-wrap-0 .aura-core    { rotate: 5deg;   animation: spin-cw  28s linear infinite, breathe-a 4.8s ease-in-out infinite 0.8s; }
+
+    #aura-wrap-1 .aura-spread  { rotate: -20deg; animation: spin-ccw 26s linear infinite, breathe-b 7.3s ease-in-out infinite; }
+    #aura-wrap-1 .aura-nucleus { rotate: 12deg;  animation: spin-cw  19s linear infinite, breathe-a 6.6s ease-in-out infinite 1.2s; }
+    #aura-wrap-1 .aura-core    { rotate: -8deg;  animation: spin-ccw 23s linear infinite, breathe-b 5.9s ease-in-out infinite; }
+
+    @keyframes spin-cw  { to { rotate: 360deg; } }
+    @keyframes spin-ccw { to { rotate: -360deg; } }
+
     @keyframes breathe-a {
       0%,100% { scale: 1;    opacity: 1;    }
-      50%     { scale: 1.22; opacity: 0.72; }
+      50%     { scale: 1.18; opacity: 0.72; }
     }
     @keyframes breathe-b {
-      0%,100% { scale: 1.1;  opacity: 0.80; }
-      50%     { scale: 0.86; opacity: 1;    }
-    }
-    @keyframes rotate-a {
-      from { rotate: 0deg;   }
-      to   { rotate: 360deg; }
-    }
-    @keyframes rotate-b {
-      from { rotate: 0deg;    }
-      to   { rotate: -360deg; }
+      0%,100% { scale: 1.08; opacity: 0.78; }
+      50%     { scale: 0.88; opacity: 1;    }
     }
   </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-<div id="aura-css-0" class="aura-css"></div>
-<div id="aura-css-1" class="aura-css"></div>
+<div id="aura-wrap-0" class="aura-wrap">
+  <div class="aura-spread"></div>
+  <div class="aura-nucleus"></div>
+  <div class="aura-core"></div>
+</div>
+<div id="aura-wrap-1" class="aura-wrap">
+  <div class="aura-spread"></div>
+  <div class="aura-nucleus"></div>
+  <div class="aura-core"></div>
+</div>
 <div id="btn-bar">
   <button class="btn-win" id="btn-params">⚙ Paramètres</button>
   <button class="btn-win" id="btn-setup">⚙ Setup</button>
@@ -119,22 +153,21 @@ function makeAuraFill(layer, ptsOrR, cx, cy, dark){
 
 // ── Params (valeurs par défaut) ───────────────────────────
 const P = {
-  attrK:5, fricK:1.0, repK:1500000, curlK:2940, restitution:0.55,
-  proxMult:3.5, contourStr:0.65,
-  coreR:112, coreColor:'#e87040', coreOpacity:1.0, coreBlur:0,
-  coreColor2:'#e87040', coreOp2:1.0, coreGStop1:0, coreGStop2:1,
-  limitR:270, limitOpacity:0.22,
-  dotOpacity:0.5,
+  attrK:6, fricK:1.0, repK:750000, curlK:2200, restitution:0.3,
+  proxMult:5.0, contourStr:0.35,
+  coreR:90, coreColor:'#F4C4B8', coreOpacity:0.45, coreBlur:0,
+  coreColor2:'#F4C4B8', coreOp2:0.0, coreGStop1:0, coreGStop2:0.5,
+  limitR:241, limitOpacity:0, dotOpacity:0,
 };
 const M = {
-  memR:120, nbPts:10, ampli:18, vitesse:0.6, twist:0.08,
-  bulge:35, tentacleStr:50, tentacleDecay:0.4,
-  color:'#a0cde6', opacity:1.0, blur:0,
-  color2:'#a0cde6', op2:1.0, gStop1:0, gStop2:1,
+  memR:115, nbPts:10, ampli:8, vitesse:0.25, twist:0.04,
+  bulge:90, tentacleStr:5, tentacleDecay:0.5,
+  color:'#D95030', opacity:0.55, blur:0,
+  color2:'#D95030', op2:0.0, gStop1:0.0, gStop2:0.55,
 };
-const L3 = { scale:1.05, color:'#64c878', opacity:1.0, blur:0, ellipse:0.18,             color2:'#64c878', op2:1.0, gStop1:0, gStop2:1 };
-const L4 = { scale:1.05, color:'#9b6abf', opacity:1.0, blur:0, ellipse:0.00, compress:0, color2:'#9b6abf', op2:1.0, gStop1:0, gStop2:1 };
-const L5 = { scale:1.05, color:'#d4c840', opacity:1.0, blur:0, ellipse:0.08, compress:0, color2:'#d4c840', op2:1.0, gStop1:0, gStop2:1 };
+const L3 = { scale:1.35, color:'#E87050', opacity:0.40, blur:6,   ellipse:0.05, color2:'#E87050', op2:0.0, gStop1:0.35, gStop2:1 };
+const L4 = { scale:1.70, color:'#F09070', opacity:0.22, blur:14,  ellipse:0.03, compress:0, color2:'#F09070', op2:0.0, gStop1:0.25, gStop2:1 };
+const L5 = { scale:2.30, color:'#F0A888', opacity:0.12, blur:22,  ellipse:0.02, compress:0, color2:'#F0A888', op2:0.0, gStop1:0.18, gStop2:1 };
 const BG = {
   baseColor:'#ece8e3',
   b1Color:'#dce7f0', b1x:0.18, b1y:0.18, b1size:0.65, b1op:1.0,
@@ -420,12 +453,9 @@ function loop(ts){
   const dt=lastTs===null?0.016:Math.min((ts-lastTs)/1000,0.05);
   lastTs=ts; elapsed+=dt;
   physics(dt); collide(); bounceWalls(); draw(elapsed);
-  // Mise à jour positions auras CSS
-  const rs=document.documentElement.style;
-  rs.setProperty('--p0x', particles[0].x+'px');
-  rs.setProperty('--p0y', particles[0].y+'px');
-  rs.setProperty('--p1x', particles[1].x+'px');
-  rs.setProperty('--p1y', particles[1].y+'px');
+  // Mise à jour positions wrappers auras CSS
+  document.getElementById('aura-wrap-0').style.transform=`translate(${particles[0].x}px,${particles[0].y}px)`;
+  document.getElementById('aura-wrap-1').style.transform=`translate(${particles[1].x}px,${particles[1].y}px)`;
   const [a,b]=particles,dx=b.x-a.x,dy=b.y-a.y;
   pushDebug(Math.sqrt(dx*dx+dy*dy),dominance[0],dominance[1]);
   requestAnimationFrame(loop);

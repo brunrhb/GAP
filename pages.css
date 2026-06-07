@@ -8,14 +8,13 @@ body.is-page {
   cursor            : default;
   user-select       : text;
   -webkit-user-select: text;
-  background        :
-    radial-gradient(ellipse 160% 100% at 35% 12%,  rgba(221,144,120, 0.95) 0%, transparent 62%),
-    radial-gradient(ellipse 110%  75% at 75%  6%,  rgba(204,176,168, 0.75) 0%, transparent 58%),
-    radial-gradient(ellipse  90%  65% at 52% 16%,  rgba(244,196,184, 0.65) 0%, transparent 52%),
-    radial-gradient(ellipse 120%  60% at 80% 70%,  rgba(196,190,200, 0.18) 0%, transparent 70%),
-    radial-gradient(ellipse 100%  50% at 15% 85%,  rgba(184,187,200, 0.14) 0%, transparent 65%),
-    var(--paper);
-  background-attachment: fixed;
+  background-color: #C4D4E8 !important;
+  background-image:
+    radial-gradient(ellipse 110% 24% at 50% 0%, rgba(217,80,48,0.50) 0%, transparent 100%),
+    radial-gradient(ellipse 150% 32% at 45% 0%, rgba(240,160,110,0.25) 0%, transparent 100%),
+    linear-gradient(to bottom, #F0DDC9 0%, #C4D4E8 22%, #C4D4E8 78%, #ECE8E3 100%) !important;
+  background-attachment: fixed !important;
+  background-size: 100% 100% !important;
 }
 
 /* ── Gestion des langues ── */

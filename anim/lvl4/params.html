@@ -144,7 +144,7 @@
     <div class="row"><label>flou</label><input type="range" id="sBlur5" min="0" max="100" step="0.5" value="0"><span class="val" id="vBlur5">0px</span></div>
     <div class="s-label">Dégradé radial</div>
     <div class="row"><label>couleur 2</label><input type="color" id="cCol5b" value="#d4c840"></div>
-    <div class="row"><label>opac. 2</label><input type="range" id="sOp5b" min="0" max="1" step="0.01" value="0"><span class="val" id="vOp5b">0.00</span></div>
+    <div class="row"><label>opac. 2</label><input type="range" id="sOp5b" min="0" max="1" step="0.01" value="1"><span class="val" id="vOp5b">1.00</span></div>
     <div class="row"><label>stop début</label><input type="range" id="sGS5a" min="0" max="1" step="0.01" value="0"><span class="val" id="vGS5a">0%</span></div>
     <div class="row"><label>stop fin</label><input type="range" id="sGS5b" min="0" max="1" step="0.01" value="1"><span class="val" id="vGS5b">100%</span></div>
   </div>
@@ -167,7 +167,7 @@
     <div class="row"><label>flou</label><input type="range" id="sBlur4" min="0" max="80" step="0.5" value="0"><span class="val" id="vBlur4">0px</span></div>
     <div class="s-label">Dégradé radial</div>
     <div class="row"><label>couleur 2</label><input type="color" id="cCol4b" value="#9b6abf"></div>
-    <div class="row"><label>opac. 2</label><input type="range" id="sOp4b" min="0" max="1" step="0.01" value="0"><span class="val" id="vOp4b">0.00</span></div>
+    <div class="row"><label>opac. 2</label><input type="range" id="sOp4b" min="0" max="1" step="0.01" value="1"><span class="val" id="vOp4b">1.00</span></div>
     <div class="row"><label>stop début</label><input type="range" id="sGS4a" min="0" max="1" step="0.01" value="0"><span class="val" id="vGS4a">0%</span></div>
     <div class="row"><label>stop fin</label><input type="range" id="sGS4b" min="0" max="1" step="0.01" value="1"><span class="val" id="vGS4b">100%</span></div>
   </div>
@@ -189,7 +189,7 @@
     <div class="row"><label>flou</label><input type="range" id="sBlur3" min="0" max="60" step="0.5" value="0"><span class="val" id="vBlur3">0px</span></div>
     <div class="s-label">Dégradé radial</div>
     <div class="row"><label>couleur 2</label><input type="color" id="cCol3b" value="#64c878"></div>
-    <div class="row"><label>opac. 2</label><input type="range" id="sOp3b" min="0" max="1" step="0.01" value="0"><span class="val" id="vOp3b">0.00</span></div>
+    <div class="row"><label>opac. 2</label><input type="range" id="sOp3b" min="0" max="1" step="0.01" value="1"><span class="val" id="vOp3b">1.00</span></div>
     <div class="row"><label>stop début</label><input type="range" id="sGS3a" min="0" max="1" step="0.01" value="0"><span class="val" id="vGS3a">0%</span></div>
     <div class="row"><label>stop fin</label><input type="range" id="sGS3b" min="0" max="1" step="0.01" value="1"><span class="val" id="vGS3b">100%</span></div>
   </div>
@@ -216,8 +216,13 @@
     <div class="row"><label>portée</label><input type="range" id="sPortee" min="0.05" max="0.95" step="0.05" value="0.4"><span class="val" id="vPortee">0.4</span></div>
     <div class="s-label">Apparence</div>
     <div class="row"><label>couleur</label><input type="color" id="cCol2" value="#a0cde6"></div>
-    <div class="row"><label>opacité</label><input type="range" id="sMemO" min="0" max="1" step="0.01" value="0.38"><span class="val" id="vMemO">0.38</span></div>
+    <div class="row"><label>opacité</label><input type="range" id="sMemO" min="0" max="1" step="0.01" value="1"><span class="val" id="vMemO">1.00</span></div>
     <div class="row"><label>flou</label><input type="range" id="sBlur2" min="0" max="40" step="0.5" value="0"><span class="val" id="vBlur2">0px</span></div>
+    <div class="s-label">Dégradé radial</div>
+    <div class="row"><label>couleur 2</label><input type="color" id="cCol2b" value="#a0cde6"></div>
+    <div class="row"><label>opac. 2</label><input type="range" id="sOp2b" min="0" max="1" step="0.01" value="1"><span class="val" id="vOp2b">1.00</span></div>
+    <div class="row"><label>stop début</label><input type="range" id="sGS2a" min="0" max="1" step="0.01" value="0"><span class="val" id="vGS2a">0%</span></div>
+    <div class="row"><label>stop fin</label><input type="range" id="sGS2b" min="0" max="1" step="0.01" value="1"><span class="val" id="vGS2b">100%</span></div>
   </div>
 </div>
 
@@ -230,9 +235,14 @@
   <div class="panel-body">
     <div class="s-label">Core</div>
     <div class="row"><label>couleur</label><input type="color" id="cCol1" value="#e87040"></div>
-    <div class="row"><label>opacité</label><input type="range" id="sCoreO" min="0" max="1" step="0.01" value="0.88"><span class="val" id="vCoreO">0.88</span></div>
+    <div class="row"><label>opacité</label><input type="range" id="sCoreO" min="0" max="1" step="0.01" value="1"><span class="val" id="vCoreO">1.00</span></div>
     <div class="row"><label>flou</label><input type="range" id="sBlur1" min="0" max="40" step="0.5" value="0"><span class="val" id="vBlur1">0px</span></div>
     <div class="row"><label>rayon</label><input type="range" id="sCoreR" min="10" max="300" step="1" value="112"><span class="val" id="vCoreR">112</span></div>
+    <div class="s-label">Dégradé radial</div>
+    <div class="row"><label>couleur 2</label><input type="color" id="cCoreColor2" value="#e87040"></div>
+    <div class="row"><label>opac. 2</label><input type="range" id="sCoreOp2" min="0" max="1" step="0.01" value="1"><span class="val" id="vCoreOp2">1.00</span></div>
+    <div class="row"><label>stop début</label><input type="range" id="sCoreGS1" min="0" max="1" step="0.01" value="0"><span class="val" id="vCoreGS1">0%</span></div>
+    <div class="row"><label>stop fin</label><input type="range" id="sCoreGS2" min="0" max="1" step="0.01" value="1"><span class="val" id="vCoreGS2">100%</span></div>
     <div class="s-label">Physique</div>
     <div class="row"><label>attraction</label><input type="range" id="sAttr" min="0.5" max="20" step="0.1" value="5"><span class="val" id="vAttr">5</span></div>
     <div class="row"><label>friction</label><input type="range" id="sFric" min="0.1" max="12" step="0.1" value="1.0"><span class="val" id="vFric">1.0</span></div>
@@ -349,17 +359,19 @@ const DBG_KEY = 'gap_lvl4_dbg';
 const P = {
   attrK:5, fricK:1.0, repK:1500000, curlK:2940, restitution:0.55,
   proxMult:3.5, contourStr:0.65,
-  coreR:112, coreColor:'#e87040', coreOpacity:0.88, coreBlur:0,
+  coreR:112, coreColor:'#e87040', coreOpacity:1.0, coreBlur:0,
+  coreColor2:'#e87040', coreOp2:1.0, coreGStop1:0, coreGStop2:1,
   limitR:270, limitOpacity:0.22,
 };
 const M = {
   memR:120, nbPts:10, ampli:18, vitesse:0.6, twist:0.08,
   bulge:35, tentacleStr:50, tentacleDecay:0.4,
-  color:'#a0cde6', opacity:0.38, blur:0,
+  color:'#a0cde6', opacity:1.0, blur:0,
+  color2:'#a0cde6', op2:1.0, gStop1:0, gStop2:1,
 };
-const L3 = { scale:1.05, color:'#64c878', opacity:1.0, blur:0, ellipse:0.18,             color2:'#64c878', op2:0, gStop1:0, gStop2:1 };
-const L4 = { scale:1.05, color:'#9b6abf', opacity:1.0, blur:0, ellipse:0.00, compress:0, color2:'#9b6abf', op2:0, gStop1:0, gStop2:1 };
-const L5 = { scale:1.05, color:'#d4c840', opacity:1.0, blur:0, ellipse:0.08, compress:0, color2:'#d4c840', op2:0, gStop1:0, gStop2:1 };
+const L3 = { scale:1.05, color:'#64c878', opacity:1.0, blur:0, ellipse:0.18,             color2:'#64c878', op2:1.0, gStop1:0, gStop2:1 };
+const L4 = { scale:1.05, color:'#9b6abf', opacity:1.0, blur:0, ellipse:0.00, compress:0, color2:'#9b6abf', op2:1.0, gStop1:0, gStop2:1 };
+const L5 = { scale:1.05, color:'#d4c840', opacity:1.0, blur:0, ellipse:0.08, compress:0, color2:'#d4c840', op2:1.0, gStop1:0, gStop2:1 };
 const BG = {
   baseColor:'#ece8e3',
   b1Color:'#dce7f0', b1x:0.22, b1y:0.22, b1size:0.55, b1op:0.85,
@@ -405,8 +417,14 @@ const sliderMap = {
   sPortee:    { obj:M,  key:'tentacleDecay' },
   sMemO:      { obj:M,  key:'opacity' },
   sBlur2:     { obj:M,  key:'blur' },
+  sOp2b:      { obj:M,  key:'op2' },
+  sGS2a:      { obj:M,  key:'gStop1' },
+  sGS2b:      { obj:M,  key:'gStop2' },
   sCoreO:     { obj:P,  key:'coreOpacity' },
   sBlur1:     { obj:P,  key:'coreBlur' },
+  sCoreOp2:   { obj:P,  key:'coreOp2' },
+  sCoreGS1:   { obj:P,  key:'coreGStop1' },
+  sCoreGS2:   { obj:P,  key:'coreGStop2' },
   sCoreR:     { obj:P,  key:'coreR' },
   sAttr:      { obj:P,  key:'attrK' },
   sFric:      { obj:P,  key:'fricK' },
@@ -434,8 +452,8 @@ const colorMap = {
   cCol5:   { obj:L5, key:'color' },  cCol5b: { obj:L5, key:'color2' },
   cCol4:   { obj:L4, key:'color' },  cCol4b: { obj:L4, key:'color2' },
   cCol3:   { obj:L3, key:'color' },  cCol3b: { obj:L3, key:'color2' },
-  cCol2:   { obj:M,  key:'color' },
-  cCol1:   { obj:P,  key:'coreColor' },
+  cCol2:   { obj:M,  key:'color' },  cCol2b: { obj:M,  key:'color2' },
+  cCol1:   { obj:P,  key:'coreColor' }, cCoreColor2: { obj:P, key:'coreColor2' },
   cBgBase: { obj:BG, key:'baseColor' },
   cBgB1:   { obj:BG, key:'b1Color' },
   cBgB2:   { obj:BG, key:'b2Color' },
@@ -459,7 +477,9 @@ const fmts = {
   sTwist:   v=>v.toFixed(2),    sBulge:   v=>Math.round(v),
   sTent:    v=>Math.round(v),   sPortee:  v=>v.toFixed(2),
   sMemO:    v=>v.toFixed(2),    sBlur2:   v=>v.toFixed(1)+'px',
+  sOp2b:    v=>v.toFixed(2),    sGS2a:    v=>Math.round(v*100)+'%',  sGS2b: v=>Math.round(v*100)+'%',
   sCoreO:   v=>v.toFixed(2),    sBlur1:   v=>v.toFixed(1)+'px',
+  sCoreOp2: v=>v.toFixed(2),    sCoreGS1: v=>Math.round(v*100)+'%', sCoreGS2: v=>Math.round(v*100)+'%',
   sCoreR:   v=>Math.round(v),   sAttr:    v=>v.toFixed(1),
   sFric:    v=>v.toFixed(1),
   sRep:     v=>v>=1000000?(v/1e6).toFixed(1)+'M':(v/1000).toFixed(0)+'k',

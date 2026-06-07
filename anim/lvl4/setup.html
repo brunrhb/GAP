@@ -246,28 +246,35 @@ const PRESET_PREFIX = 'gap_lvl4_preset__';
 const P = {
   attrK:5, fricK:1.0, repK:1500000, curlK:2940, restitution:0.55,
   proxMult:3.5, contourStr:0.65,
-  coreR:112, coreColor:'#e87040', coreOpacity:0.88, coreBlur:0,
+  coreR:112, coreColor:'#e87040', coreOpacity:1.0, coreBlur:0,
+  coreColor2:'#e87040', coreOp2:1.0, coreGStop1:0, coreGStop2:1,
   limitR:270, limitOpacity:0.22,
 };
 const M = {
   memR:120, nbPts:10, ampli:18, vitesse:0.6, twist:0.08,
   bulge:35, tentacleStr:50, tentacleDecay:0.4,
-  color:'#a0cde6', opacity:0.38, blur:0,
+  color:'#a0cde6', opacity:1.0, blur:0,
+  color2:'#a0cde6', op2:1.0, gStop1:0, gStop2:1,
 };
-const L3 = { scale:1.05, color:'#64c878', opacity:0.22, blur:0, ellipse:0.18 };
-const L4 = { scale:1.05, color:'#9b6abf', opacity:0.16, blur:0, ellipse:0.00, compress:0 };
-const L5 = { scale:1.05, color:'#d4c840', opacity:0.10, blur:0, ellipse:0.08, compress:0 };
+const L3 = { scale:1.05, color:'#64c878', opacity:1.0, blur:0, ellipse:0.18, color2:'#64c878', op2:1.0, gStop1:0, gStop2:1 };
+const L4 = { scale:1.05, color:'#9b6abf', opacity:1.0, blur:0, ellipse:0.00, compress:0, color2:'#9b6abf', op2:1.0, gStop1:0, gStop2:1 };
+const L5 = { scale:1.05, color:'#d4c840', opacity:1.0, blur:0, ellipse:0.08, compress:0, color2:'#d4c840', op2:1.0, gStop1:0, gStop2:1 };
+const BG = {
+  baseColor:'#ece8e3',
+  b1Color:'#dce7f0', b1x:0.18, b1y:0.18, b1size:0.65, b1op:1.0,
+  b2Color:'#d6d3e2', b2x:0.82, b2y:0.22, b2size:0.60, b2op:1.0,
+  b3Color:'#f0ddc9', b3x:0.50, b3y:0.75, b3size:0.70, b3op:1.0,
+  b4Color:'#dce7f0', b4x:0.72, b4y:0.65, b4size:0.50, b4op:0.85,
+  b5Color:'#f0ddc9', b5x:0.18, b5y:0.78, b5size:0.45, b5op:0.80,
+  warpAmt:0.08,
+};
 let _switchSpeed = 1.2;
 
 function getConfig(){
-  return { P:{...P}, M:{...M}, L3:{...L3}, L4:{...L4}, L5:{...L5}, switchSpeed:_switchSpeed };
+  return { P:{...P}, M:{...M}, L3:{...L3}, L4:{...L4}, L5:{...L5}, BG:{...BG}, switchSpeed:_switchSpeed };
 }
 function broadcast(){
-  // Préserve BG depuis le localStorage existant pour ne pas l'écraser
-  let existing={};
-  try{ const s=localStorage.getItem(CFG_KEY); if(s) existing=JSON.parse(s); }catch(e){}
-  const cfg=Object.assign({}, existing, getConfig());
-  try{ localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); }catch(e){}
+  try{ localStorage.setItem(CFG_KEY, JSON.stringify(getConfig())); }catch(e){}
   flashSync();
 }
 
@@ -278,6 +285,7 @@ function absorbConfig(cfg){
   if(cfg.L3) Object.assign(L3, cfg.L3);
   if(cfg.L4) Object.assign(L4, cfg.L4);
   if(cfg.L5) Object.assign(L5, cfg.L5);
+  if(cfg.BG) Object.assign(BG, cfg.BG);
   if(cfg.switchSpeed!==undefined) _switchSpeed=cfg.switchSpeed;
 }
 
@@ -301,93 +309,202 @@ window.addEventListener('storage',e=>{
 // ── Scènes ────────────────────────────────────────────────
 const SCENES = [
   {
-    name: 'Méduse', color: '#6080d0',
-    cfg: {
-      P: { attrK:4, fricK:0.8, repK:1200000, curlK:2200, restitution:0.4,
-           proxMult:4, contourStr:0.5, coreR:55, coreColor:'#3050a0',
-           coreOpacity:0.55, coreBlur:12, limitR:300, limitOpacity:0.15 },
-      M: { memR:155, nbPts:14, ampli:38, vitesse:1.0, twist:0.12,
-           bulge:18, tentacleStr:85, tentacleDecay:0.22,
-           color:'#6080c8', opacity:0.28, blur:5 },
-      L3: { scale:1.5,  color:'#80a8e8', opacity:0.18, blur:14, ellipse:0.55 },
-      L4: { scale:2.2,  color:'#a060c0', opacity:0.11, blur:26, ellipse:0.75, compress:0.08 },
-      L5: { scale:3.5,  color:'#40b8c0', opacity:0.05, blur:48, ellipse:0.85, compress:0.0 },
-      switchSpeed: 1.6,
-    }
-  },
-  {
     name: 'Soleil', color: '#ff8030',
     cfg: {
       P: { attrK:8, fricK:1.2, repK:1600000, curlK:1800, restitution:0.5,
            proxMult:3, contourStr:0.4, coreR:135, coreColor:'#ff5010',
-           coreOpacity:0.92, coreBlur:18, limitR:280, limitOpacity:0.1 },
+           coreOpacity:0.92, coreBlur:18, coreColor2:'#ff5010', coreOp2:0.0, coreGStop1:0.5, coreGStop2:1,
+           limitR:280, limitOpacity:0.1 },
       M: { memR:145, nbPts:8, ampli:20, vitesse:0.35, twist:0.03,
            bulge:70, tentacleStr:15, tentacleDecay:0.55,
-           color:'#ff8030', opacity:0.45, blur:10 },
-      L3: { scale:1.3,  color:'#ffa030', opacity:0.28, blur:22, ellipse:0.04 },
-      L4: { scale:1.9,  color:'#ff4010', opacity:0.15, blur:40, ellipse:0.03, compress:0 },
-      L5: { scale:2.8,  color:'#ffd020', opacity:0.07, blur:65, ellipse:0.02, compress:0 },
+           color:'#ff8030', opacity:0.45, blur:10,
+           color2:'#ff8030', op2:0.0, gStop1:0.4, gStop2:1 },
+      L3: { scale:1.3,  color:'#ffa030', opacity:0.28, blur:22, ellipse:0.04, color2:'#ffa030', op2:0.0, gStop1:0.3, gStop2:1 },
+      L4: { scale:1.9,  color:'#ff4010', opacity:0.15, blur:40, ellipse:0.03, compress:0, color2:'#ff4010', op2:0.0, gStop1:0.2, gStop2:1 },
+      L5: { scale:2.8,  color:'#ffd020', opacity:0.07, blur:65, ellipse:0.02, compress:0, color2:'#ffd020', op2:0.0, gStop1:0.15, gStop2:1 },
       switchSpeed: 0.7,
     }
   },
   {
-    name: 'Cellule', color: '#60c870',
+    name: 'GAP Union', color: '#D95030',
     cfg: {
-      P: { attrK:4, fricK:3.5, repK:1400000, curlK:1500, restitution:0.3,
-           proxMult:3, contourStr:0.7, coreR:75, coreColor:'#40b050',
-           coreOpacity:0.8, coreBlur:0, limitR:240, limitOpacity:0.2 },
-      M: { memR:125, nbPts:18, ampli:32, vitesse:1.8, twist:0.18,
-           bulge:50, tentacleStr:70, tentacleDecay:0.3,
-           color:'#70d080', opacity:0.44, blur:2 },
-      L3: { scale:1.18, color:'#40b855', opacity:0.30, blur:4,  ellipse:0.28 },
-      L4: { scale:1.42, color:'#289048', opacity:0.20, blur:9,  ellipse:0.32, compress:0.12 },
-      L5: { scale:1.72, color:'#186838', opacity:0.10, blur:16, ellipse:0.38, compress:0.18 },
-      switchSpeed: 2.2,
+      BG: {
+        baseColor:'#C4BEC8',
+        b1Color:'#DDA090', b1x:0.35, b1y:0.22, b1size:0.85, b1op:1.0,
+        b2Color:'#CCB0A8', b2x:0.60, b2y:0.20, b2size:0.65, b2op:0.80,
+        b3Color:'#B8BBC8', b3x:0.50, b3y:0.88, b3size:0.90, b3op:1.0,
+        b4Color:'#C8C0C4', b4x:0.15, b4y:0.65, b4size:0.55, b4op:0.70,
+        b5Color:'#D4BEB8', b5x:0.80, b5y:0.55, b5size:0.45, b5op:0.60,
+        warpAmt:0.12,
+      },
+      P: { attrK:6, fricK:1.0, repK:1800000, curlK:2200, restitution:0.5,
+           proxMult:3.5, contourStr:0.55, coreR:90, coreColor:'#D95030',
+           coreOpacity:1.0, coreBlur:0, coreColor2:'#D95030', coreOp2:1.0, coreGStop1:0, coreGStop2:1,
+           limitR:270, limitOpacity:0 },
+      M: { memR:108, nbPts:10, ampli:8, vitesse:0.4, twist:0.04,
+           bulge:85, tentacleStr:5, tentacleDecay:0.5,
+           color:'#D95030', opacity:1.0, blur:0,
+           color2:'#D95030', op2:0.0, gStop1:0.0, gStop2:0.55 },
+      L3: { scale:1.35, color:'#E87050', opacity:0.55, blur:6,  ellipse:0.05, color2:'#E87050', op2:0.0, gStop1:0.35, gStop2:1 },
+      L4: { scale:1.7,  color:'#F09070', opacity:0.35, blur:16, ellipse:0.03, compress:0, color2:'#F09070', op2:0.0, gStop1:0.25, gStop2:1 },
+      L5: { scale:2.3,  color:'#F0A888', opacity:0.20, blur:26, ellipse:0.02, compress:0, color2:'#F0A888', op2:0.0, gStop1:0.18, gStop2:1 },
+      switchSpeed: 0.8,
     }
   },
   {
-    name: 'Fantôme', color: '#b8b4ac',
+    name: 'GAP Union 2', color: '#E06848',
     cfg: {
-      P: { attrK:3, fricK:0.5, repK:900000, curlK:2400, restitution:0.65,
-           proxMult:4.5, contourStr:0.3, coreR:88, coreColor:'#e0dcd4',
-           coreOpacity:0.28, coreBlur:28, limitR:300, limitOpacity:0.1 },
-      M: { memR:138, nbPts:10, ampli:38, vitesse:0.45, twist:0.06,
-           bulge:28, tentacleStr:42, tentacleDecay:0.42,
-           color:'#d0ccc4', opacity:0.18, blur:18 },
-      L3: { scale:1.6,  color:'#e8e4dc', opacity:0.10, blur:32, ellipse:0.14 },
-      L4: { scale:2.4,  color:'#f0ece4', opacity:0.06, blur:50, ellipse:0.18, compress:0 },
-      L5: { scale:3.8,  color:'#ffffff', opacity:0.03, blur:75, ellipse:0.08, compress:0 },
-      switchSpeed: 0.9,
+      BG: {
+        baseColor:'#C4BEC8',
+        b1Color:'#DDA090', b1x:0.35, b1y:0.22, b1size:0.85, b1op:1.0,
+        b2Color:'#CCB0A8', b2x:0.60, b2y:0.20, b2size:0.65, b2op:0.80,
+        b3Color:'#B8BBC8', b3x:0.50, b3y:0.88, b3size:0.90, b3op:1.0,
+        b4Color:'#C8C0C4', b4x:0.15, b4y:0.65, b4size:0.55, b4op:0.70,
+        b5Color:'#D4BEB8', b5x:0.80, b5y:0.55, b5size:0.45, b5op:0.60,
+        warpAmt:0.12,
+      },
+      P: { attrK:6, fricK:1.0, repK:1800000, curlK:2200, restitution:0.5,
+           proxMult:3.5, contourStr:0.55, coreR:90, coreColor:'#E06848',
+           coreOpacity:0.45, coreBlur:0, coreColor2:'#E06848', coreOp2:0.0, coreGStop1:0, coreGStop2:0.65,
+           limitR:270, limitOpacity:0 },
+      M: { memR:108, nbPts:10, ampli:8, vitesse:0.4, twist:0.04,
+           bulge:85, tentacleStr:5, tentacleDecay:0.5,
+           color:'#D95030', opacity:1.0, blur:0,
+           color2:'#D95030', op2:0.0, gStop1:0.0, gStop2:0.55 },
+      L3: { scale:1.35, color:'#E87050', opacity:0.55, blur:6,  ellipse:0.05, color2:'#E87050', op2:0.0, gStop1:0.35, gStop2:1 },
+      L4: { scale:1.7,  color:'#F09070', opacity:0.35, blur:16, ellipse:0.03, compress:0, color2:'#F09070', op2:0.0, gStop1:0.25, gStop2:1 },
+      L5: { scale:2.3,  color:'#F0A888', opacity:0.20, blur:26, ellipse:0.02, compress:0, color2:'#F0A888', op2:0.0, gStop1:0.18, gStop2:1 },
+      switchSpeed: 0.8,
     }
   },
   {
-    name: 'Magnétique', color: '#ff40a0',
+    name: 'GAP Union 3', color: '#E08060',
     cfg: {
-      P: { attrK:9, fricK:0.6, repK:2000000, curlK:2940, restitution:0.65,
-           proxMult:3, contourStr:0.75, coreR:95, coreColor:'#c03070',
-           coreOpacity:0.88, coreBlur:0, limitR:260, limitOpacity:0.25 },
-      M: { memR:108, nbPts:8, ampli:12, vitesse:0.9, twist:0.05,
-           bulge:55, tentacleStr:28, tentacleDecay:0.48,
-           color:'#c03070', opacity:0.52, blur:0 },
-      L3: { scale:1.35, color:'#4080ff', opacity:0.28, blur:6,  ellipse:0.72 },
-      L4: { scale:2.0,  color:'#40c8ff', opacity:0.18, blur:14, ellipse:0.95, compress:0.28 },
-      L5: { scale:3.0,  color:'#80ff80', opacity:0.09, blur:28, ellipse:1.1,  compress:0.4 },
-      switchSpeed: 0.5,
+      BG: {
+        baseColor:'#C4BEC8',
+        b1Color:'#DDA090', b1x:0.35, b1y:0.22, b1size:0.85, b1op:1.0,
+        b2Color:'#CCB0A8', b2x:0.60, b2y:0.20, b2size:0.65, b2op:0.80,
+        b3Color:'#B8BBC8', b3x:0.50, b3y:0.88, b3size:0.90, b3op:1.0,
+        b4Color:'#C8C0C4', b4x:0.15, b4y:0.65, b4size:0.55, b4op:0.70,
+        b5Color:'#D4BEB8', b5x:0.80, b5y:0.55, b5size:0.45, b5op:0.60,
+        warpAmt:0.12,
+      },
+      P: { attrK:6, fricK:1.0, repK:1100000, curlK:2200, restitution:0.5,
+           proxMult:3.5, contourStr:0.55, coreR:90, coreColor:'#E06848',
+           coreOpacity:0.25, coreBlur:0, coreColor2:'#E06848', coreOp2:0.0, coreGStop1:0, coreGStop2:0.50,
+           limitR:270, limitOpacity:0 },
+      M: { memR:115, nbPts:10, ampli:8, vitesse:0.4, twist:0.04,
+           bulge:90, tentacleStr:5, tentacleDecay:0.5,
+           color:'#D95030', opacity:1.0, blur:0,
+           color2:'#D95030', op2:0.0, gStop1:0.0, gStop2:0.55 },
+      L3: { scale:1.35, color:'#E87050', opacity:0.55, blur:6,  ellipse:0.05, color2:'#E87050', op2:0.0, gStop1:0.35, gStop2:1 },
+      L4: { scale:1.7,  color:'#F09070', opacity:0.35, blur:16, ellipse:0.03, compress:0, color2:'#F09070', op2:0.0, gStop1:0.25, gStop2:1 },
+      L5: { scale:2.3,  color:'#F0A888', opacity:0.20, blur:26, ellipse:0.02, compress:0, color2:'#F0A888', op2:0.0, gStop1:0.18, gStop2:1 },
+      switchSpeed: 0.8,
     }
   },
   {
-    name: 'Nébuleuse', color: '#a060e0',
+    name: 'GAP Union 4', color: '#E08060',
     cfg: {
-      P: { attrK:5, fricK:0.9, repK:1300000, curlK:2600, restitution:0.5,
-           proxMult:3.5, contourStr:0.55, coreR:68, coreColor:'#7030b8',
-           coreOpacity:0.72, coreBlur:12, limitR:290, limitOpacity:0.15 },
-      M: { memR:118, nbPts:12, ampli:24, vitesse:0.28, twist:0.1,
-           bulge:22, tentacleStr:38, tentacleDecay:0.5,
-           color:'#c060e0', opacity:0.32, blur:7 },
-      L3: { scale:1.7,  color:'#40b8ff', opacity:0.18, blur:22, ellipse:0.35 },
-      L4: { scale:2.6,  color:'#ff40a0', opacity:0.11, blur:42, ellipse:0.52, compress:0.12 },
-      L5: { scale:4.2,  color:'#4040e8', opacity:0.05, blur:75, ellipse:0.65, compress:0.22 },
-      switchSpeed: 1.1,
+      BG: {
+        baseColor:'#C4BEC8',
+        b1Color:'#DDA090', b1x:0.35, b1y:0.22, b1size:0.85, b1op:1.0,
+        b2Color:'#CCB0A8', b2x:0.60, b2y:0.20, b2size:0.65, b2op:0.80,
+        b3Color:'#B8BBC8', b3x:0.50, b3y:0.88, b3size:0.90, b3op:1.0,
+        b4Color:'#C8C0C4', b4x:0.15, b4y:0.65, b4size:0.55, b4op:0.70,
+        b5Color:'#D4BEB8', b5x:0.80, b5y:0.55, b5size:0.45, b5op:0.60,
+        warpAmt:0.12,
+      },
+      P: { attrK:6, fricK:1.0, repK:1100000, curlK:2200, restitution:0.5,
+           proxMult:3.5, contourStr:0.55, coreR:90, coreColor:'#E8A088',
+           coreOpacity:0.12, coreBlur:0, coreColor2:'#E8A088', coreOp2:0.0, coreGStop1:0, coreGStop2:0.40,
+           limitR:270, limitOpacity:0 },
+      M: { memR:115, nbPts:10, ampli:8, vitesse:0.4, twist:0.04,
+           bulge:90, tentacleStr:5, tentacleDecay:0.5,
+           color:'#D95030', opacity:1.0, blur:0,
+           color2:'#D95030', op2:0.0, gStop1:0.0, gStop2:0.55 },
+      L3: { scale:1.35, color:'#E87050', opacity:0.55, blur:6,  ellipse:0.05, color2:'#E87050', op2:0.0, gStop1:0.35, gStop2:1 },
+      L4: { scale:1.7,  color:'#F09070', opacity:0.35, blur:16, ellipse:0.03, compress:0, color2:'#F09070', op2:0.0, gStop1:0.25, gStop2:1 },
+      L5: { scale:2.3,  color:'#F0A888', opacity:0.20, blur:26, ellipse:0.02, compress:0, color2:'#F0A888', op2:0.0, gStop1:0.18, gStop2:1 },
+      switchSpeed: 0.8,
+    }
+  },
+  {
+    name: 'GAP Union 5', color: '#F0B0A0',
+    cfg: {
+      BG: {
+        baseColor:'#C4BEC8',
+        b1Color:'#DDA090', b1x:0.35, b1y:0.22, b1size:0.85, b1op:1.0,
+        b2Color:'#CCB0A8', b2x:0.60, b2y:0.20, b2size:0.65, b2op:0.80,
+        b3Color:'#B8BBC8', b3x:0.50, b3y:0.88, b3size:0.90, b3op:1.0,
+        b4Color:'#C8C0C4', b4x:0.15, b4y:0.65, b4size:0.55, b4op:0.70,
+        b5Color:'#D4BEB8', b5x:0.80, b5y:0.55, b5size:0.45, b5op:0.60,
+        warpAmt:0.12,
+      },
+      P: { attrK:6, fricK:1.0, repK:1100000, curlK:2200, restitution:0.5,
+           proxMult:3.5, contourStr:0.55, coreR:90, coreColor:'#F0B0A0',
+           coreOpacity:0.08, coreBlur:0, coreColor2:'#F0B0A0', coreOp2:0.0, coreGStop1:0, coreGStop2:0.35,
+           limitR:270, limitOpacity:0 },
+      M: { memR:115, nbPts:10, ampli:8, vitesse:0.4, twist:0.04,
+           bulge:90, tentacleStr:5, tentacleDecay:0.5,
+           color:'#D95030', opacity:1.0, blur:0,
+           color2:'#D95030', op2:0.0, gStop1:0.0, gStop2:0.55 },
+      L3: { scale:1.35, color:'#E87050', opacity:0.55, blur:6,  ellipse:0.05, color2:'#E87050', op2:0.0, gStop1:0.35, gStop2:1 },
+      L4: { scale:1.7,  color:'#F09070', opacity:0.35, blur:16, ellipse:0.03, compress:0, color2:'#F09070', op2:0.0, gStop1:0.25, gStop2:1 },
+      L5: { scale:2.3,  color:'#F0A888', opacity:0.20, blur:26, ellipse:0.02, compress:0, color2:'#F0A888', op2:0.0, gStop1:0.18, gStop2:1 },
+      switchSpeed: 0.8,
+    }
+  },
+  {
+    name: 'GAP Union 6', color: '#F4C4B8',
+    cfg: {
+      BG: {
+        baseColor:'#C4BEC8',
+        b1Color:'#DDA090', b1x:0.35, b1y:0.22, b1size:0.85, b1op:1.0,
+        b2Color:'#CCB0A8', b2x:0.60, b2y:0.20, b2size:0.65, b2op:0.80,
+        b3Color:'#B8BBC8', b3x:0.50, b3y:0.88, b3size:0.90, b3op:1.0,
+        b4Color:'#C8C0C4', b4x:0.15, b4y:0.65, b4size:0.55, b4op:0.70,
+        b5Color:'#D4BEB8', b5x:0.80, b5y:0.55, b5size:0.45, b5op:0.60,
+        warpAmt:0.12,
+      },
+      P: { attrK:6, fricK:1.0, repK:1100000, curlK:2200, restitution:0.5,
+           proxMult:3.5, contourStr:0.55, coreR:90, coreColor:'#F4C4B8',
+           coreOpacity:0.05, coreBlur:0, coreColor2:'#F4C4B8', coreOp2:0.0, coreGStop1:0, coreGStop2:0.28,
+           limitR:270, limitOpacity:0 },
+      M: { memR:115, nbPts:10, ampli:8, vitesse:0.4, twist:0.04,
+           bulge:90, tentacleStr:5, tentacleDecay:0.5,
+           color:'#D95030', opacity:1.0, blur:0,
+           color2:'#D95030', op2:0.0, gStop1:0.0, gStop2:0.55 },
+      L3: { scale:1.35, color:'#E87050', opacity:0.55, blur:6,  ellipse:0.05, color2:'#E87050', op2:0.0, gStop1:0.35, gStop2:1 },
+      L4: { scale:1.7,  color:'#F09070', opacity:0.35, blur:16, ellipse:0.03, compress:0, color2:'#F09070', op2:0.0, gStop1:0.25, gStop2:1 },
+      L5: { scale:2.3,  color:'#F0A888', opacity:0.20, blur:26, ellipse:0.02, compress:0, color2:'#F0A888', op2:0.0, gStop1:0.18, gStop2:1 },
+      switchSpeed: 0.8,
+    }
+  },
+  {
+    name: 'GAP Poster', color: '#D95030',
+    cfg: {
+      BG: {
+        baseColor:'#C4BEC8',
+        b1Color:'#DDA090', b1x:0.35, b1y:0.22, b1size:0.85, b1op:1.0,
+        b2Color:'#CCB0A8', b2x:0.60, b2y:0.20, b2size:0.65, b2op:0.80,
+        b3Color:'#B8BBC8', b3x:0.50, b3y:0.88, b3size:0.90, b3op:1.0,
+        b4Color:'#C8C0C4', b4x:0.15, b4y:0.65, b4size:0.55, b4op:0.70,
+        b5Color:'#D4BEB8', b5x:0.80, b5y:0.55, b5size:0.45, b5op:0.60,
+        warpAmt:0.12,
+      },
+      P: { attrK:5, fricK:1.0, repK:1500000, curlK:2400, restitution:0.5,
+           proxMult:3.5, contourStr:0.55, coreR:85, coreColor:'#D95030',
+           coreOpacity:1.0, coreBlur:0, coreColor2:'#D95030', coreOp2:1.0, coreGStop1:0, coreGStop2:1,
+           limitR:270, limitOpacity:0 },
+      M: { memR:110, nbPts:10, ampli:20, vitesse:0.5, twist:0.06,
+           bulge:40, tentacleStr:40, tentacleDecay:0.45,
+           color:'#E06840', opacity:0.85, blur:0,
+           color2:'#E06840', op2:0.0, gStop1:0.5, gStop2:1 },
+      L3: { scale:1.3,  color:'#E87858', opacity:0.65, blur:8,  ellipse:0.06, color2:'#E87858', op2:0.0, gStop1:0.4, gStop2:1 },
+      L4: { scale:1.6,  color:'#F09070', opacity:0.45, blur:18, ellipse:0.04, compress:0, color2:'#F09070', op2:0.0, gStop1:0.3, gStop2:1 },
+      L5: { scale:2.2,  color:'#F0A888', opacity:0.30, blur:28, ellipse:0.02, compress:0, color2:'#F0A888', op2:0.0, gStop1:0.2, gStop2:1 },
+      switchSpeed: 0.8,
     }
   },
 ];

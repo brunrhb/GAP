@@ -109,12 +109,13 @@ function buildPhases(n){
   return Array.from({length:n},(_,i)=>i*phi*Math.PI*2);
 }
 let phases0=buildPhases(M.nbPts), phases1=buildPhases(M.nbPts);
-let W=0, H=0, cursor=null, smoothCursor=null, lastTs=null, elapsed=0;
+let W=0, H=0, U=1, cursor=null, smoothCursor=null, lastTs=null, elapsed=0;
 const particles=[{x:0,y:0,vx:0,vy:0},{x:0,y:0,vx:0,vy:0}];
 
 function resize(){
   W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight;
-  if(!particles[0].x){ particles[0].x=W/2-200; particles[0].y=H/2; particles[1].x=W/2+200; particles[1].y=H/2; }
+  U=Math.min(Math.max(Math.min(W/1280,H/900),0.5),1.5);
+  if(!particles[0].x){ particles[0].x=W/2-200*U; particles[0].y=H/2; particles[1].x=W/2+200*U; particles[1].y=H/2; }
 }
 window.addEventListener('resize',resize); resize();
 window.addEventListener('mousemove',e=>{
@@ -147,7 +148,7 @@ function physics(dt){
   targetDom[farIdx]=1.0;
   const speed=window._switchSpeed??1.2;
   for(let i=0;i<2;i++) dominance[i]+=(targetDom[i]-dominance[i])*Math.min(speed*dt,1);
-  const threshold=P.limitR*P.proxMult,proximity=Math.min(dist/threshold,1);
+  const threshold=P.limitR*U*P.proxMult,proximity=Math.min(dist/threshold,1);
   for(let i=0;i<2;i++){
     const p=particles[i],sign=i===0?-1:1,dom=dominance[i];
     const challAttr=ATTR_FAR_CLOSE+proximity*(ATTR_FAR_FAR-ATTR_FAR_CLOSE);
@@ -168,12 +169,22 @@ function physics(dt){
 }
 
 function collide(){
-  const [a,b]=particles,dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy),minD=P.limitR*2;
+  const [a,b]=particles,dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy),minD=P.limitR*U*2;
   if(dist<minD&&dist>0.01){
     const nx=dx/dist,ny=dy/dist,ov=(minD-dist)*0.5;
     a.x-=nx*ov;a.y-=ny*ov;b.x+=nx*ov;b.y+=ny*ov;
     const dvn=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
     if(dvn<0){const imp=-(1+P.restitution)*dvn*0.5;a.vx-=imp*nx;a.vy-=imp*ny;b.vx+=imp*nx;b.vy+=imp*ny;}
+  }
+}
+
+function bounceWalls(){
+  const ox=W*0.1, oy=H*0.1;
+  for(const p of particles){
+    if(p.x<-ox)    { p.x=-ox;  if(p.vx<0) p.vx=-p.vx*P.restitution; }
+    else if(p.x>W+ox){ p.x=W+ox; if(p.vx>0) p.vx=-p.vx*P.restitution; }
+    if(p.y<-oy)    { p.y=-oy;  if(p.vy<0) p.vy=-p.vy*P.restitution; }
+    else if(p.y>H+oy){ p.y=H+oy; if(p.vy>0) p.vy=-p.vy*P.restitution; }
   }
 }
 
@@ -189,13 +200,13 @@ function membranePoints(p,other,phases,t){
   const tp=0.55+0.45*Math.sin(t*M.vitesse*0.55+1.2),pts=[];
   for(let j=0;j<n;j++){
     const ba=(j/n)*Math.PI*2,ph=phases[j%phases.length];
-    const noise=M.ampli*Math.sin(t*M.vitesse+ph)+M.ampli*0.4*Math.sin(t*M.vitesse*1.618+ph*2.414);
-    const bulgeR=M.bulge*Math.max(0,Math.cos(ba-toOtherAngle));
+    const noise=(M.ampli*Math.sin(t*M.vitesse+ph)+M.ampli*0.4*Math.sin(t*M.vitesse*1.618+ph*2.414))*U;
+    const bulgeR=M.bulge*U*Math.max(0,Math.cos(ba-toOtherAngle));
     const cd=Math.min(Math.abs(j-leaderJ),n-Math.abs(j-leaderJ));
     const inf=Math.pow(M.tentacleDecay,cd);
-    const tentR=M.tentacleStr*inf*tp;
-    const nbN=cd>0?M.tentacleStr*0.18*inf*Math.sin(t*M.vitesse*1.3+ph+cd):0;
-    const r=M.memR+noise+bulgeR+tentR+nbN,angle=ba+M.twist*Math.sin(t*M.vitesse*0.7+ph);
+    const tentR=M.tentacleStr*U*inf*tp;
+    const nbN=cd>0?M.tentacleStr*U*0.18*inf*Math.sin(t*M.vitesse*1.3+ph+cd):0;
+    const r=M.memR*U+noise+bulgeR+tentR+nbN,angle=ba+M.twist*Math.sin(t*M.vitesse*0.7+ph);
     pts.push({x:p.x+Math.cos(angle)*r,y:p.y+Math.sin(angle)*r});
   }
   return pts;
@@ -284,7 +295,7 @@ function draw(t){
   // Debug circles — les deux (entre L2 et L1)
   if(P.limitOpacity>0.01){
     geom.forEach(({p})=>{
-      ctx.save();ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(p.x,p.y,P.limitR,0,Math.PI*2);
+      ctx.save();ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(p.x,p.y,P.limitR*U,0,Math.PI*2);
       ctx.strokeStyle=hexToRgba(P.coreColor,P.limitOpacity);ctx.lineWidth=1;ctx.stroke();ctx.restore();
     });
   }
@@ -292,9 +303,9 @@ function draw(t){
   // L1 core — les deux
   ctx.filter=P.coreBlur>0?`blur(${P.coreBlur}px)`:'none';
   geom.forEach(({p,dark})=>{
-    ctx.beginPath();ctx.arc(p.x,p.y,P.coreR,0,Math.PI*2);
+    ctx.beginPath();ctx.arc(p.x,p.y,P.coreR*U,0,Math.PI*2);
     const coreLayer={color:P.coreColor,opacity:P.coreOpacity,color2:P.coreColor2,op2:P.coreOp2,gStop1:P.coreGStop1,gStop2:P.coreGStop2};
-    ctx.fillStyle=makeAuraFill(coreLayer,P.coreR,p.x,p.y,dark);ctx.fill();
+    ctx.fillStyle=makeAuraFill(coreLayer,P.coreR*U,p.x,p.y,dark);ctx.fill();
   });
   ctx.filter='none';
 
@@ -363,7 +374,7 @@ function pushDebug(dist,d0,d1){
 function loop(ts){
   const dt=lastTs===null?0.016:Math.min((ts-lastTs)/1000,0.05);
   lastTs=ts; elapsed+=dt;
-  physics(dt); collide(); draw(elapsed);
+  physics(dt); collide(); bounceWalls(); draw(elapsed);
   const [a,b]=particles,dx=b.x-a.x,dy=b.y-a.y;
   pushDebug(Math.sqrt(dx*dx+dy*dy),dominance[0],dominance[1]);
   requestAnimationFrame(loop);

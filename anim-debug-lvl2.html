@@ -16,9 +16,18 @@
 
     canvas { display: block; position: fixed; inset: 0; }
 
-    .panel {
+    #panels {
       position: fixed;
       top: 1rem;
+      right: 1rem;
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 0.5rem;
+      z-index: 10;
+    }
+
+    .panel {
       background: rgba(15, 14, 12, 0.78);
       color: #f0ece4;
       padding: 0.75rem 1rem;
@@ -28,11 +37,9 @@
       gap: 0.4rem;
       min-width: 220px;
       backdrop-filter: blur(6px);
-      z-index: 10;
     }
 
-    #panel1 { right: 1rem; }
-    #panel2 { right: 250px; border-left: 2px solid rgba(160,200,230,0.3); }
+    #panel2 { border-left: 2px solid rgba(160,200,230,0.25); }
 
     .label {
       opacity: 0.4;
@@ -71,7 +78,23 @@
 
 <canvas id="c"></canvas>
 
-<!-- ═══ PANEL 1 — Physique (valeurs figées de la session précédente) ═══ -->
+<div id="panels">
+<!-- ═══ PANEL 2 — Membranes ═══ -->
+<div class="panel" id="panel2">
+  <div class="label lvl2">Membrane — niveau 2</div>
+
+  <div class="row"><label>rayon mem.</label><input type="range" id="sMemR" min="10" max="400" step="1" value="155"><span class="val" id="vMemR">155</span></div>
+  <div class="row"><label>nb points</label><input type="range" id="sNbPts" min="4" max="32" step="1" value="10"><span class="val" id="vNbPts">10</span></div>
+  <div class="row"><label>amplitude</label><input type="range" id="sAmpli" min="0" max="80" step="1" value="18"><span class="val" id="vAmpli">18</span></div>
+  <div class="row"><label>vitesse</label><input type="range" id="sVit" min="0.05" max="3" step="0.05" value="0.6"><span class="val" id="vVit">0.6</span></div>
+  <div class="row"><label>twist</label><input type="range" id="sTwist" min="0" max="0.5" step="0.01" value="0.08"><span class="val" id="vTwist">0.08</span></div>
+  <div class="row"><label>bulge</label><input type="range" id="sBulge" min="0" max="120" step="1" value="35"><span class="val" id="vBulge">35</span></div>
+  <div class="row"><label>opacité</label><input type="range" id="sMemO" min="0" max="1" step="0.02" value="0.38"><span class="val" id="vMemO">0.38</span></div>
+  <div class="row"><label>tentacule</label><input type="range" id="sTent" min="0" max="120" step="1" value="50"><span class="val" id="vTent">50</span></div>
+  <div class="row"><label>portée</label><input type="range" id="sPortee" min="0.05" max="0.95" step="0.05" value="0.4"><span class="val" id="vPortee">0.4</span></div>
+</div>
+
+<!-- ═══ PANEL 1 — Physique ═══ -->
 <div class="panel" id="panel1">
   <div class="label">Physique</div>
   <div class="row"><label>attraction</label><input type="range" id="sAttr" min="0.5" max="20" step="0.1" value="5"><span class="val" id="vAttr">5</span></div>
@@ -93,18 +116,7 @@
   <div id="info">dist: — px</div>
 </div>
 
-<!-- ═══ PANEL 2 — Membranes ═══ -->
-<div class="panel" id="panel2">
-  <div class="label lvl2">Membrane — niveau 2</div>
-
-  <div class="row"><label>rayon mem.</label><input type="range" id="sMemR" min="10" max="400" step="1" value="155"><span class="val" id="vMemR">155</span></div>
-  <div class="row"><label>nb points</label><input type="range" id="sNbPts" min="4" max="32" step="1" value="10"><span class="val" id="vNbPts">10</span></div>
-  <div class="row"><label>amplitude</label><input type="range" id="sAmpli" min="0" max="80" step="1" value="18"><span class="val" id="vAmpli">18</span></div>
-  <div class="row"><label>vitesse</label><input type="range" id="sVit" min="0.05" max="3" step="0.05" value="0.6"><span class="val" id="vVit">0.6</span></div>
-  <div class="row"><label>twist</label><input type="range" id="sTwist" min="0" max="0.5" step="0.01" value="0.08"><span class="val" id="vTwist">0.08</span></div>
-  <div class="row"><label>bulge</label><input type="range" id="sBulge" min="0" max="120" step="1" value="35"><span class="val" id="vBulge">35</span></div>
-  <div class="row"><label>opacité</label><input type="range" id="sMemO" min="0" max="1" step="0.02" value="0.38"><span class="val" id="vMemO">0.38</span></div>
-</div>
+</div><!-- #panels -->
 
 <script>
 /* ── GAP — Anim debug lvl2
@@ -136,8 +148,10 @@ const M = {
   ampli   : 18,    // amplitude de déformation (px)
   vitesse : 0.6,   // vitesse d'oscillation (rad/s)
   twist   : 0.08,  // déformation angulaire (rad)
-  bulge   : 35,    // gonflement directionnel vers l'autre cellule (px)
-  opacity : 0.38,  // opacité du fill membrane
+  bulge      : 35,   // gonflement directionnel global vers l'autre cellule (px)
+  opacity    : 0.38, // opacité du fill membrane
+  tentacleStr: 50,   // force d'extension du point avant-garde (px)
+  tentacleDecay: 0.4,// decay exponentiel vers les voisins (0=isolé, 1=tous pareil)
 };
 
 // ── Asymétrie physique ────────────────────────────────────
@@ -287,27 +301,55 @@ function collide() {
 // ── Membrane : calcul des points déformés ─────────────────
 function membranePoints(p, other, phases, t) {
   const n = M.nbPts;
-  const pts = [];
 
-  // angle vers l'autre cellule (pour le bulge directionnel)
+  // angle vers l'autre cellule
   const toOtherAngle = Math.atan2(other.y - p.y, other.x - p.x);
 
+  // ── Trouver le point "avant-garde" : angle le plus proche de toOtherAngle ──
+  let leaderJ = 0;
+  let leaderDiff = Infinity;
+  for (let j = 0; j < n; j++) {
+    const baseAngle = (j / n) * Math.PI * 2;
+    // distance angulaire circulaire
+    let diff = Math.abs(((baseAngle - toOtherAngle) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2));
+    if (diff > Math.PI) diff = Math.PI * 2 - diff;
+    if (diff < leaderDiff) { leaderDiff = diff; leaderJ = j; }
+  }
+
+  // ── Pulsation de la tentacule (oscillation lente, indépendante) ──
+  // Elle doit continuer à vivre même quand tout est stable
+  const tentaclePulse = 0.55 + 0.45 * Math.sin(t * M.vitesse * 0.55 + 1.2);
+
+  const pts = [];
   for (let j = 0; j < n; j++) {
     const baseAngle = (j / n) * Math.PI * 2;
     const ph = phases[j % phases.length];
 
-    // déformation radiale : deux harmoniques pour plus de richesse
+    // déformation radiale (deux harmoniques)
     const noise = M.ampli * Math.sin(t * M.vitesse + ph)
                 + M.ampli * 0.4 * Math.sin(t * M.vitesse * 1.618 + ph * 2.414);
 
-    // twist : décalage angulaire oscillant
+    // twist
     const angOffset = M.twist * Math.sin(t * M.vitesse * 0.7 + ph);
 
-    // bulge directionnel : plus de rayon vers l'autre cellule
-    const alignment = Math.cos(baseAngle - toOtherAngle); // -1 → 1
+    // bulge directionnel global
+    const alignment = Math.cos(baseAngle - toOtherAngle);
     const bulgeR    = M.bulge * Math.max(0, alignment);
 
-    const r     = M.memR + noise + bulgeR;
+    // ── Influence tentacule depuis le leader ──────────────
+    // distance circulaire au leader (en nombre de points)
+    const rawDist  = Math.abs(j - leaderJ);
+    const circDist = Math.min(rawDist, n - rawDist); // distance circulaire
+    // falloff exponentiel
+    const influence = Math.pow(M.tentacleDecay, circDist);
+    // extension vers l'autre cellule, oscillante + qui diffuse aux voisins
+    const tentR = M.tentacleStr * influence * tentaclePulse;
+    // les voisins reçoivent une légère agitation compensatoire (énergie gommée)
+    const neighborNoise = circDist > 0
+      ? M.tentacleStr * 0.18 * influence * Math.sin(t * M.vitesse * 1.3 + ph + circDist)
+      : 0;
+
+    const r     = M.memR + noise + bulgeR + tentR + neighborNoise;
     const angle = baseAngle + angOffset;
 
     pts.push({
@@ -452,7 +494,9 @@ bindSlider('sAmpli', 'vAmpli', M, 'ampli',   v => Math.round(v));
 bindSlider('sVit',   'vVit',   M, 'vitesse', v => v.toFixed(2));
 bindSlider('sTwist', 'vTwist', M, 'twist',   v => v.toFixed(2));
 bindSlider('sBulge', 'vBulge', M, 'bulge',   v => Math.round(v));
-bindSlider('sMemO',  'vMemO',  M, 'opacity', v => v.toFixed(2));
+bindSlider('sMemO',   'vMemO',   M, 'opacity',       v => v.toFixed(2));
+bindSlider('sTent',   'vTent',   M, 'tentacleStr',   v => Math.round(v));
+bindSlider('sPortee', 'vPortee', M, 'tentacleDecay', v => v.toFixed(2));
 
 requestAnimationFrame(loop);
 </script>

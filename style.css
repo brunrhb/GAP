@@ -26,6 +26,21 @@
 
 html, body { height: 100%; }
 
+/* ── Animation background ── */
+#anim-bg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  z-index: 0;
+  pointer-events: none;
+}
+header, main, footer {
+  position: relative;
+  z-index: 1;
+}
+
 /* ── Header aligné avec le contenu, marges ajustées, police discrète ── */
 .site-header {
   display: flex;

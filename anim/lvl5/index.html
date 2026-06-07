@@ -79,6 +79,7 @@ const P = {
   coreR:112, coreColor:'#e87040', coreOpacity:1.0, coreBlur:0,
   coreColor2:'#e87040', coreOp2:1.0, coreGStop1:0, coreGStop2:1,
   limitR:270, limitOpacity:0.22,
+  dotOpacity:0.5,
 };
 const M = {
   memR:120, nbPts:10, ampli:18, vitesse:0.6, twist:0.08,
@@ -122,6 +123,13 @@ window.addEventListener('mousemove',e=>{
 });
 document.addEventListener('mouseleave',()=>{cursor=null;});
 window.addEventListener('blur',()=>{cursor=null;});
+// Curseur forwardé depuis la page parente (mode iframe)
+window.addEventListener('message',e=>{
+  if(e.data?.type==='cursor'){
+    if(e.data.x===null){ cursor=null; }
+    else { cursor={x:e.data.x,y:e.data.y}; smoothCursor=cursor; }
+  }
+});
 function getCursor(){return smoothCursor??{x:W/2,y:H/2};}
 
 function physics(dt){
@@ -290,10 +298,12 @@ function draw(t){
   ctx.filter='none';
 
   // Dots — les deux (toujours au-dessus)
-  geom.forEach(({p})=>{
-    ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);
-    ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fill();
-  });
+  if((P.dotOpacity??0.5)>0){
+    geom.forEach(({p})=>{
+      ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,255,255,${P.dotOpacity??0.5})`;ctx.fill();
+    });
+  }
 }
 
 // ── Sync localStorage ─────────────────────────────────────
@@ -308,8 +318,26 @@ function applyConfig(cfg){
   if(cfg.M&&cfg.M.nbPts){ phases0=buildPhases(M.nbPts); phases1=buildPhases(M.nbPts); }
 }
 
-// Au refresh : publie les valeurs par défaut (réinitialise params/setup si ouverts)
-try{ localStorage.setItem(CFG_KEY, JSON.stringify({P:{...P},M:{...M},L3:{...L3},L4:{...L4},L5:{...L5},BG:{...BG},switchSpeed:window._switchSpeed})); }catch(e){}
+// Init : charge preset URL (?preset=nom), sinon localStorage existant, sinon écrit les defaults
+(function initConfig(){
+  const params=new URLSearchParams(location.search);
+  const presetName=params.get('preset');
+  if(presetName){
+    try{
+      const s=localStorage.getItem('gap_lvl5_preset__'+presetName);
+      if(s){ applyConfig(JSON.parse(s)); return; }
+    }catch(e){}
+  }
+  try{
+    const s=localStorage.getItem(CFG_KEY);
+    if(s){ applyConfig(JSON.parse(s)); return; }
+  }catch(e){}
+  // Aucun config trouvé — écrit les defaults
+  try{ localStorage.setItem(CFG_KEY, JSON.stringify({P:{...P},M:{...M},L3:{...L3},L4:{...L4},L5:{...L5},BG:{...BG},switchSpeed:window._switchSpeed})); }catch(e){}
+})();
+
+// Cache les boutons si en iframe
+if(window.self!==window.top) document.getElementById('btn-bar').style.display='none';
 
 // Reçoit les updates de la fenêtre de contrôles
 window.addEventListener('storage',e=>{

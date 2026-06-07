@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <iframe id="anim-bg" src="anim/lvl5/index.html?preset=VERSION%2010" tabindex="-1" aria-hidden="true"></iframe>
   <header class="site-header">
   <a href="index.html" class="brand">THE GAP GROUP BXL</a>
   <nav class="main-nav" aria-label="Navigation principale">
@@ -59,6 +60,19 @@
 
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
   <script src="main.js"></script>
+  <script>
+    const _anim = document.getElementById('anim-bg');
+    const _fw = () => _anim.contentWindow;
+    document.addEventListener('mousemove', e => {
+      _fw().postMessage({type:'cursor', x:e.clientX, y:e.clientY}, '*');
+    });
+    document.addEventListener('mouseleave', () => {
+      _fw().postMessage({type:'cursor', x:null, y:null}, '*');
+    });
+    window.addEventListener('blur', () => {
+      _fw().postMessage({type:'cursor', x:null, y:null}, '*');
+    });
+  </script>
 </body>
 </html>
 

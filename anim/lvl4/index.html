@@ -55,6 +55,21 @@ function hexToRgba(hex, alpha, darken=1) {
   const b=Math.round(parseInt(hex.slice(5,7),16)*darken);
   return `rgba(${r},${g},${b},${alpha})`;
 }
+// Gradient radial pour les auras — centre → bord
+function makeAuraFill(layer, pts, cx, cy, dark){
+  const s1=layer.gStop1??0, s2=Math.max((layer.gStop1??0)+0.001, layer.gStop2??1);
+  const c1=hexToRgba(layer.color, layer.opacity, dark);
+  const c2=hexToRgba(layer.color2||layer.color, layer.op2??0, dark);
+  // Flat si pas de dégradé utile
+  if(s1===0 && s2>=1 && (layer.op2??0)===layer.opacity && (layer.color2||layer.color)===layer.color) return c1;
+  const r=Math.max(...pts.map(pt=>Math.hypot(pt.x-cx,pt.y-cy)))||1;
+  const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+  if(s1>0) g.addColorStop(0,c1);
+  g.addColorStop(s1,c1);
+  g.addColorStop(s2,c2);
+  if(s2<1) g.addColorStop(1,c2);
+  return g;
+}
 
 // ── Params (valeurs par défaut) ───────────────────────────
 const P = {
@@ -68,14 +83,17 @@ const M = {
   bulge:35, tentacleStr:50, tentacleDecay:0.4,
   color:'#a0cde6', opacity:0.38, blur:0,
 };
-const L3 = { scale:1.05, color:'#64c878', opacity:0.22, blur:0, ellipse:0.18 };
-const L4 = { scale:1.05, color:'#9b6abf', opacity:0.16, blur:0, ellipse:0.00, compress:0 };
-const L5 = { scale:1.05, color:'#d4c840', opacity:0.10, blur:0, ellipse:0.08, compress:0 };
+const L3 = { scale:1.05, color:'#64c878', opacity:1.0, blur:0, ellipse:0.18,             color2:'#64c878', op2:0, gStop1:0, gStop2:1 };
+const L4 = { scale:1.05, color:'#9b6abf', opacity:1.0, blur:0, ellipse:0.00, compress:0, color2:'#9b6abf', op2:0, gStop1:0, gStop2:1 };
+const L5 = { scale:1.05, color:'#d4c840', opacity:1.0, blur:0, ellipse:0.08, compress:0, color2:'#d4c840', op2:0, gStop1:0, gStop2:1 };
 const BG = {
   baseColor:'#ece8e3',
-  b1Color:'#dce7f0', b1x:0.22, b1y:0.22, b1size:0.55, b1op:0.85,
-  b2Color:'#d6d3e2', b2x:0.78, b2y:0.28, b2size:0.50, b2op:0.75,
-  b3Color:'#f0ddc9', b3x:0.50, b3y:0.72, b3size:0.60, b3op:0.70,
+  b1Color:'#dce7f0', b1x:0.18, b1y:0.18, b1size:0.65, b1op:1.0,
+  b2Color:'#d6d3e2', b2x:0.82, b2y:0.22, b2size:0.60, b2op:1.0,
+  b3Color:'#f0ddc9', b3x:0.50, b3y:0.75, b3size:0.70, b3op:1.0,
+  b4Color:'#dce7f0', b4x:0.72, b4y:0.65, b4size:0.50, b4op:0.85,
+  b5Color:'#f0ddc9', b5x:0.18, b5y:0.78, b5size:0.45, b5op:0.80,
+  warpAmt:0.08,
 };
 
 // ── Physique ──────────────────────────────────────────────
@@ -183,11 +201,17 @@ function drawSmoothClosed(pts){
 function drawBackground(){
   ctx.fillStyle=BG.baseColor;
   ctx.fillRect(0,0,W,H);
-  [[BG.b1Color,BG.b1x,BG.b1y,BG.b1size,BG.b1op],
-   [BG.b2Color,BG.b2x,BG.b2y,BG.b2size,BG.b2op],
-   [BG.b3Color,BG.b3x,BG.b3y,BG.b3size,BG.b3op]
-  ].forEach(([col,x,y,sz,op])=>{
-    const cx=x*W,cy=y*H,r=sz*Math.max(W,H);
+  [
+    [BG.b1Color,BG.b1x,BG.b1y,BG.b1size,BG.b1op],
+    [BG.b2Color,BG.b2x,BG.b2y,BG.b2size,BG.b2op],
+    [BG.b3Color,BG.b3x,BG.b3y,BG.b3size,BG.b3op],
+    [BG.b4Color,BG.b4x,BG.b4y,BG.b4size,BG.b4op],
+    [BG.b5Color,BG.b5x,BG.b5y,BG.b5size,BG.b5op],
+  ].forEach(([col,x,y,sz,op],i)=>{
+    // warp statique par blob (casse la symétrie circulaire)
+    const wx=Math.sin(i*2.1+0.5)*BG.warpAmt;
+    const wy=Math.cos(i*1.7+1.2)*BG.warpAmt;
+    const cx=(x+wx)*W, cy=(y+wy)*H, r=sz*Math.max(W,H);
     const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
     g.addColorStop(0,hexToRgba(col,op));
     g.addColorStop(1,hexToRgba(col,0));
@@ -220,15 +244,15 @@ function draw(t){
 
   // L5 — les deux
   ctx.filter=L5.blur>0?`blur(${L5.blur}px)`:'none';
-  geom.forEach(({a5,dark})=>{drawSmoothClosed(a5);ctx.fillStyle=hexToRgba(L5.color,L5.opacity,dark);ctx.fill();});
+  geom.forEach(({p,a5,dark})=>{drawSmoothClosed(a5);ctx.fillStyle=makeAuraFill(L5,a5,p.x,p.y,dark);ctx.fill();});
 
   // L4 — les deux
   ctx.filter=L4.blur>0?`blur(${L4.blur}px)`:'none';
-  geom.forEach(({a4,dark})=>{drawSmoothClosed(a4);ctx.fillStyle=hexToRgba(L4.color,L4.opacity,dark);ctx.fill();});
+  geom.forEach(({p,a4,dark})=>{drawSmoothClosed(a4);ctx.fillStyle=makeAuraFill(L4,a4,p.x,p.y,dark);ctx.fill();});
 
   // L3 — les deux
   ctx.filter=L3.blur>0?`blur(${L3.blur}px)`:'none';
-  geom.forEach(({a3,dark})=>{drawSmoothClosed(a3);ctx.fillStyle=hexToRgba(L3.color,L3.opacity,dark);ctx.fill();});
+  geom.forEach(({p,a3,dark})=>{drawSmoothClosed(a3);ctx.fillStyle=makeAuraFill(L3,a3,p.x,p.y,dark);ctx.fill();});
 
   // L2 membrane — les deux
   ctx.filter=M.blur>0?`blur(${M.blur}px)`:'none';

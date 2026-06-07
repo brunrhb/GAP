@@ -84,7 +84,7 @@ body {
   :root {
     --core-size: 300px; --core-blur: 20px;
     --nucleus-size: 400px; --nucleus-blur: 50px;
-    --spread-size: 1000px; --spread-blur: 100px;
+    --spread-size: 1000px; --spread-blur: 50px;
 
     --drift-offset-Aura1-x: 100px; --drift-offset-Aura1-x2: 100px;
     --drift-offset-Aura1-y: 100px; --drift-offset-Aura1-y2: 100px;
@@ -92,7 +92,7 @@ body {
     --drift-offset-Aura2-x: 100px; --drift-offset-Aura2-x2: 100px;
     --drift-offset-Aura2-y: 100px; --drift-offset-Aura2-y2: 100px;
 
-    --drift-duration-1: 9s; --drift-duration-2: 5s;
+    --drift-duration-1: 13s; --drift-duration-2: 16s;
   }
 }
 
@@ -109,7 +109,7 @@ body {
     --drift-offset-Aura2-x: 130px; --drift-offset-Aura2-x2: 130px;
     --drift-offset-Aura2-y: 130px; --drift-offset-Aura2-y2: 130px;
 
-    --drift-duration-1: 09s; --drift-duration-2: 07s;
+    --drift-duration-1: 09s; --drift-duration-2: 12s;
   }
 }
 
@@ -262,7 +262,7 @@ body {
   animation: drift1 var(--drift-duration-1) ease-in-out infinite alternate;
 }
 .spread-2, .core-2, .nucleus-2 {
-  animation: drift2 var(--drift-duration-2) ease-in-out infinite alternate;
+  animation: drift2 var(--drift-duration-2) ease-in-out infinite alternate-reverse;
 }
 
 .spread-1 {

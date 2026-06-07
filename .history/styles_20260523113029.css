@@ -84,7 +84,7 @@ body {
   :root {
     --core-size: 300px; --core-blur: 20px;
     --nucleus-size: 400px; --nucleus-blur: 50px;
-    --spread-size: 1000px; --spread-blur: 100px;
+    --spread-size: 1000px; --spread-blur: 50px;
 
     --drift-offset-Aura1-x: 100px; --drift-offset-Aura1-x2: 100px;
     --drift-offset-Aura1-y: 100px; --drift-offset-Aura1-y2: 100px;

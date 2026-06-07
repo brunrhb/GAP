@@ -11,31 +11,51 @@
       background:#0e0d0c;
       color:#f0ece4;
       font-family:monospace;
-      font-size:13px;      /* Cmd+/- zoome tout */
-      overflow-y:auto;
-      overflow-x:hidden;
-      min-height:100vh;
+      font-size:13px;       /* Cmd+/- zoome tout */
+      overflow:hidden;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
     }
 
     /* ── En-tête ─────────────────────────────────────────── */
     #top {
-      position:sticky; top:0; z-index:10;
+      flex-shrink:0;
       background:#0e0d0c;
-      border-bottom:1px solid rgba(255,255,255,0.07);
-      padding:0.7em 1em 0.6em;
+      border-bottom:1px solid rgba(255,255,255,0.09);
+      padding:0.55em 1em;
       display:flex; align-items:center; justify-content:space-between;
     }
-    #top h1 { font-size:0.9em; letter-spacing:0.1em; text-transform:uppercase; opacity:0.5; }
-    #debug-info { font-size:0.78em; opacity:0.3; }
+    #top h1 { font-size:0.85em; letter-spacing:0.1em; text-transform:uppercase; opacity:0.4; }
+    #debug-info { font-size:0.75em; opacity:0.28; }
 
-    /* ── Sections / panneaux ─────────────────────────────── */
+    /* ── Grille 2 colonnes ───────────────────────────────── */
+    #cols {
+      flex:1;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto;
+      overflow:hidden;          /* chaque colonne scroll indépendamment */
+      border-top:none;
+    }
+
+    .col {
+      overflow-y:auto;
+      overflow-x:hidden;
+      height:100%;
+    }
+    .col:first-child {
+      border-right:1px solid rgba(255,255,255,0.07);
+    }
+
+    /* ── Panneaux ────────────────────────────────────────── */
     .panel {
       border-bottom:1px solid rgba(255,255,255,0.06);
     }
 
     .panel-header {
       display:flex; align-items:center; justify-content:space-between;
-      padding:0.65em 1em;
+      padding:0.55em 0.75em;
       cursor:pointer;
       border-left:3px solid transparent;
       user-select:none;
@@ -43,19 +63,19 @@
     .panel-header:hover { background:rgba(255,255,255,0.03); }
 
     .panel-title {
-      font-size:0.88em; font-weight:bold;
-      letter-spacing:0.07em; text-transform:uppercase;
+      font-size:0.84em; font-weight:bold;
+      letter-spacing:0.06em; text-transform:uppercase;
     }
 
     .panel-toggle {
       background:none; border:none; color:inherit;
-      cursor:pointer; font-size:0.85em; opacity:0.4;
+      cursor:pointer; font-size:0.82em; opacity:0.35;
       padding:0; line-height:1;
     }
 
     .panel-body {
-      padding:0.5em 1em 0.8em;
-      display:flex; flex-direction:column; gap:0.28em;
+      padding:0.45em 0.75em 0.7em;
+      display:flex; flex-direction:column; gap:0.25em;
       overflow:hidden;
       transition:max-height 0.2s ease, opacity 0.15s ease, padding 0.2s ease;
       max-height:120em;
@@ -66,44 +86,43 @@
     }
 
     /* Accents couleur */
-    #p-rando  .panel-header { border-left-color:rgba(80,220,200,0.6); }
-    #p-prst   .panel-header { border-left-color:rgba(240,200,48,0.6); }
-    #p-l4     .panel-header { border-left-color:rgba(155,106,191,0.6); }
-    #p-l3     .panel-header { border-left-color:rgba(100,200,120,0.6); }
-    #p-l2     .panel-header { border-left-color:rgba(120,180,220,0.6); }
-    #p-l1     .panel-header { border-left-color:rgba(232,112,64,0.6); }
+    #p-rando .panel-header { border-left-color:rgba(80,220,200,0.6); }
+    #p-prst  .panel-header { border-left-color:rgba(240,200,48,0.6); }
+    #p-l5    .panel-header { border-left-color:rgba(212,200,64,0.6); }
+    #p-l4    .panel-header { border-left-color:rgba(155,106,191,0.6); }
+    #p-l3    .panel-header { border-left-color:rgba(100,200,120,0.6); }
+    #p-l2    .panel-header { border-left-color:rgba(120,180,220,0.6); }
+    #p-l1    .panel-header { border-left-color:rgba(232,112,64,0.6); }
 
     /* ── Lignes de contrôle ──────────────────────────────── */
     .s-label {
-      font-size:0.72em; letter-spacing:0.07em; text-transform:uppercase;
-      opacity:0.3; margin-top:0.4em; padding-top:0.3em;
+      font-size:0.7em; letter-spacing:0.07em; text-transform:uppercase;
+      opacity:0.28; margin-top:0.35em; padding-top:0.28em;
       border-top:1px solid rgba(255,255,255,0.06);
     }
     .s-label:first-child { margin-top:0; border-top:none; }
 
-    .row {
-      display:flex; align-items:center; gap:0.4em;
-    }
+    .row { display:flex; align-items:center; gap:0.3em; }
     .row label {
-      white-space:nowrap; font-size:0.88em; opacity:0.6;
-      flex:0 0 6em;
+      white-space:nowrap; font-size:0.82em; opacity:0.55;
+      flex:0 0 4.8em;           /* labels un peu plus courts pour gagner de la place */
     }
     input[type=range] {
-      flex:1; cursor:pointer; height:0.85em; min-width:0;
+      flex:1; cursor:pointer; height:0.8em; min-width:0;
     }
     input[type=color] {
-      width:1.8em; height:1.3em; border:none; border-radius:0.2em;
-      cursor:pointer; padding:1px; background:rgba(255,255,255,0.08);
-      flex-shrink:0;
+      width:1.6em; height:1.2em; border:none; border-radius:0.2em;
+      cursor:pointer; padding:1px; background:rgba(255,255,255,0.08); flex-shrink:0;
     }
     .val {
-      width:3em; text-align:right; opacity:0.75; font-size:0.86em; flex-shrink:0;
+      width:2.8em; text-align:right; opacity:0.72; font-size:0.82em; flex-shrink:0;
     }
 
-    #p-l4  input[type=range] { accent-color:#9b6abf; }
-    #p-l3  input[type=range] { accent-color:#64c878; }
-    #p-l2  input[type=range] { accent-color:#7ab8d8; }
-    #p-l1  input[type=range] { accent-color:#e87040; }
+    #p-l5   input[type=range] { accent-color:#d4c840; }
+    #p-l4   input[type=range] { accent-color:#9b6abf; }
+    #p-l3   input[type=range] { accent-color:#64c878; }
+    #p-l2   input[type=range] { accent-color:#7ab8d8; }
+    #p-l1   input[type=range] { accent-color:#e87040; }
     #p-prst input[type=range] { accent-color:#f0c830; }
     #p-rando input[type=range] { accent-color:#50dcc8; }
 
@@ -172,6 +191,9 @@
   <div id="debug-info">—</div>
 </div>
 
+<div id="cols">
+<div class="col">
+
 <!-- ═══ RANDO ═══ -->
 <div class="panel" id="p-rando">
   <div class="panel-header">
@@ -195,6 +217,7 @@
       <button class="btn-rando" data-rando="membrane">Membrane</button>
       <button class="btn-rando" data-rando="l3">Niv.3 Aura</button>
       <button class="btn-rando" data-rando="l4">Niv.4 Aura</button>
+      <button class="btn-rando" data-rando="l5">Niv.5 Aura</button>
     </div>
     <div class="s-label">Par couche</div>
     <div class="rando-grid">
@@ -202,7 +225,61 @@
       <button class="btn-rando" data-rando="l2">Niv.2 Memb.</button>
       <button class="btn-rando" data-rando="l3layer">Niv.3</button>
       <button class="btn-rando" data-rando="l4layer">Niv.4</button>
+      <button class="btn-rando" data-rando="l5layer">Niv.5</button>
     </div>
+  </div>
+</div>
+
+<!-- ═══ NIV.5 ═══ -->
+<div class="panel" id="p-l5">
+  <div class="panel-header">
+    <span class="panel-title" style="color:#e8dc70;">Niv.5 — Aura</span>
+    <button class="panel-toggle">▾</button>
+  </div>
+  <div class="panel-body">
+    <div class="s-label">Forme</div>
+    <div class="row"><label>échelle</label><input type="range" id="sScale5" min="1.05" max="5" step="0.01" value="1.05"><span class="val" id="vScale5">1.05×</span></div>
+    <div class="row"><label>ellipse</label><input type="range" id="sEllipse5" min="0" max="1.2" step="0.01" value="0.08"><span class="val" id="vEllipse5">0.08</span></div>
+    <div class="row"><label>compress</label><input type="range" id="sCompress5" min="0" max="1.2" step="0.01" value="0"><span class="val" id="vCompress5">0</span></div>
+    <div class="s-label">Apparence</div>
+    <div class="row"><label>couleur</label><input type="color" id="cCol5" value="#d4c840"></div>
+    <div class="row"><label>opacité</label><input type="range" id="sOp5" min="0" max="1" step="0.01" value="0.10"><span class="val" id="vOp5">0.10</span></div>
+    <div class="row"><label>flou</label><input type="range" id="sBlur5" min="0" max="100" step="0.5" value="0"><span class="val" id="vBlur5">0px</span></div>
+  </div>
+</div>
+
+<!-- ═══ NIV.4 ═══ -->
+<div class="panel" id="p-l4">
+  <div class="panel-header">
+    <span class="panel-title" style="color:#c8a8e8;">Niv.4 — Aura</span>
+    <button class="panel-toggle">▾</button>
+  </div>
+  <div class="panel-body">
+    <div class="s-label">Forme</div>
+    <div class="row"><label>échelle</label><input type="range" id="sScale4" min="1.05" max="3.5" step="0.01" value="1.05"><span class="val" id="vScale4">1.05×</span></div>
+    <div class="row"><label>ellipse</label><input type="range" id="sEllipse4" min="0" max="1.2" step="0.01" value="0"><span class="val" id="vEllipse4">0</span></div>
+    <div class="row"><label>compress</label><input type="range" id="sCompress4" min="0" max="1.2" step="0.01" value="0"><span class="val" id="vCompress4">0</span></div>
+    <div class="s-label">Apparence</div>
+    <div class="row"><label>couleur</label><input type="color" id="cCol4" value="#9b6abf"></div>
+    <div class="row"><label>opacité</label><input type="range" id="sOp4" min="0" max="1" step="0.01" value="0.16"><span class="val" id="vOp4">0.16</span></div>
+    <div class="row"><label>flou</label><input type="range" id="sBlur4" min="0" max="80" step="0.5" value="0"><span class="val" id="vBlur4">0px</span></div>
+  </div>
+</div>
+
+<!-- ═══ NIV.3 ═══ -->
+<div class="panel" id="p-l3">
+  <div class="panel-header">
+    <span class="panel-title" style="color:#a8d890;">Niv.3 — Aura</span>
+    <button class="panel-toggle">▾</button>
+  </div>
+  <div class="panel-body">
+    <div class="s-label">Forme</div>
+    <div class="row"><label>échelle</label><input type="range" id="sScale3" min="1.05" max="2.5" step="0.01" value="1.05"><span class="val" id="vScale3">1.05×</span></div>
+    <div class="row"><label>ellipse</label><input type="range" id="sEllipse3" min="0" max="1.2" step="0.01" value="0.18"><span class="val" id="vEllipse3">0.18</span></div>
+    <div class="s-label">Apparence</div>
+    <div class="row"><label>couleur</label><input type="color" id="cCol3" value="#64c878"></div>
+    <div class="row"><label>opacité</label><input type="range" id="sOp3" min="0" max="1" step="0.01" value="0.22"><span class="val" id="vOp3">0.22</span></div>
+    <div class="row"><label>flou</label><input type="range" id="sBlur3" min="0" max="60" step="0.5" value="0"><span class="val" id="vBlur3">0px</span></div>
   </div>
 </div>
 
@@ -221,40 +298,8 @@
   </div>
 </div>
 
-<!-- ═══ NIV.4 ═══ -->
-<div class="panel" id="p-l4">
-  <div class="panel-header">
-    <span class="panel-title" style="color:#c8a8e8;">Niv.4 — Aura</span>
-    <button class="panel-toggle">▾</button>
-  </div>
-  <div class="panel-body">
-    <div class="s-label">Forme</div>
-    <div class="row"><label>échelle</label><input type="range" id="sScale4" min="1.05" max="3.5" step="0.01" value="1.8"><span class="val" id="vScale4">1.8×</span></div>
-    <div class="row"><label>ellipse</label><input type="range" id="sEllipse4" min="0" max="1.2" step="0.01" value="0.28"><span class="val" id="vEllipse4">0.28</span></div>
-    <div class="row"><label>compress</label><input type="range" id="sCompress4" min="0" max="1.2" step="0.01" value="0"><span class="val" id="vCompress4">0</span></div>
-    <div class="s-label">Apparence</div>
-    <div class="row"><label>couleur</label><input type="color" id="cCol4" value="#9b6abf"></div>
-    <div class="row"><label>opacité</label><input type="range" id="sOp4" min="0" max="1" step="0.01" value="0.16"><span class="val" id="vOp4">0.16</span></div>
-    <div class="row"><label>flou</label><input type="range" id="sBlur4" min="0" max="80" step="0.5" value="0"><span class="val" id="vBlur4">0px</span></div>
-  </div>
-</div>
-
-<!-- ═══ NIV.3 ═══ -->
-<div class="panel" id="p-l3">
-  <div class="panel-header">
-    <span class="panel-title" style="color:#a8d890;">Niv.3 — Aura</span>
-    <button class="panel-toggle">▾</button>
-  </div>
-  <div class="panel-body">
-    <div class="s-label">Forme</div>
-    <div class="row"><label>échelle</label><input type="range" id="sScale3" min="1.05" max="2.5" step="0.01" value="1.4"><span class="val" id="vScale3">1.4×</span></div>
-    <div class="row"><label>ellipse</label><input type="range" id="sEllipse3" min="0" max="1.2" step="0.01" value="0.18"><span class="val" id="vEllipse3">0.18</span></div>
-    <div class="s-label">Apparence</div>
-    <div class="row"><label>couleur</label><input type="color" id="cCol3" value="#64c878"></div>
-    <div class="row"><label>opacité</label><input type="range" id="sOp3" min="0" max="1" step="0.01" value="0.22"><span class="val" id="vOp3">0.22</span></div>
-    <div class="row"><label>flou</label><input type="range" id="sBlur3" min="0" max="60" step="0.5" value="0"><span class="val" id="vBlur3">0px</span></div>
-  </div>
-</div>
+</div><!-- /col gauche -->
+<div class="col">
 
 <!-- ═══ NIV.2 ═══ -->
 <div class="panel" id="p-l2">
@@ -264,8 +309,8 @@
   </div>
   <div class="panel-body">
     <div class="s-label">Forme</div>
-    <div class="row"><label>rayon</label><input type="range" id="sMemR" min="10" max="400" step="1" value="155"><span class="val" id="vMemR">155</span></div>
-    <div class="row"><label>nb points</label><input type="range" id="sNbPts" min="4" max="32" step="1" value="10"><span class="val" id="vNbPts">10</span></div>
+    <div class="row"><label>rayon</label><input type="range" id="sMemR" min="10" max="400" step="1" value="120"><span class="val" id="vMemR">120</span></div>
+    <div class="row"><label>nb pts</label><input type="range" id="sNbPts" min="4" max="32" step="1" value="10"><span class="val" id="vNbPts">10</span></div>
     <div class="row"><label>amplitude</label><input type="range" id="sAmpli" min="0" max="80" step="1" value="18"><span class="val" id="vAmpli">18</span></div>
     <div class="row"><label>vitesse</label><input type="range" id="sVit" min="0.05" max="3" step="0.05" value="0.6"><span class="val" id="vVit">0.6</span></div>
     <div class="row"><label>twist</label><input type="range" id="sTwist" min="0" max="0.5" step="0.01" value="0.08"><span class="val" id="vTwist">0.08</span></div>
@@ -307,6 +352,9 @@
   </div>
 </div>
 
+</div><!-- /col droite -->
+</div><!-- /cols -->
+
 <script>
 /* ── GAP — Contrôles lvl4
    Sync vers anim-debug-lvl4.html via localStorage (key=gap_lvl4_cfg)
@@ -325,16 +373,22 @@ const P = {
   limitR:270, limitOpacity:0.22,
 };
 const M = {
-  memR:155, nbPts:10, ampli:18, vitesse:0.6, twist:0.08,
+  memR:120, nbPts:10, ampli:18, vitesse:0.6, twist:0.08,
   bulge:35, tentacleStr:50, tentacleDecay:0.4,
   color:'#a0cde6', opacity:0.38, blur:0,
 };
-const L3 = { scale:1.4, color:'#64c878', opacity:0.22, blur:0, ellipse:0.18 };
-const L4 = { scale:1.8, color:'#9b6abf', opacity:0.16, blur:0, ellipse:0.28, compress:0 };
+const L3 = { scale:1.05, color:'#64c878', opacity:0.22, blur:0, ellipse:0.18 };
+const L4 = { scale:1.05, color:'#9b6abf', opacity:0.16, blur:0, ellipse:0.00, compress:0 };
+const L5 = { scale:1.05, color:'#d4c840', opacity:0.10, blur:0, ellipse:0.08, compress:0 };
 let _switchSpeed = 1.2;
 
 // ── Slider map pour resync DOM ────────────────────────────
 const sliderMap = {
+  sScale5:    { obj:L5, key:'scale' },
+  sEllipse5:  { obj:L5, key:'ellipse' },
+  sCompress5: { obj:L5, key:'compress' },
+  sOp5:       { obj:L5, key:'opacity' },
+  sBlur5:     { obj:L5, key:'blur' },
   sScale4:    { obj:L4, key:'scale' },
   sEllipse4:  { obj:L4, key:'ellipse' },
   sCompress4: { obj:L4, key:'compress' },
@@ -369,6 +423,7 @@ const sliderMap = {
   sLimitO:    { obj:P,  key:'limitOpacity' },
 };
 const colorMap = {
+  cCol5:{ obj:L5, key:'color' },
   cCol4:{ obj:L4, key:'color' },
   cCol3:{ obj:L3, key:'color' },
   cCol2:{ obj:M,  key:'color' },
@@ -377,7 +432,7 @@ const colorMap = {
 
 // ── Diffusion vers la page animation ─────────────────────
 function getConfig(){
-  return { P:{...P}, M:{...M}, L3:{...L3}, L4:{...L4}, switchSpeed:_switchSpeed };
+  return { P:{...P}, M:{...M}, L3:{...L3}, L4:{...L4}, L5:{...L5}, switchSpeed:_switchSpeed };
 }
 function broadcast(){
   try{ localStorage.setItem(CFG_KEY, JSON.stringify(getConfig())); }catch(e){}
@@ -385,6 +440,8 @@ function broadcast(){
 
 // ── Bindings sliders ──────────────────────────────────────
 const fmts = {
+  sScale5:  v=>v.toFixed(2)+'×',  sEllipse5: v=>v.toFixed(2), sCompress5:v=>v.toFixed(2),
+  sOp5:     v=>v.toFixed(2),      sBlur5:    v=>v.toFixed(1)+'px',
   sScale4:  v=>v.toFixed(2)+'×',  sEllipse4: v=>v.toFixed(2), sCompress4:v=>v.toFixed(2),
   sOp4:     v=>v.toFixed(2),      sBlur4:    v=>v.toFixed(1)+'px',
   sScale3:  v=>v.toFixed(2)+'×',  sEllipse3: v=>v.toFixed(2),
@@ -451,6 +508,7 @@ function applyConfig(cfg){
   if(cfg.M)  Object.assign(M, cfg.M);
   if(cfg.L3) Object.assign(L3, cfg.L3);
   if(cfg.L4) Object.assign(L4, cfg.L4);
+  if(cfg.L5) Object.assign(L5, cfg.L5);
   if(cfg.switchSpeed!==undefined) _switchSpeed=cfg.switchSpeed;
   syncAllInputs();
 }
@@ -543,14 +601,19 @@ const RANDO_L4=[
   {obj:L4,key:'compress',min:0,max:1.1},
   {obj:L4,key:'color',color:true},{obj:L4,key:'opacity',min:0.04,max:0.45},{obj:L4,key:'blur',min:0,max:60},
 ];
+const RANDO_L5=[
+  {obj:L5,key:'scale',min:1.8,max:5.0},{obj:L5,key:'ellipse',min:0,max:1.2},
+  {obj:L5,key:'compress',min:0,max:1.2},
+  {obj:L5,key:'color',color:true},{obj:L5,key:'opacity',min:0.03,max:0.35},{obj:L5,key:'blur',min:0,max:80},
+];
 const RANDO_GROUPS={
-  all:[...RANDO_PHYSICS,...RANDO_CORE,...RANDO_MEM_SHAPE,...RANDO_MEM_LOOK,...RANDO_L3,...RANDO_L4],
-  colors:[{obj:P,key:'coreColor',color:true},{obj:M,key:'color',color:true},{obj:L3,key:'color',color:true},{obj:L4,key:'color',color:true}],
+  all:[...RANDO_PHYSICS,...RANDO_CORE,...RANDO_MEM_SHAPE,...RANDO_MEM_LOOK,...RANDO_L3,...RANDO_L4,...RANDO_L5],
+  colors:[{obj:P,key:'coreColor',color:true},{obj:M,key:'color',color:true},{obj:L3,key:'color',color:true},{obj:L4,key:'color',color:true},{obj:L5,key:'color',color:true}],
   physics:[...RANDO_PHYSICS],
   membrane:[...RANDO_MEM_SHAPE,...RANDO_MEM_LOOK],
-  l3:[...RANDO_L3], l4:[...RANDO_L4],
+  l3:[...RANDO_L3], l4:[...RANDO_L4], l5:[...RANDO_L5],
   l1:[...RANDO_CORE], l2:[...RANDO_MEM_SHAPE,...RANDO_MEM_LOOK],
-  l3layer:[...RANDO_L3], l4layer:[...RANDO_L4],
+  l3layer:[...RANDO_L3], l4layer:[...RANDO_L4], l5layer:[...RANDO_L5],
 };
 
 function randHex(){ return '#'+[0,0,0].map(()=>Math.floor(Math.random()*256).toString(16).padStart(2,'0')).join(''); }

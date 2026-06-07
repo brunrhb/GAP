@@ -8,8 +8,11 @@
     * { margin:0; padding:0; box-sizing:border-box; }
     body { background:#f0ece4; overflow:hidden; font-family:monospace; }
     canvas { display:block; position:fixed; inset:0; }
-    #btn-ctrl {
+    #btn-bar {
       position:fixed; bottom:1rem; right:1rem; z-index:999;
+      display:flex; gap:0.4em;
+    }
+    .btn-win {
       background:rgba(12,11,10,0.72); color:#f0ece4;
       border:1px solid rgba(255,255,255,0.13);
       font-family:monospace; font-size:13px;
@@ -17,7 +20,7 @@
       cursor:pointer; backdrop-filter:blur(10px);
       transition:background 0.15s;
     }
-    #btn-ctrl:hover { background:rgba(30,28,25,0.9); }
+    .btn-win:hover { background:rgba(30,28,25,0.9); }
     #status {
       position:fixed; bottom:1rem; left:1rem; z-index:999;
       font-family:monospace; font-size:11px;
@@ -28,12 +31,16 @@
 </head>
 <body>
 <canvas id="c"></canvas>
-<button id="btn-ctrl">⚙ Contrôles</button>
+<div id="btn-bar">
+  <button class="btn-win" id="btn-params">⚙ Paramètres</button>
+  <button class="btn-win" id="btn-setup">⚙ Setup</button>
+</div>
 <div id="status">—</div>
 
 <script>
 /* ── GAP — Anim debug lvl4 — animation seule
-   Contrôles dans anim-debug-lvl4-controls.html (window.open)
+   Params  → anim-debug-lvl4-params.html (window.open)
+   Setup   → anim-debug-lvl4-setup.html  (window.open)
    Sync via localStorage  key=gap_lvl4_cfg / gap_lvl4_dbg
    ─────────────────────────────────────────── */
 
@@ -57,12 +64,13 @@ const P = {
   limitR:270, limitOpacity:0.22,
 };
 const M = {
-  memR:155, nbPts:10, ampli:18, vitesse:0.6, twist:0.08,
+  memR:120, nbPts:10, ampli:18, vitesse:0.6, twist:0.08,
   bulge:35, tentacleStr:50, tentacleDecay:0.4,
   color:'#a0cde6', opacity:0.38, blur:0,
 };
-const L3 = { scale:1.4, color:'#64c878', opacity:0.22, blur:0, ellipse:0.18 };
-const L4 = { scale:1.8, color:'#9b6abf', opacity:0.16, blur:0, ellipse:0.28, compress:0 };
+const L3 = { scale:1.05, color:'#64c878', opacity:0.22, blur:0, ellipse:0.18 };
+const L4 = { scale:1.05, color:'#9b6abf', opacity:0.16, blur:0, ellipse:0.00, compress:0 };
+const L5 = { scale:1.05, color:'#d4c840', opacity:0.10, blur:0, ellipse:0.08, compress:0 };
 
 // ── Physique ──────────────────────────────────────────────
 const CURL_BEHIND=3.0, CURL_FRONT=0.25, ATTR_FAR_CLOSE=0.05, ATTR_FAR_FAR=4.0;
@@ -179,6 +187,10 @@ function draw(t){
 
     const a3=auraPoints(pts, p, L3.scale, L3.ellipse, 0,           axisAngle);
     const a4=auraPoints(a3,  p, L4.scale, L4.ellipse, L4.compress, axisAngle);
+    const a5=auraPoints(a4,  p, L5.scale, L5.ellipse, L5.compress, axisAngle);
+
+    ctx.filter=L5.blur>0?`blur(${L5.blur}px)`:'none';
+    drawSmoothClosed(a5);ctx.fillStyle=hexToRgba(L5.color,L5.opacity,dark);ctx.fill();
 
     ctx.filter=L4.blur>0?`blur(${L4.blur}px)`:'none';
     drawSmoothClosed(a4);ctx.fillStyle=hexToRgba(L4.color,L4.opacity,dark);ctx.fill();
@@ -211,12 +223,13 @@ function applyConfig(cfg){
   if(cfg.M) Object.assign(M, cfg.M);
   if(cfg.L3) Object.assign(L3, cfg.L3);
   if(cfg.L4) Object.assign(L4, cfg.L4);
+  if(cfg.L5) Object.assign(L5, cfg.L5);
   if(cfg.switchSpeed!==undefined) window._switchSpeed=cfg.switchSpeed;
   if(cfg.M&&cfg.M.nbPts){ phases0=buildPhases(M.nbPts); phases1=buildPhases(M.nbPts); }
 }
 
-// Charge config initiale si elle existe
-try{ const s=localStorage.getItem(CFG_KEY); if(s) applyConfig(JSON.parse(s)); }catch(e){}
+// Au refresh : publie les valeurs par défaut (réinitialise params/setup si ouverts)
+try{ localStorage.setItem(CFG_KEY, JSON.stringify({P:{...P},M:{...M},L3:{...L3},L4:{...L4},L5:{...L5},switchSpeed:window._switchSpeed})); }catch(e){}
 
 // Reçoit les updates de la fenêtre de contrôles
 window.addEventListener('storage',e=>{
@@ -247,14 +260,22 @@ function loop(ts){
   requestAnimationFrame(loop);
 }
 
-// ── Bouton Contrôles ──────────────────────────────────────
-let ctrlWin=null;
-document.getElementById('btn-ctrl').addEventListener('click',()=>{
-  if(ctrlWin&&!ctrlWin.closed){ ctrlWin.focus(); return; }
-  ctrlWin=window.open(
-    'anim-debug-lvl4-controls.html',
-    'gap-controls',
-    'width=380,height=860,left=20,top=20'
+// ── Boutons fenêtres ──────────────────────────────────────
+let paramsWin=null, setupWin=null;
+document.getElementById('btn-params').addEventListener('click',()=>{
+  if(paramsWin&&!paramsWin.closed){ paramsWin.focus(); return; }
+  paramsWin=window.open(
+    'anim-debug-lvl4-params.html',
+    'gap-params',
+    'width=560,height=820,left=20,top=20'
+  );
+});
+document.getElementById('btn-setup').addEventListener('click',()=>{
+  if(setupWin&&!setupWin.closed){ setupWin.focus(); return; }
+  setupWin=window.open(
+    'anim-debug-lvl4-setup.html',
+    'gap-setup',
+    'width=360,height=640,left=600,top=20'
   );
 });
 

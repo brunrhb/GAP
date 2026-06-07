@@ -2,35 +2,78 @@ GAP — ANIM DEBUG : NOTES DE DÉVELOPPEMENT
 ==========================================
 Mis à jour : 2026-06-07
 Branche active : DYNAMIC-COLOR-ANIM
-Fichier courant : anim-debug-lvl4.html
+Fichier courant : anim-debug-lvl4.html + anim-debug-lvl4-controls.html
 
 
 ── FICHIERS ──────────────────────────────────────────────────────────────────
 
-  anim-debug.html        Physique de base (orbite asymétrique, 2 cercles)
-  anim-debug-lvl2.html   + Membrane (forme organique L2, bleue)
-  anim-debug-lvl3.html   + Aura verte L3 + Aura mauve L4, panneaux flottants
-  anim-debug-lvl4.html   + Système de presets (save/restore via localStorage)
+  anim-debug.html              Physique de base (orbite asymétrique, 2 cercles)
+  anim-debug-lvl2.html         + Membrane (forme organique L2, bleue)
+  anim-debug-lvl3.html         + Aura L3 (verte) + L4 (mauve), panneaux flottants
+  anim-debug-lvl4.html         Animation seule — canvas + physique, aucun panneau
+  anim-debug-lvl4-controls.html  Contrôles seuls — page séparée, ouverte via window.open()
+
+
+── ARCHITECTURE CONTRÔLES / ANIMATION ───────────────────────────────────────
+
+  Les deux pages communiquent via localStorage (fonctionne sur file://) :
+
+  Clé gap_lvl4_cfg   : controls → animation  (config complète JSON)
+  Clé gap_lvl4_dbg   : animation → controls  (debug : dist, d0, d1, throttle 200ms)
+
+  L'événement `storage` (déclenché dans les AUTRES fenêtres uniquement)
+  permet la synchronisation en temps réel sans polling.
+
+  Bouton ⚙ Contrôles (bas-droite de l'animation) :
+    window.open('anim-debug-lvl4-controls.html', 'gap-controls', 'width=620,height=820,...')
+
+  L'UI des contrôles est en em / font-size:13px → Cmd+/- zoome tout.
 
 
 ── SYSTÈME DE COUCHES ────────────────────────────────────────────────────────
 
-  L1 — Core       : cercle plein, couleur de base, rayon coreR
-  L2 — Membrane   : forme organique, N points, animée (noise + tentacule)
-  L3 — Aura verte : membrane × scale L3, couleur/opacité/flou indépendants
-  L4 — Aura mauve : membrane × scale L4, couleur/opacité/flou indépendants
+  L1 — Core       : cercle plein, rayon coreR, couleur/opacité/flou
+  L2 — Membrane   : forme organique N points, animée (noise + tentacule)
+  L3 — Aura verte : auraPoints(L2_pts, center, L3.scale, L3.ellipse, 0, axisAngle)
+  L4 — Aura mauve : auraPoints(L3_pts, center, L4.scale, L4.ellipse, L4.compress, axisAngle)
+  L5 — Aura jaune : auraPoints(L4_pts, center, L5.scale, L5.ellipse, L5.compress, axisAngle)
 
-  Ordre de rendu par particule : L4 → L3 → L2 → debug circle → L1 → dot
+  Les couches sont CUMULATIVES : chaque aura prend les points de la précédente
+  comme entrée (pas les points L2 bruts). Les déformations s'accumulent.
+
+  Ordre de rendu par particule : L5 → L4 → L3 → L2 → debug circle → L1 → dot
+
+
+── FONCTION auraPoints ───────────────────────────────────────────────────────
+
+  auraPoints(basePts, center, scale, ellipseStr, compressStr, axisAngle)
+
+    1. Translate chaque pt depuis center, multiplie par scale
+    2. Projette sur l'axe A→B (axisAngle = angle entre les deux particules)
+    3. Applique :
+         sa = (1 + ellipseStr) / (1 + compressStr)   → étire sur l'axe A→B
+         sp = sqrt((1 + compressStr) / (1 + ellipseStr))  → compense sur perp.
+    4. Reprojette en coordonnées canvas
+
+  ellipse > 0 → étire vers l'autre particule (allonge dans l'axe orbital)
+  compress > 0 → écrase dans cet axe (aplatis orthogonalement à l'axe orbital)
+  Les deux sont indépendants et se combinent (L4 peut avoir les deux).
 
 
 ── PHYSIQUE ──────────────────────────────────────────────────────────────────
 
   Attraction curseur : attrFactor modulé par dominance (rôle) et proximity
-  Répulsion mutuelle : 1/d², equilibre à R³ = repK / (4 × attrK)
+  Répulsion mutuelle : 1/d², équilibre à R³ = repK / (4 × attrK)
   Orbite             : force tangentielle curlK/d, asymétrique (CURL_BEHIND vs CURL_FRONT)
   Inertie de rôle    : dominance[i] lerp lent vers 0 (dominant/proche) ou 1 (challengeur/loin)
   Collision élastique: impulsion = -(1+restitution) × dvn × 0.5, séparation dure
   Contour            : déviation de l'attraction le long du périmètre de l'autre particule
+
+  CURL_BEHIND   = 3.0    (tangentiel challengeur)
+  CURL_FRONT    = 0.25   (tangentiel dominant)
+  ATTR_FAR_CLOSE= 0.05   (attrFactor quand particules proches)
+  ATTR_FAR_FAR  = 4.0    (attrFactor quand particules éloignées)
+  SWITCH_SPEED  = 1.2/s  (vitesse de transition des rôles, slider "délai rôle")
 
 
 ── MEMBRANE ──────────────────────────────────────────────────────────────────
@@ -45,38 +88,46 @@ Fichier courant : anim-debug-lvl4.html
 
   drawSmoothClosed(pts) : courbe fermée lisse via bezier quadratique (midpoints)
 
-  Auras L3/L4 : pts.map(pt => scale depuis center p) → même drawSmoothClosed
 
-
-── FENÊTRES FLOTTANTES (lvl3+) ───────────────────────────────────────────────
-
-  CSS : .fp { position:fixed; width:14em; font-size:11px; resize:horizontal }
-  Drag : mousedown header → mousemove → mouseup (bornes = viewport)
-  Collapse : toggle .collapsed → max-height transition
-  z-index : ++zTop à chaque mousedown (bring to front)
-  Positions initiales : centrées en haut, espacées de 12px
-
-  Panneaux :
-    #fp-presets  (jaune)  — save/restore presets
-    #fp4         (mauve)  — Niv.4 Aura
-    #fp3         (vert)   — Niv.3 Aura
-    #fp2         (bleu)   — Niv.2 Membrane
-    #fp1         (orange) — Niv.1 Core + Physique
-
-
-── SYSTÈME PRESETS (lvl4) ────────────────────────────────────────────────────
+── SYSTÈME PRESETS ───────────────────────────────────────────────────────────
 
   Stockage : localStorage, clé = "gap_lvl4_preset__<nom>"
-  Données  : JSON({ P, M, L3, L4, switchSpeed })
+  Données  : JSON({ P, M, L3, L4, L5, switchSpeed })
 
-  getConfig()         → sérialise P, M, L3, L4, switchSpeed
-  setConfig(cfg)      → applique aux objets ET resync tous les sliders/couleurs via dispatchEvent('input')
   savePreset(name)    → setItem + re-render liste
-  restorePreset(name) → getItem + setConfig
+  restorePreset(name) → getItem + applyConfig + syncAllInputs + broadcast
   deletePreset(name)  → removeItem + re-render liste
-  renderPresets()     → reconstruit le DOM #preset-list depuis localStorage
 
   Entrée clavier : Enter dans le champ nom = sauvegarder
+
+
+── SYNCHRONISATION SLIDERS / OBJETS ──────────────────────────────────────────
+
+  sliderMap  : { sliderId → { obj, key } }   (35+ entrées)
+  colorMap   : { inputId → { obj, key } }    (cCol1..5)
+
+  syncAllInputs() : relit obj[key] → set el.value → dispatchEvent('input')
+                    puis broadcast() → écrit gap_lvl4_cfg dans localStorage
+
+  applyConfig(cfg) : Object.assign sur P/M/L3/L4/L5 + switchSpeed
+                     puis syncAllInputs()
+
+
+── SYSTÈME RANDO ─────────────────────────────────────────────────────────────
+
+  Groupes disponibles :
+    all       → tous les paramètres
+    colors    → couleurs seules
+    physics   → physique
+    membrane  → membrane (forme + aspect)
+    l3 / l4 / l5        → aura par famille
+    l1 / l2             → par couche (core / membrane)
+    l3layer / l4layer / l5layer → par couche aura
+
+  randParam(spec, intensity) :
+    - couleur  → RGB lerp entre valeur courante et couleur aléatoire
+    - numérique → cur + (random - cur) * intensity
+    Intensity 0..1 pilote un slider dans le panneau Rando
 
 
 ── PARAMÈTRES COURANTS (défaut lvl4) ────────────────────────────────────────
@@ -88,21 +139,13 @@ Fichier courant : anim-debug-lvl4.html
     limitR:270, limitOpacity:0.22
   }
   M = {
-    memR:155, nbPts:10, ampli:18, vitesse:0.6, twist:0.08,
+    memR:120, nbPts:10, ampli:18, vitesse:0.6, twist:0.08,
     bulge:35, tentacleStr:50, tentacleDecay:0.4,
     color:'#a0cde6', opacity:0.38, blur:0
   }
-  L3 = { scale:1.4, color:'#64c878', opacity:0.22, blur:0 }
-  L4 = { scale:1.8, color:'#9b6abf', opacity:0.16, blur:0 }
-
-
-── CONSTANTES PHYSIQUES ──────────────────────────────────────────────────────
-
-  CURL_BEHIND   = 3.0    (tangentiel challengeur)
-  CURL_FRONT    = 0.25   (tangentiel dominant)
-  ATTR_FAR_CLOSE= 0.05   (attrFactor quand particules proches)
-  ATTR_FAR_FAR  = 4.0    (attrFactor quand particules éloignées)
-  SWITCH_SPEED  = 1.2/s  (vitesse de transition des rôles, slider "délai rôle")
+  L3 = { scale:1.05, color:'#64c878', opacity:0.22, blur:0, ellipse:0.18 }
+  L4 = { scale:1.05, color:'#9b6abf', opacity:0.16, blur:0, ellipse:0.00, compress:0 }
+  L5 = { scale:1.05, color:'#d4c840', opacity:0.10, blur:0, ellipse:0.08, compress:0 }
 
 
 ── PROCHAINES ÉTAPES POSSIBLES ───────────────────────────────────────────────

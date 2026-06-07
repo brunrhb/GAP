@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GAP — Anim debug lvl2 — Membranes</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #f0ece4;
+      overflow: hidden;
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    canvas { display: block; position: fixed; inset: 0; }
+
+    #panels {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 0.5rem;
+      z-index: 10;
+    }
+
+    .panel {
+      background: rgba(15, 14, 12, 0.78);
+      color: #f0ece4;
+      padding: 0.75rem 1rem;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      min-width: 220px;
+      backdrop-filter: blur(6px);
+    }
+
+    #panel2 { border-left: 2px solid rgba(160,200,230,0.25); }
+
+    .label {
+      opacity: 0.4;
+      font-size: 10px;
+      margin-top: 0.3rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .label:first-child { margin-top: 0; }
+    .label.lvl2 { opacity: 0.7; color: #aad4f0; }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .row label { opacity: 0.75; white-space: nowrap; font-size: 11px; flex: 0 0 auto; min-width: 80px; }
+
+    input[type=range] { flex: 1; cursor: pointer; }
+    #panel1 input[type=range] { accent-color: #E87040; }
+    #panel2 input[type=range] { accent-color: #7ab8d8; }
+
+    .val { width: 40px; text-align: right; opacity: 0.9; font-size: 11px; }
+
+    #info {
+      margin-top: 0.25rem;
+      opacity: 0.4;
+      font-size: 11px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 0.4rem;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<div id="panels">
+<!-- ═══ PANEL 2 — Membranes ═══ -->
+<div class="panel" id="panel2">
+  <div class="label lvl2">Membrane — niveau 2</div>
+
+  <div class="row"><label>rayon mem.</label><input type="range" id="sMemR" min="10" max="400" step="1" value="155"><span class="val" id="vMemR">155</span></div>
+  <div class="row"><label>nb points</label><input type="range" id="sNbPts" min="4" max="32" step="1" value="10"><span class="val" id="vNbPts">10</span></div>
+  <div class="row"><label>amplitude</label><input type="range" id="sAmpli" min="0" max="80" step="1" value="18"><span class="val" id="vAmpli">18</span></div>
+  <div class="row"><label>vitesse</label><input type="range" id="sVit" min="0.05" max="3" step="0.05" value="0.6"><span class="val" id="vVit">0.6</span></div>
+  <div class="row"><label>twist</label><input type="range" id="sTwist" min="0" max="0.5" step="0.01" value="0.08"><span class="val" id="vTwist">0.08</span></div>
+  <div class="row"><label>bulge</label><input type="range" id="sBulge" min="0" max="120" step="1" value="35"><span class="val" id="vBulge">35</span></div>
+  <div class="row"><label>opacité</label><input type="range" id="sMemO" min="0" max="1" step="0.02" value="0.38"><span class="val" id="vMemO">0.38</span></div>
+  <div class="row"><label>tentacule</label><input type="range" id="sTent" min="0" max="120" step="1" value="50"><span class="val" id="vTent">50</span></div>
+  <div class="row"><label>portée</label><input type="range" id="sPortee" min="0.05" max="0.95" step="0.05" value="0.4"><span class="val" id="vPortee">0.4</span></div>
+</div>
+
+<!-- ═══ PANEL 1 — Physique ═══ -->
+<div class="panel" id="panel1">
+  <div class="label">Physique</div>
+  <div class="row"><label>attraction</label><input type="range" id="sAttr" min="0.5" max="20" step="0.1" value="5"><span class="val" id="vAttr">5</span></div>
+  <div class="row"><label>friction</label><input type="range" id="sFric" min="0.1" max="12" step="0.1" value="1.0"><span class="val" id="vFric">1.0</span></div>
+  <div class="row"><label>répulsion</label><input type="range" id="sRep" min="1000" max="5000000" step="1000" value="1500000"><span class="val" id="vRep">1.5M</span></div>
+  <div class="row"><label>rebond</label><input type="range" id="sRest" min="0" max="1" step="0.05" value="0.55"><span class="val" id="vRest">0.55</span></div>
+
+  <div class="label">Orbite / Rôles</div>
+  <div class="row"><label>orbite base</label><input type="range" id="sCurl" min="0" max="3000" step="10" value="2940"><span class="val" id="vCurl">2940</span></div>
+  <div class="row"><label>seuil orbite</label><input type="range" id="sProx" min="1.5" max="8" step="0.1" value="3.5"><span class="val" id="vProx">3.5×</span></div>
+  <div class="row"><label>délai rôle</label><input type="range" id="sSwitch" min="0.2" max="4" step="0.1" value="1.2"><span class="val" id="vSwitch">1.2</span></div>
+  <div class="row"><label>contour</label><input type="range" id="sContour" min="0" max="1" step="0.05" value="0.65"><span class="val" id="vContour">0.65</span></div>
+
+  <div class="label">Rendu debug</div>
+  <div class="row"><label>rayon core</label><input type="range" id="sCoreR" min="10" max="300" step="1" value="112"><span class="val" id="vCoreR">112</span></div>
+  <div class="row"><label>rayon limite</label><input type="range" id="sLimitR" min="30" max="400" step="1" value="270"><span class="val" id="vLimitR">270</span></div>
+  <div class="row"><label>opacité limite</label><input type="range" id="sLimitO" min="0" max="1" step="0.01" value="0.22"><span class="val" id="vLimitO">0.22</span></div>
+
+  <div id="info">dist: — px</div>
+</div>
+
+</div><!-- #panels -->
+
+<script>
+/* ── GAP — Anim debug lvl2
+   Niveau 1 : physique A1/A2 (orbite asymétrique + contour + inertie de rôle)
+   Niveau 2 : membranes organiques — oscillateurs sinus phasés + bulge directionnel
+   ─────────────────────────────────────────────────────────────────────────────── */
+
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+
+// ── Paramètres niveau 1 ───────────────────────────────────
+const P = {
+  attrK       : 5,
+  fricK       : 1.0,
+  repK        : 1500000,
+  curlK       : 2940,
+  restitution : 0.55,
+  proxMult    : 3.5,
+  contourStr  : 0.65,
+  coreR       : 112,
+  limitR      : 270,
+  limitOpacity: 0.22,
+};
+
+// ── Paramètres niveau 2 — membranes ──────────────────────
+const M = {
+  memR    : 155,   // rayon de base de la membrane (px)
+  nbPts   : 10,    // nombre de points de contrôle
+  ampli   : 18,    // amplitude de déformation (px)
+  vitesse : 0.6,   // vitesse d'oscillation (rad/s)
+  twist   : 0.08,  // déformation angulaire (rad)
+  bulge      : 35,   // gonflement directionnel global vers l'autre cellule (px)
+  opacity    : 0.38, // opacité du fill membrane
+  tentacleStr: 50,   // force d'extension du point avant-garde (px)
+  tentacleDecay: 0.4,// decay exponentiel vers les voisins (0=isolé, 1=tous pareil)
+};
+
+// ── Asymétrie physique ────────────────────────────────────
+const CURL_BEHIND    = 3.0;
+const CURL_FRONT     = 0.25;
+const ATTR_FAR_CLOSE = 0.05;
+const ATTR_FAR_FAR   = 4.0;
+
+// ── Inertie de rôle ──────────────────────────────────────
+const dominance    = [0.0, 1.0];
+const SWITCH_SPEED = 1.2;
+
+// ── Phase offsets membrane (calculés une fois, irréguliers) ──
+// On utilise une valeur irrationnelle comme multiplicateur pour
+// éviter la répétition — chaque point a sa propre "vie"
+function buildPhases(n) {
+  const phi = 1.6180339887; // nombre d'or
+  return Array.from({ length: n }, (_, i) => i * phi * Math.PI * 2);
+}
+let phases0 = buildPhases(M.nbPts);
+let phases1 = buildPhases(M.nbPts);
+
+// ── État ─────────────────────────────────────────────────
+let W = 0, H = 0;
+let cursor = null;
+let lastTs = null;
+let elapsed = 0;
+
+const particles = [
+  { x: 0, y: 0, vx: 0, vy: 0 },
+  { x: 0, y: 0, vx: 0, vy: 0 },
+];
+
+// ── Resize ────────────────────────────────────────────────
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  if (particles[0].x === 0) {
+    particles[0].x = W / 2 - 200;
+    particles[0].y = H / 2;
+    particles[1].x = W / 2 + 200;
+    particles[1].y = H / 2;
+  }
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ── Curseur ───────────────────────────────────────────────
+window.addEventListener('mousemove', e => { cursor = { x: e.clientX, y: e.clientY }; });
+function getCursor() { return cursor ?? { x: W / 2, y: H / 2 }; }
+
+// ── Physique niveau 1 ─────────────────────────────────────
+function physics(dt) {
+  const c = getCursor();
+  const [a, b] = particles;
+
+  const dx   = b.x - a.x;
+  const dy   = b.y - a.y;
+  const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
+  const nx   = dx / dist;
+  const ny   = dy / dist;
+
+  const repMag  = P.repK  / (dist * dist);
+  const curlMag = P.curlK / dist;
+  const tx = -ny, ty = nx;
+
+  const dA = Math.sqrt((c.x - a.x) ** 2 + (c.y - a.y) ** 2);
+  const dB = Math.sqrt((c.x - b.x) ** 2 + (c.y - b.y) ** 2);
+  const farIdx = dA > dB ? 0 : 1;
+
+  const targetDom = [0.0, 0.0];
+  targetDom[farIdx] = 1.0;
+
+  const speed = window._switchSpeed ?? SWITCH_SPEED;
+  for (let i = 0; i < 2; i++) {
+    dominance[i] += (targetDom[i] - dominance[i]) * Math.min(speed * dt, 1);
+  }
+
+  const threshold = P.limitR * P.proxMult;
+  const proximity = Math.min(dist / threshold, 1);
+
+  for (let i = 0; i < 2; i++) {
+    const p    = particles[i];
+    const sign = i === 0 ? -1 : 1;
+    const dom  = dominance[i];
+
+    const challAttr  = ATTR_FAR_CLOSE + proximity * (ATTR_FAR_FAR - ATTR_FAR_CLOSE);
+    const attrFactor = 1.0 + dom * (challAttr - 1.0);
+    const curlFactor = CURL_FRONT + dom * (CURL_BEHIND - CURL_FRONT);
+
+    let fax = (c.x - p.x) * P.attrK * attrFactor;
+    let fay = (c.y - p.y) * P.attrK * attrFactor;
+
+    // Stratégie contour
+    const contourWeight = dom * (1 - proximity) * P.contourStr;
+    if (contourWeight > 0.001) {
+      const other = particles[1 - i];
+      const tox = other.x - p.x, toy = other.y - p.y;
+      const tod = Math.max(Math.sqrt(tox*tox + toy*toy), 1);
+      const t1x = -toy/tod, t1y =  tox/tod;
+      const t2x =  toy/tod, t2y = -tox/tod;
+      const pcx = c.x - p.x, pcy = c.y - p.y;
+      const dot1 = t1x*pcx + t1y*pcy;
+      const dot2 = t2x*pcx + t2y*pcy;
+      const btx = dot1 >= dot2 ? t1x : t2x;
+      const bty = dot1 >= dot2 ? t1y : t2y;
+      const mag = Math.sqrt(fax*fax + fay*fay);
+      fax = fax*(1 - contourWeight) + btx*mag*contourWeight;
+      fay = fay*(1 - contourWeight) + bty*mag*contourWeight;
+    }
+
+    const frx = sign * nx * repMag;
+    const fry = sign * ny * repMag;
+    const fcx = sign * tx * curlMag * curlFactor;
+    const fcy = sign * ty * curlMag * curlFactor;
+    const fdx = -p.vx * P.fricK;
+    const fdy = -p.vy * P.fricK;
+
+    p.vx += (fax + frx + fcx + fdx) * dt;
+    p.vy += (fay + fry + fcy + fdy) * dt;
+    p.x  += p.vx * dt;
+    p.y  += p.vy * dt;
+  }
+}
+
+// ── Collision élastique ───────────────────────────────────
+function collide() {
+  const [a, b] = particles;
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  const minD = P.limitR * 2;
+  if (dist < minD && dist > 0.01) {
+    const nx = dx/dist, ny = dy/dist;
+    const overlap = (minD - dist) * 0.5;
+    a.x -= nx*overlap; a.y -= ny*overlap;
+    b.x += nx*overlap; b.y += ny*overlap;
+    const dvx = b.vx - a.vx, dvy = b.vy - a.vy;
+    const dvn = dvx*nx + dvy*ny;
+    if (dvn < 0) {
+      const imp = -(1 + P.restitution) * dvn * 0.5;
+      a.vx -= imp*nx; a.vy -= imp*ny;
+      b.vx += imp*nx; b.vy += imp*ny;
+    }
+  }
+}
+
+// ── Membrane : calcul des points déformés ─────────────────
+function membranePoints(p, other, phases, t) {
+  const n = M.nbPts;
+
+  // angle vers l'autre cellule
+  const toOtherAngle = Math.atan2(other.y - p.y, other.x - p.x);
+
+  // ── Trouver le point "avant-garde" : angle le plus proche de toOtherAngle ──
+  let leaderJ = 0;
+  let leaderDiff = Infinity;
+  for (let j = 0; j < n; j++) {
+    const baseAngle = (j / n) * Math.PI * 2;
+    // distance angulaire circulaire
+    let diff = Math.abs(((baseAngle - toOtherAngle) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2));
+    if (diff > Math.PI) diff = Math.PI * 2 - diff;
+    if (diff < leaderDiff) { leaderDiff = diff; leaderJ = j; }
+  }
+
+  // ── Pulsation de la tentacule (oscillation lente, indépendante) ──
+  // Elle doit continuer à vivre même quand tout est stable
+  const tentaclePulse = 0.55 + 0.45 * Math.sin(t * M.vitesse * 0.55 + 1.2);
+
+  const pts = [];
+  for (let j = 0; j < n; j++) {
+    const baseAngle = (j / n) * Math.PI * 2;
+    const ph = phases[j % phases.length];
+
+    // déformation radiale (deux harmoniques)
+    const noise = M.ampli * Math.sin(t * M.vitesse + ph)
+                + M.ampli * 0.4 * Math.sin(t * M.vitesse * 1.618 + ph * 2.414);
+
+    // twist
+    const angOffset = M.twist * Math.sin(t * M.vitesse * 0.7 + ph);
+
+    // bulge directionnel global
+    const alignment = Math.cos(baseAngle - toOtherAngle);
+    const bulgeR    = M.bulge * Math.max(0, alignment);
+
+    // ── Influence tentacule depuis le leader ──────────────
+    // distance circulaire au leader (en nombre de points)
+    const rawDist  = Math.abs(j - leaderJ);
+    const circDist = Math.min(rawDist, n - rawDist); // distance circulaire
+    // falloff exponentiel
+    const influence = Math.pow(M.tentacleDecay, circDist);
+    // extension vers l'autre cellule, oscillante + qui diffuse aux voisins
+    const tentR = M.tentacleStr * influence * tentaclePulse;
+    // les voisins reçoivent une légère agitation compensatoire (énergie gommée)
+    const neighborNoise = circDist > 0
+      ? M.tentacleStr * 0.18 * influence * Math.sin(t * M.vitesse * 1.3 + ph + circDist)
+      : 0;
+
+    const r     = M.memR + noise + bulgeR + tentR + neighborNoise;
+    const angle = baseAngle + angOffset;
+
+    pts.push({
+      x: p.x + Math.cos(angle) * r,
+      y: p.y + Math.sin(angle) * r,
+    });
+  }
+  return pts;
+}
+
+// ── Courbe lisse fermée (quadratique, midpoint) ───────────
+function drawSmoothClosed(pts) {
+  const n = pts.length;
+  if (n < 3) return;
+  ctx.beginPath();
+  const mid0x = (pts[n-1].x + pts[0].x) / 2;
+  const mid0y = (pts[n-1].y + pts[0].y) / 2;
+  ctx.moveTo(mid0x, mid0y);
+  for (let i = 0; i < n; i++) {
+    const p    = pts[i];
+    const next = pts[(i + 1) % n];
+    ctx.quadraticCurveTo(p.x, p.y, (p.x + next.x) / 2, (p.y + next.y) / 2);
+  }
+  ctx.closePath();
+}
+
+// ── Rendu ─────────────────────────────────────────────────
+function draw(t) {
+  ctx.clearRect(0, 0, W, H);
+  const [a, b] = particles;
+
+  // ligne inter-centres
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.strokeStyle = 'rgba(180,90,40,0.08)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  const fills     = ['rgba(232,112,64,0.88)', 'rgba(200,85,45,0.80)'];
+  const memFills  = ['rgba(160,205,230,', 'rgba(140,190,220,']; // bleu pâle
+  const phaseList = [phases0, phases1];
+
+  for (let i = 0; i < 2; i++) {
+    const p     = particles[i];
+    const other = particles[1 - i];
+
+    // — Membrane (sous le core) —
+    const pts = membranePoints(p, other, phaseList[i], t);
+    drawSmoothClosed(pts);
+    ctx.fillStyle = memFills[i] + M.opacity + ')';
+    ctx.fill();
+
+    // — Limite debug pointillée (rayon limitR) —
+    if (P.limitOpacity > 0.01) {
+      ctx.save();
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, P.limitR, 0, Math.PI * 2);
+      ctx.strokeStyle = fills[i].replace(/[\d.]+\)$/, P.limitOpacity + ')');
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // — Core plein —
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, P.coreR, 0, Math.PI * 2);
+    ctx.fillStyle = fills[i];
+    ctx.fill();
+
+    // — Centre debug —
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fill();
+  }
+}
+
+// ── Boucle ────────────────────────────────────────────────
+function loop(ts) {
+  const dt = lastTs === null ? 0.016 : Math.min((ts - lastTs) / 1000, 0.05);
+  lastTs = ts;
+  elapsed += dt;
+
+  physics(dt);
+  collide();
+  draw(elapsed);
+
+  const [a, b] = particles;
+  const dx = b.x - a.x, dy = b.y - a.y;
+  document.getElementById('info').textContent =
+    `dist: ${Math.sqrt(dx*dx + dy*dy).toFixed(0)} px  |  dom: ${dominance[0].toFixed(2)} / ${dominance[1].toFixed(2)}`;
+
+  requestAnimationFrame(loop);
+}
+
+// ── Sliders ───────────────────────────────────────────────
+function bindSlider(id, valId, obj, key, fmt) {
+  const s = document.getElementById(id);
+  const v = document.getElementById(valId);
+  v.textContent = fmt ? fmt(obj[key]) : obj[key];
+  s.addEventListener('input', () => {
+    obj[key] = parseFloat(s.value);
+    v.textContent = fmt ? fmt(obj[key]) : obj[key];
+    // recalcul des phases si nbPts change
+    if (key === 'nbPts') {
+      phases0 = buildPhases(M.nbPts);
+      phases1 = buildPhases(M.nbPts);
+    }
+  });
+}
+
+// Panel 1
+bindSlider('sAttr',    'vAttr',    P, 'attrK');
+bindSlider('sFric',    'vFric',    P, 'fricK');
+bindSlider('sRep',     'vRep',     P, 'repK',
+  v => v >= 1000000 ? (v/1000000).toFixed(1)+'M' : (v/1000).toFixed(0)+'k');
+bindSlider('sRest',    'vRest',    P, 'restitution');
+bindSlider('sCurl',    'vCurl',    P, 'curlK');
+bindSlider('sProx',    'vProx',    P, 'proxMult',    v => v.toFixed(1)+'×');
+bindSlider('sContour', 'vContour', P, 'contourStr',  v => v.toFixed(2));
+bindSlider('sCoreR',   'vCoreR',   P, 'coreR',       v => Math.round(v));
+bindSlider('sLimitR',  'vLimitR',  P, 'limitR',      v => Math.round(v));
+bindSlider('sLimitO',  'vLimitO',  P, 'limitOpacity',v => v.toFixed(2));
+
+// délai rôle
+(function () {
+  const s = document.getElementById('sSwitch');
+  const v = document.getElementById('vSwitch');
+  s.addEventListener('input', () => {
+    window._switchSpeed = parseFloat(s.value);
+    v.textContent = parseFloat(s.value).toFixed(1);
+  });
+  window._switchSpeed = 1.2;
+})();
+
+// Panel 2
+bindSlider('sMemR',  'vMemR',  M, 'memR',    v => Math.round(v));
+bindSlider('sNbPts', 'vNbPts', M, 'nbPts',   v => Math.round(v));
+bindSlider('sAmpli', 'vAmpli', M, 'ampli',   v => Math.round(v));
+bindSlider('sVit',   'vVit',   M, 'vitesse', v => v.toFixed(2));
+bindSlider('sTwist', 'vTwist', M, 'twist',   v => v.toFixed(2));
+bindSlider('sBulge', 'vBulge', M, 'bulge',   v => Math.round(v));
+bindSlider('sMemO',   'vMemO',   M, 'opacity',       v => v.toFixed(2));
+bindSlider('sTent',   'vTent',   M, 'tentacleStr',   v => Math.round(v));
+bindSlider('sPortee', 'vPortee', M, 'tentacleDecay', v => v.toFixed(2));
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

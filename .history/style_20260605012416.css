@@ -1,0 +1,186 @@
+*, *::before, *::after {
+  margin: 0; padding: 0; box-sizing: border-box;
+}
+
+:root {
+  --paper : #f0ece4;
+  --ink   : #0f0e0c;
+  --phi   : 1.618;
+
+  /* ── Référence d'échelle (viewport idéal, en px) ──────────
+     --u vaut 1px quand le viewport = w-ref × h-ref exactement.
+     Ce sont les deux SEULS curseurs à régler pour caler la
+     composition idéale. */
+  --w-ref : 1280;
+  --h-ref : 900;
+
+  /* Unité bi-axe : suit la plus PETITE contrainte des deux axes
+     (largeur OU hauteur). Le bloc se met à l'échelle comme un
+     SVG preserveAspectRatio — proportions internes constantes.
+     clamp() : plancher (sous lequel on scrolle) + plafond. */
+  --u-raw : min(calc(100vw / var(--w-ref)), calc(100vh / var(--h-ref)));
+  --u     : clamp(0.5px, var(--u-raw), 1.5px);
+
+  /* ── Tailles dérivées — TOUT en multiples de --u ─────────
+     Changer --u met à l'échelle les éléments ET leurs
+     distances simultanément. */
+  --title : calc(120 * var(--u));   /* GAP / GROUP */
+  --gap   : calc(40  * var(--u));   /* espacement entre éléments */
+
+  --logo-sota   : calc(40 * var(--u));
+  --logo-kunst  : calc(15 * var(--u));
+  --logo-vallee : calc(17 * var(--u));
+}
+
+html, body { min-height: 100%; }
+
+body {
+  background         : var(--paper);
+  color              : var(--ink);
+  font-family        : "obviously-variable", sans-serif;
+  font-optical-sizing: auto;
+  overflow-x         : clip;
+  cursor             : pointer;
+  user-select        : none;
+  -webkit-user-select: none;
+}
+
+/* ── Bloc central : objet rigide, centré, contenu ferré-left ──
+   width plafonnée à 92vw → jamais de débordement en étroit.
+   safe center : si le contenu dépasse la hauteur (sous le
+   plancher), bascule en haut sans coupe et autorise le scroll. */
+main {
+  width          : min(calc(960 * var(--u)), 92vw);
+  margin-inline  : auto;
+  min-height     : 100vh;
+  display        : flex;
+  flex-direction : column;
+  justify-content: safe center;
+  gap            : var(--gap);
+  overflow-x     : clip;
+}
+
+/* ── Lignes communes ── */
+.line {
+  display        : block;
+  line-height    : 0.92;
+  white-space    : nowrap;
+  text-transform : uppercase;
+  overflow       : visible;
+}
+.line.align-right { text-align: right; }
+.line.align-left  { text-align: left;  }
+
+.block + .block { margin-top: 0; }
+
+/* ── H1 intérieur : GAP / GROUP ── */
+.h1 .inner {
+  display                : block;
+  font-size              : var(--title);
+  font-variation-settings: "ital" 0, "wght" 803, "wdth" 121;
+  transform              : scaleY(0.88);
+  transform-origin       : bottom left;
+}
+
+/* ── H1 extérieur : THE / BXL ── */
+.h1 .outer {
+  display                : block;
+  font-size              : calc(var(--title) / var(--phi));
+  font-variation-settings: "ital" 0, "wght" 500, "wdth" 100;
+  transform              : scaleY(0.88);
+  transform-origin       : bottom left;
+}
+
+/* ── H2 : PAIRING / IS CARING ── */
+.h2 .line {
+  display                : block;
+  font-size              : calc(var(--title) / var(--phi));
+  font-variation-settings: "ital" 0, "wght" 699, "wdth" 121;
+  transform              : scaleY(0.88);
+  transform-origin       : bottom left;
+}
+
+/* ── Ligne d'appel ── */
+.call {
+  font-size              : calc(26 * var(--u));
+  font-variation-settings: "ital" 0, "wght" 480, "wdth" 100;
+  line-height            : 1.3;
+  max-width              : calc(620 * var(--u));
+}
+
+/* ── Bouton ── */
+.btn {
+  align-self             : flex-start;
+  display                : inline-block;
+  padding                : calc(15 * var(--u)) calc(30 * var(--u));
+  background             : var(--ink);
+  color                  : var(--paper);
+  text-decoration        : none;
+  font-size              : calc(21 * var(--u));
+  font-variation-settings: "ital" 0, "wght" 650, "wdth" 100;
+  border-radius          : calc(2 * var(--u));
+  transition             : transform 0.25s ease, opacity 0.25s ease;
+}
+.btn:hover { transform: translateY(-2px); opacity: 0.9; }
+
+/* ── Partenaires : rangée, hauteurs modulées par masse optique.
+   nowrap + hauteurs en --u → ils RAPETISSENT ensemble au lieu
+   de se réagencer. Plus de wrap. */
+.partners {
+  display    : flex;
+  align-items: center;
+  gap        : calc(44 * var(--u));
+  flex-wrap  : nowrap;
+}
+.logo        { width: auto; display: block; opacity: 0.85; }
+.logo-sota   { height: var(--logo-sota);   }
+.logo-kunst  { height: var(--logo-kunst);  }
+.logo-vallee { height: var(--logo-vallee); }
+
+/* ── Footer : discret, en flux, jamais collé ── */
+/* ── Footer ──────────────────────────────────────────────
+   Discret, aligné à gauche, filet visible, textes légers
+   ──────────────────────────────────────────────────────── */
+
+/* ── Footer : discret, premium, aligné à gauche ───────────────── */
+footer {
+  margin-top: calc(30 * var(--u));       /* espace aéré avant le footer */
+  padding-bottom: calc(30 * var(--u));   /* marge basse pour ne pas coller */
+  border-top: 1px solid rgba(0, 0, 0, 0.4);   /* filet visible mais élégant */
+}
+
+.footer-inner {
+  max-width: min(calc(960 * var(--u)), 92vw);
+  margin-inline: auto;          /* centrage horizontal du bloc */
+  text-align: left;             /* contenu ferré à gauche */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;                  /* espace réduit entre email et mention */
+  font-size: calc(13 * var(--u));    /* très petit, aérien */
+  font-variation-settings: "ital" 0, "wght" 320, "wdth" 100;
+  letter-spacing: 0.01em;
+}
+
+.footer-inner a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  opacity: 0.55;                /* texte discret */
+  transition: opacity 0.2s ease;
+}
+
+.footer-inner a:hover {
+  opacity: 0.9;
+  text-decoration: none;
+}
+
+.footer-inner span {
+  opacity: 0.45;                /* mention encore plus légère */
+}
+
+/* ── Ajustement de l’espace sous les logos partenaires
+     pour que le footer ne soit pas collé ───────────────── */
+.partners {
+  margin-bottom: calc(20 * var(--u));   /* respiration avant le footer */
+}

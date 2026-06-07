@@ -1,0 +1,47 @@
+*, *::before, *::after {
+  margin: 0; padding: 0; box-sizing: border-box;
+}
+
+:root {
+  --paper : #f0ece4;
+  --ink   : #0f0e0c;
+  --h2    : clamp(1.8rem, 5vw, 4rem);
+  --h1    : calc(clamp(1.8rem, 5vw, 4rem) * 1.618);
+}
+
+html, body { height: 100%; }
+
+body {
+  background  : var(--paper);
+  color       : var(--ink);
+  font-family : 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  display     : flex;
+  align-items : center;
+  min-height  : 100vh;
+  padding     : 6vw;
+  overflow-x  : hidden;
+  cursor      : pointer;
+  user-select : none;
+  -webkit-user-select: none;
+}
+
+main { width: 100%; }
+
+h1 {
+  font-size     : var(--h1);
+  font-weight   : 700;
+  line-height   : 1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space   : nowrap;
+  margin-bottom : calc(var(--h2) * 0.6);
+}
+
+h2 {
+  font-size     : var(--h2);
+  font-weight   : 700;
+  line-height   : 1.25;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space   : nowrap;
+}

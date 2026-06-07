@@ -1,0 +1,81 @@
+*, *::before, *::after {
+  margin: 0; padding: 0; box-sizing: border-box;
+}
+
+:root {
+  --paper : #f0ece4;
+  --ink   : #0f0e0c;
+  --pad   : 5vw;
+  --main  : clamp(2.5rem, 10vw, 9rem);
+  --phi   : 1.618;
+}
+
+html, body { min-height: 100%; }
+
+body {
+  background         : var(--paper);
+  color              : var(--ink);
+  font-family        : "obviously-variable", sans-serif;
+  padding            : var(--pad);
+  overflow-x         : hidden;
+  cursor             : pointer;
+  user-select        : none;
+  -webkit-user-select: none;
+}
+
+/* ── Conteneur — bord droit à 75vw depuis x=0 ── */
+/* ── Main : centre le bloc, contenu ferré-left ── */
+main {
+  width          : 75vw;            /* bord droit à 75vw depuis x=0 */
+  max-width      : 70rem;           /* plafond sur très grand écran */
+  margin-inline  : auto;            /* centre le bloc horizontalement */
+  min-height     : calc(100vh - 2 * var(--pad)); /* occupe le viewport */
+  display        : flex;
+  flex-direction : column;
+  justify-content: center;          /* centre verticalement le contenu */
+  overflow-x     : clip;
+}
+
+/* ── Blocs ── */
+.block + .block {
+  margin-top: calc(var(--main) / var(--phi));
+}
+
+/* ── Lignes ── */
+.line {
+  display        : block;
+  line-height    : 0.92;
+  white-space    : nowrap;
+  text-transform : uppercase;
+  overflow       : visible;
+}
+
+.line.align-right { text-align: right; }
+.line.align-left  { text-align: left;  }
+
+/* ── H1 intérieur : GAP / GROUP ── */
+.h1 .inner {
+  display                : block;
+  font-size              : var(--main);
+  font-variation-settings: "ital" 0, "wght" 803, "wdth" 121;
+  transform              : scaleY(0.88);
+  transform-origin       : bottom left;
+}
+
+/* ── H1 extérieur : THE / BXL ── */
+.h1 .outer {
+  display                : block;
+  font-size              : calc(var(--main) / var(--phi));
+  font-variation-settings: "ital" 0, "wght" 500, "wdth" 100;
+  transform              : scaleY(0.88);
+  transform-origin       : bottom left;
+}
+
+/* ── H2 ── */
+.h2 .line {
+  display                : block;
+  font-size              : calc(var(--main) / var(--phi));
+  font-variation-settings: "ital" 0, "wght" 699, "wdth" 121;
+  transform              : scaleY(0.88);
+  transform-origin       : bottom left;
+}

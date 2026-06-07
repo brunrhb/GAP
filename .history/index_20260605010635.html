@@ -8,22 +8,6 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <iframe id="anim-bg" src="anim/lvl6/index.html?preset=VERSION%2014" tabindex="-1" aria-hidden="true"></iframe>
-  <header class="site-header">
-  <a href="index.html" class="brand">THE GAP GROUP BXL</a>
-  <nav class="main-nav" aria-label="Navigation principale">
-    <button class="nav-toggle" aria-expanded="false" aria-controls="primary-menu" aria-label="Ouvrir le menu">☰</button>
-    <ul id="primary-menu" class="nav-list">
-      <li><a href="about.html">À propos</a></li>
-      <li><a href="programme.html">Programme</a></li>
-    </ul>
-    <div class="lang-switch" role="group" aria-label="Langue">
-      <button data-lang-btn="fr" class="active">FR</button>
-      <button data-lang-btn="en">EN</button>
-      <button data-lang-btn="nl">NL</button>
-    </div>
-  </nav>
-</header>
   <main>
 
     <div class="block h1" role="heading" aria-level="1">
@@ -40,7 +24,7 @@
 
     <p class="call">Soutien aux artistes émergent·e·s <br> — Call for mentors 2026/2027</p>
 
-    <a class="btn" href="programme.html">Devenir mentor·e</a>
+    <a class="btn" href="#">Devenir mentor·e</a>
 
     <div class="partners">
       <img class="logo logo-sota"  src="sota.png"        alt="State of the Arts">
@@ -51,6 +35,8 @@
   </main>
 
 
+  </main>
+
   <footer>
     <div class="footer-inner">
       <a href="mailto:opencall-thegap@protonmail.com">opencall-thegap@protonmail.com</a>
@@ -60,18 +46,10 @@
 
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
   <script src="main.js"></script>
-  <script>
-    const _anim = document.getElementById('anim-bg');
-    const _fw = () => _anim.contentWindow;
-    document.addEventListener('mousemove', e => {
-      _fw().postMessage({type:'cursor', x:e.clientX, y:e.clientY}, '*');
-    });
-    document.addEventListener('mouseleave', () => {
-      _fw().postMessage({type:'cursor', x:null, y:null}, '*');
-    });
-    window.addEventListener('blur', () => {
-      _fw().postMessage({type:'cursor', x:null, y:null}, '*');
-    });
-  </script>
+</body>
+</html>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>

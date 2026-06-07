@@ -1,0 +1,64 @@
+*, *::before, *::after {
+  margin: 0; padding: 0; box-sizing: border-box;
+}
+
+:root {
+  --paper : #f0ece4;
+  --ink   : #0f0e0c;
+  --pad   : 5vw;
+  --main  : clamp(2.5rem, 10vw, 9rem);
+  --phi   : 1.618;
+}
+
+html, body { min-height: 100%; }
+
+body {
+  background         : var(--paper);
+  color              : var(--ink);
+  font-family        : "obviously-variable", sans-serif;
+  padding            : var(--pad);
+  overflow-x         : hidden;
+  cursor             : pointer;
+  user-select        : none;
+  -webkit-user-select: none;
+}
+
+main {
+  overflow-x: clip;
+}
+
+.block + .block {
+  margin-top: calc(var(--main) / var(--phi));
+}
+
+.line {
+  display        : block;
+  line-height    : 0.92;
+  white-space    : nowrap;
+  text-transform : uppercase;
+  overflow       : visible;
+}
+
+.h1 .inner {
+  display                : block;
+  font-size              : var(--main);
+  font-variation-settings: "ital" 0, "wght" 803, "wdth" 121;
+  transform              : scaleY(0.88);
+  transform-origin       : bottom left;
+}
+
+.h1 .outer {
+  display                : block;
+  font-size              : calc(var(--main) / var(--phi));
+  font-variation-settings: "ital" 0, "wght" 500, "wdth" 100;
+  transform              : scaleY(0.88);
+  transform-origin       : bottom left;
+}
+
+.h2 .line {
+  display                : block;
+  font-size              : calc(var(--main) / var(--phi));
+  font-variation-settings: "ital" 0, "wght" 699, "wdth" 121;
+  transform              : scaleY(0.88);
+  transform-origin       : bottom left;
+}

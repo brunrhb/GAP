@@ -1,0 +1,265 @@
+*, *::before, *::after {
+  margin: 0; padding: 0; box-sizing: border-box;
+}
+
+:root {
+  --paper : #f0ece4;
+  --ink   : #0f0e0c;
+  --phi   : 1.618;
+
+  /* ── Référence d'échelle (viewport idéal, en px) ────────── */
+  --w-ref : 1280;
+  --h-ref : 900;
+
+  /* Unité bi-axe : suit la plus PETITE contrainte (largeur OU hauteur) */
+  --u-raw : min(calc(100vw / var(--w-ref)), calc(100vh / var(--h-ref)));
+  --u     : clamp(0.5px, var(--u-raw), 1.5px);
+
+  /* ── Tailles dérivées ── */
+  --title : calc(120 * var(--u));
+  --gap   : calc(40  * var(--u));
+
+  --logo-sota   : calc(40 * var(--u));
+  --logo-kunst  : calc(15 * var(--u));
+  --logo-vallee : calc(17 * var(--u));
+}
+
+html, body { height: 100%; }
+
+/* ── Header (from V1) ───────────────────────── */
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 0;
+  gap: 1rem;
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  color: inherit;
+  font-size: clamp(1rem, 0.9rem + 0.4vw, 1.2rem);
+}
+
+.main-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.nav-list {
+  list-style: none;
+  display: flex;
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-list a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+.nav-list a:hover,
+.nav-list a[aria-current="page"] {
+  border-bottom-color: currentColor;
+}
+
+.lang-switch {
+  display: flex;
+  gap: 0.25rem;
+}
+.lang-switch button {
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.3);
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  color: inherit;
+  border-radius: 2px;
+}
+.lang-switch button.active {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+.nav-toggle {
+  display: none;
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.3);
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+/* responsive menu */
+@media (max-width: 800px) {
+  .nav-toggle {
+    display: inline-block;
+  }
+  .nav-list {
+    display: none;
+    flex-basis: 100%;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 0;
+    order: 3;
+  }
+  .main-nav.open .nav-list {
+    display: flex;
+  }
+}
+
+
+body {
+  background         : var(--paper);
+  color              : var(--ink);
+  font-family        : "obviously-variable", sans-serif;
+  font-optical-sizing: auto;
+  overflow-x         : clip;
+  cursor             : pointer;
+  user-select        : none;
+  -webkit-user-select: none;
+
+  /* ── Layout vertical : footer toujours visible ── */
+  display        : flex;
+  flex-direction : column;
+  height         : 100vh;
+}
+
+/* ── Contenu principal : occupe l'espace, pousse le footer en bas ── */
+main {
+  flex: 1;
+  width          : min(calc(960 * var(--u)), 92vw);
+  margin-inline  : auto;
+  display        : flex;
+  flex-direction : column;
+  justify-content: center;
+  gap            : var(--gap);
+  overflow-x     : clip;
+}
+
+/* ── Lignes communes ── */
+.line {
+  display        : block;
+  line-height    : 0.92;
+  white-space    : nowrap;
+  text-transform : uppercase;
+  overflow       : visible;
+}
+.line.align-right { text-align: right; }
+.line.align-left  { text-align: left;  }
+
+.block + .block { margin-top: 0; }
+
+/* ── H1 intérieur : GAP / GROUP ── */
+.h1 .inner {
+  display                : block;
+  font-size              : var(--title);
+  font-variation-settings: "ital" 0, "wght" 803, "wdth" 121;
+  transform              : scaleY(0.88);
+  transform-origin       : bottom left;
+}
+
+/* ── H1 extérieur : THE / BXL ── */
+.h1 .outer {
+  display                : block;
+  font-size              : calc(var(--title) / var(--phi));
+  font-variation-settings: "ital" 0, "wght" 500, "wdth" 100;
+  transform              : scaleY(0.88);
+  transform-origin       : bottom left;
+}
+
+/* ── H2 : PAIRING / IS CARING ── */
+.h2 .line {
+  display                : block;
+  font-size              : calc(var(--title) / var(--phi));
+  font-variation-settings: "ital" 0, "wght" 699, "wdth" 121;
+  transform              : scaleY(0.88);
+  transform-origin       : bottom left;
+}
+
+/* ── Ligne d'appel ── */
+.call {
+  font-size              : calc(26 * var(--u));
+  font-variation-settings: "ital" 0, "wght" 480, "wdth" 100;
+  line-height            : 1.3;
+  max-width              : calc(620 * var(--u));
+}
+
+/* ── Bouton ── */
+.btn {
+  align-self             : flex-start;
+  display                : inline-block;
+  padding                : calc(15 * var(--u)) calc(30 * var(--u));
+  background             : var(--ink);
+  color                  : var(--paper);
+  text-decoration        : none;
+  font-size              : calc(21 * var(--u));
+  font-variation-settings: "ital" 0, "wght" 650, "wdth" 100;
+  border-radius          : calc(2 * var(--u));
+  transition             : transform 0.25s ease, opacity 0.25s ease;
+}
+.btn:hover {
+  transform: translateY(-2px);
+  opacity  : 0.9;
+}
+
+/* ── Partenaires : rangée, hauteurs modulées ── */
+.partners {
+  display    : flex;
+  align-items: center;
+  gap        : calc(44 * var(--u));
+  flex-wrap  : nowrap;
+  margin-bottom: calc(20 * var(--u));
+}
+.logo        { width: auto; display: block; opacity: 0.85; }
+.logo-sota   { height: var(--logo-sota);   }
+.logo-kunst  { height: var(--logo-kunst);  }
+.logo-vallee { height: var(--logo-vallee); }
+
+/* ── Footer : discret, premium, aligné à gauche, toujours visible ── */
+footer {
+  margin-top: 0;
+  padding-top: calc(20 * var(--u));
+  padding-bottom: calc(20 * var(--u));
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.footer-inner {
+  max-width: min(calc(960 * var(--u)), 92vw);
+  margin-inline: auto;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: calc(13 * var(--u));
+  font-variation-settings: "ital" 0, "wght" 320, "wdth" 100;
+  letter-spacing: 0.01em;
+}
+
+.footer-inner a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  opacity: 0.55;
+  transition: opacity 0.2s ease;
+}
+
+.footer-inner a:hover {
+  opacity: 0.9;
+  text-decoration: none;
+}
+
+.footer-inner span {
+  opacity: 0.45;
+}

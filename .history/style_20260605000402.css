@@ -1,0 +1,112 @@
+*, *::before, *::after {
+  margin: 0; padding: 0; box-sizing: border-box;
+}
+
+:root {
+  --paper : #f0ece4;
+  --ink   : #0f0e0c;
+  --pad   : 5vw;
+  --main  : clamp(2.5rem, 10vw, 9rem);
+  --phi   : 1.618;
+}
+
+html, body { min-height: 100%; }
+
+body {
+  background         : var(--paper);
+  color              : var(--ink);
+  font-family        : "obviously-variable", sans-serif;
+  padding            : var(--pad);
+  overflow-x         : hidden;
+  cursor             : pointer;
+  user-select        : none;
+  -webkit-user-select: none;
+}
+
+/* ── Conteneur — bord droit à 75vw depuis x=0 ── */
+/* ── Main : centre le bloc, contenu ferré-left ── */
+/* ── Main : bloc centré, contenu ferré-left, pile verticale ── */
+main {
+  width          : 75vw;
+  max-width      : 70rem;
+  margin-inline  : auto;
+  min-height     : calc(100vh - 2 * var(--pad));
+  display        : flex;
+  flex-direction : column;
+  justify-content: center;   /* centre la pile entière dans le viewport */
+  gap            : clamp(1.5rem, 4vh, 3rem); /* respiration entre blocs */
+  overflow-x     : clip;
+}
+
+/* le gap remplace les margin-top inter-blocs */
+.block + .block { margin-top: 0; }
+
+/* ── Ligne d'appel ── */
+.call {
+  font-size              : clamp(1rem, 2.2vw, 1.5rem);
+  font-variation-settings: "ital" 0, "wght" 480, "wdth" 100;
+  line-height            : 1.3;
+  max-width              : 42ch;
+}
+
+/* ── Bouton ── */
+.btn {
+  align-self             : flex-start;   /* ferré-left, ne s'étire pas */
+  display                : inline-block;
+  padding                : 0.85em 1.6em;
+  background             : var(--ink);
+  color                  : var(--paper);
+  text-decoration        : none;
+  font-size              : clamp(0.95rem, 1.8vw, 1.2rem);
+  font-variation-settings: "ital" 0, "wght" 650, "wdth" 100;
+  letter-spacing         : 0.01em;
+  border-radius          : 2px;
+  transition             : transform 0.25s ease, opacity 0.25s ease;
+}
+.btn:hover {
+  transform: translateY(-2px);
+  opacity  : 0.9;
+}
+/* ── Blocs ── */
+.block + .block {
+  margin-top: calc(var(--main) / var(--phi));
+}
+
+/* ── Lignes ── */
+.line {
+  display        : block;
+  line-height    : 0.92;
+  white-space    : nowrap;
+  text-transform : uppercase;
+  overflow       : visible;
+}
+
+.line.align-right { text-align: right; }
+.line.align-left  { text-align: left;  }
+
+/* ── H1 intérieur : GAP / GROUP ── */
+.h1 .inner {
+  display                : block;
+  font-size              : var(--main);
+  font-variation-settings: "ital" 0, "wght" 803, "wdth" 121;
+  transform              : scaleY(0.88);
+  transform-origin       : bottom left;
+}
+
+/* ── H1 extérieur : THE / BXL ── */
+.h1 .outer {
+  display                : block;
+  font-size              : calc(var(--main) / var(--phi));
+  font-variation-settings: "ital" 0, "wght" 500, "wdth" 100;
+  transform              : scaleY(0.88);
+  transform-origin       : bottom left;
+}
+
+/* ── H2 ── */
+.h2 .line {
+  display                : block;
+  font-size              : calc(var(--main) / var(--phi));
+  font-variation-settings: "ital" 0, "wght" 699, "wdth" 121;
+  transform              : scaleY(0.88);
+  transform-origin       : bottom left;
+}

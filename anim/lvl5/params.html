@@ -31,7 +31,7 @@
     #cols {
       flex:1;
       display:grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       overflow:hidden;
     }
     .col {
@@ -39,7 +39,8 @@
       overflow-x:hidden;
       height:100%;
     }
-    .col:first-child { border-right:1px solid rgba(255,255,255,0.07); }
+    .col:nth-child(1),
+    .col:nth-child(2) { border-right:1px solid rgba(255,255,255,0.07); }
 
     .panel { border-bottom:1px solid rgba(255,255,255,0.06); }
 
@@ -72,17 +73,25 @@
       max-height:0; opacity:0; padding-top:0; padding-bottom:0;
     }
 
-    #p-l5 .panel-header { border-left-color:rgba(212,200,64,0.6); }
-    #p-l4 .panel-header { border-left-color:rgba(155,106,191,0.6); }
-    #p-l3 .panel-header { border-left-color:rgba(100,200,120,0.6); }
-    #p-l2 .panel-header { border-left-color:rgba(120,180,220,0.6); }
-    #p-l1 .panel-header { border-left-color:rgba(232,112,64,0.6); }
+    #p-l5  .panel-header { border-left-color:rgba(212,200,64,0.6); }
+    #p-l4  .panel-header { border-left-color:rgba(155,106,191,0.6); }
+    #p-l3  .panel-header { border-left-color:rgba(100,200,120,0.6); }
+    #p-l2  .panel-header { border-left-color:rgba(120,180,220,0.6); }
+    #p-l1  .panel-header { border-left-color:rgba(232,112,64,0.6); }
+    #p-bg0 .panel-header { border-left-color:rgba(220,200,170,0.6); }
+    #p-bg1 .panel-header { border-left-color:rgba(160,200,225,0.6); }
+    #p-bg2 .panel-header { border-left-color:rgba(195,185,225,0.6); }
+    #p-bg3 .panel-header { border-left-color:rgba(230,190,145,0.6); }
 
-    #p-l5 input[type=range] { accent-color:#d4c840; }
-    #p-l4 input[type=range] { accent-color:#9b6abf; }
-    #p-l3 input[type=range] { accent-color:#64c878; }
-    #p-l2 input[type=range] { accent-color:#7ab8d8; }
-    #p-l1 input[type=range] { accent-color:#e87040; }
+    #p-l5  input[type=range] { accent-color:#d4c840; }
+    #p-l4  input[type=range] { accent-color:#9b6abf; }
+    #p-l3  input[type=range] { accent-color:#64c878; }
+    #p-l2  input[type=range] { accent-color:#7ab8d8; }
+    #p-l1  input[type=range] { accent-color:#e87040; }
+    #p-bg0 input[type=range] { accent-color:#c8b890; }
+    #p-bg1 input[type=range] { accent-color:#a0c8e0; }
+    #p-bg2 input[type=range] { accent-color:#c0b8e0; }
+    #p-bg3 input[type=range] { accent-color:#e0b888; }
 
     .s-label {
       font-size:0.7em; letter-spacing:0.07em; text-transform:uppercase;
@@ -221,6 +230,65 @@
   </div>
 </div>
 
+</div><!-- /col milieu -->
+<div class="col">
+
+<!-- ═══ FOND BASE ═══ -->
+<div class="panel" id="p-bg0">
+  <div class="panel-header">
+    <span class="panel-title" style="color:#d8c8a8;">Fond — Base</span>
+    <button class="panel-toggle">▾</button>
+  </div>
+  <div class="panel-body">
+    <div class="row"><label>couleur</label><input type="color" id="cBgBase" value="#ece8e3"></div>
+  </div>
+</div>
+
+<!-- ═══ BLOB 1 ═══ -->
+<div class="panel" id="p-bg1">
+  <div class="panel-header">
+    <span class="panel-title" style="color:#a8c8e0;">Fond — Blob 1</span>
+    <button class="panel-toggle">▾</button>
+  </div>
+  <div class="panel-body">
+    <div class="row"><label>couleur</label><input type="color" id="cBgB1" value="#dce7f0"></div>
+    <div class="row"><label>x</label><input type="range" id="sBgB1x" min="0" max="1" step="0.01" value="0.22"><span class="val" id="vBgB1x">0.22</span></div>
+    <div class="row"><label>y</label><input type="range" id="sBgB1y" min="0" max="1" step="0.01" value="0.22"><span class="val" id="vBgB1y">0.22</span></div>
+    <div class="row"><label>taille</label><input type="range" id="sBgB1sz" min="0.1" max="2" step="0.01" value="0.55"><span class="val" id="vBgB1sz">0.55</span></div>
+    <div class="row"><label>opacité</label><input type="range" id="sBgB1op" min="0" max="1" step="0.01" value="0.85"><span class="val" id="vBgB1op">0.85</span></div>
+  </div>
+</div>
+
+<!-- ═══ BLOB 2 ═══ -->
+<div class="panel" id="p-bg2">
+  <div class="panel-header">
+    <span class="panel-title" style="color:#c0b8e0;">Fond — Blob 2</span>
+    <button class="panel-toggle">▾</button>
+  </div>
+  <div class="panel-body">
+    <div class="row"><label>couleur</label><input type="color" id="cBgB2" value="#d6d3e2"></div>
+    <div class="row"><label>x</label><input type="range" id="sBgB2x" min="0" max="1" step="0.01" value="0.78"><span class="val" id="vBgB2x">0.78</span></div>
+    <div class="row"><label>y</label><input type="range" id="sBgB2y" min="0" max="1" step="0.01" value="0.28"><span class="val" id="vBgB2y">0.28</span></div>
+    <div class="row"><label>taille</label><input type="range" id="sBgB2sz" min="0.1" max="2" step="0.01" value="0.50"><span class="val" id="vBgB2sz">0.50</span></div>
+    <div class="row"><label>opacité</label><input type="range" id="sBgB2op" min="0" max="1" step="0.01" value="0.75"><span class="val" id="vBgB2op">0.75</span></div>
+  </div>
+</div>
+
+<!-- ═══ BLOB 3 ═══ -->
+<div class="panel" id="p-bg3">
+  <div class="panel-header">
+    <span class="panel-title" style="color:#e0b880;">Fond — Blob 3</span>
+    <button class="panel-toggle">▾</button>
+  </div>
+  <div class="panel-body">
+    <div class="row"><label>couleur</label><input type="color" id="cBgB3" value="#f0ddc9"></div>
+    <div class="row"><label>x</label><input type="range" id="sBgB3x" min="0" max="1" step="0.01" value="0.50"><span class="val" id="vBgB3x">0.50</span></div>
+    <div class="row"><label>y</label><input type="range" id="sBgB3y" min="0" max="1" step="0.01" value="0.72"><span class="val" id="vBgB3y">0.72</span></div>
+    <div class="row"><label>taille</label><input type="range" id="sBgB3sz" min="0.1" max="2" step="0.01" value="0.60"><span class="val" id="vBgB3sz">0.60</span></div>
+    <div class="row"><label>opacité</label><input type="range" id="sBgB3op" min="0" max="1" step="0.01" value="0.70"><span class="val" id="vBgB3op">0.70</span></div>
+  </div>
+</div>
+
 </div><!-- /col droite -->
 </div><!-- /cols -->
 
@@ -248,6 +316,12 @@ const M = {
 const L3 = { scale:1.05, color:'#64c878', opacity:0.22, blur:0, ellipse:0.18 };
 const L4 = { scale:1.05, color:'#9b6abf', opacity:0.16, blur:0, ellipse:0.00, compress:0 };
 const L5 = { scale:1.05, color:'#d4c840', opacity:0.10, blur:0, ellipse:0.08, compress:0 };
+const BG = {
+  baseColor:'#ece8e3',
+  b1Color:'#dce7f0', b1x:0.22, b1y:0.22, b1size:0.55, b1op:0.85,
+  b2Color:'#d6d3e2', b2x:0.78, b2y:0.28, b2size:0.50, b2op:0.75,
+  b3Color:'#f0ddc9', b3x:0.50, b3y:0.72, b3size:0.60, b3op:0.70,
+};
 let _switchSpeed = 1.2;
 
 const sliderMap = {
@@ -288,13 +362,29 @@ const sliderMap = {
   sContour:   { obj:P,  key:'contourStr' },
   sLimitR:    { obj:P,  key:'limitR' },
   sLimitO:    { obj:P,  key:'limitOpacity' },
+  sBgB1x:     { obj:BG, key:'b1x' },
+  sBgB1y:     { obj:BG, key:'b1y' },
+  sBgB1sz:    { obj:BG, key:'b1size' },
+  sBgB1op:    { obj:BG, key:'b1op' },
+  sBgB2x:     { obj:BG, key:'b2x' },
+  sBgB2y:     { obj:BG, key:'b2y' },
+  sBgB2sz:    { obj:BG, key:'b2size' },
+  sBgB2op:    { obj:BG, key:'b2op' },
+  sBgB3x:     { obj:BG, key:'b3x' },
+  sBgB3y:     { obj:BG, key:'b3y' },
+  sBgB3sz:    { obj:BG, key:'b3size' },
+  sBgB3op:    { obj:BG, key:'b3op' },
 };
 const colorMap = {
-  cCol5:{ obj:L5, key:'color' },
-  cCol4:{ obj:L4, key:'color' },
-  cCol3:{ obj:L3, key:'color' },
-  cCol2:{ obj:M,  key:'color' },
-  cCol1:{ obj:P,  key:'coreColor' },
+  cCol5:   { obj:L5, key:'color' },
+  cCol4:   { obj:L4, key:'color' },
+  cCol3:   { obj:L3, key:'color' },
+  cCol2:   { obj:M,  key:'color' },
+  cCol1:   { obj:P,  key:'coreColor' },
+  cBgBase: { obj:BG, key:'baseColor' },
+  cBgB1:   { obj:BG, key:'b1Color' },
+  cBgB2:   { obj:BG, key:'b2Color' },
+  cBgB3:   { obj:BG, key:'b3Color' },
 };
 
 const fmts = {
@@ -317,10 +407,16 @@ const fmts = {
   sProx:    v=>v.toFixed(1)+'×', sSwitch: v=>v.toFixed(1),
   sContour: v=>v.toFixed(2),    sLimitR:  v=>Math.round(v),
   sLimitO:  v=>v.toFixed(2),
+  sBgB1x:   v=>v.toFixed(2),   sBgB1y:   v=>v.toFixed(2),
+  sBgB1sz:  v=>v.toFixed(2),   sBgB1op:  v=>v.toFixed(2),
+  sBgB2x:   v=>v.toFixed(2),   sBgB2y:   v=>v.toFixed(2),
+  sBgB2sz:  v=>v.toFixed(2),   sBgB2op:  v=>v.toFixed(2),
+  sBgB3x:   v=>v.toFixed(2),   sBgB3y:   v=>v.toFixed(2),
+  sBgB3sz:  v=>v.toFixed(2),   sBgB3op:  v=>v.toFixed(2),
 };
 
 function getConfig(){
-  return { P:{...P}, M:{...M}, L3:{...L3}, L4:{...L4}, L5:{...L5}, switchSpeed:_switchSpeed };
+  return { P:{...P}, M:{...M}, L3:{...L3}, L4:{...L4}, L5:{...L5}, BG:{...BG}, switchSpeed:_switchSpeed };
 }
 function broadcast(){
   try{ localStorage.setItem(CFG_KEY, JSON.stringify(getConfig())); }catch(e){}
@@ -348,6 +444,7 @@ function applyConfig(cfg, doBroadcast=true){
   if(cfg.L3) Object.assign(L3, cfg.L3);
   if(cfg.L4) Object.assign(L4, cfg.L4);
   if(cfg.L5) Object.assign(L5, cfg.L5);
+  if(cfg.BG) Object.assign(BG, cfg.BG);
   if(cfg.switchSpeed!==undefined) _switchSpeed=cfg.switchSpeed;
   if(doBroadcast) syncAllInputs(); else syncDOM();
 }

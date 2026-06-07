@@ -263,7 +263,11 @@ function getConfig(){
   return { P:{...P}, M:{...M}, L3:{...L3}, L4:{...L4}, L5:{...L5}, switchSpeed:_switchSpeed };
 }
 function broadcast(){
-  try{ localStorage.setItem(CFG_KEY, JSON.stringify(getConfig())); }catch(e){}
+  // Préserve BG depuis le localStorage existant pour ne pas l'écraser
+  let existing={};
+  try{ const s=localStorage.getItem(CFG_KEY); if(s) existing=JSON.parse(s); }catch(e){}
+  const cfg=Object.assign({}, existing, getConfig());
+  try{ localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); }catch(e){}
   flashSync();
 }
 

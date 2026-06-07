@@ -6,7 +6,7 @@
   <title>GAP — Anim lvl4</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { background:#f0ece4; overflow:hidden; font-family:monospace; }
+    body { background:#ece8e3; overflow:hidden; font-family:monospace; }
     canvas { display:block; position:fixed; inset:0; }
     #btn-bar {
       position:fixed; bottom:1rem; right:1rem; z-index:999;
@@ -71,6 +71,12 @@ const M = {
 const L3 = { scale:1.05, color:'#64c878', opacity:0.22, blur:0, ellipse:0.18 };
 const L4 = { scale:1.05, color:'#9b6abf', opacity:0.16, blur:0, ellipse:0.00, compress:0 };
 const L5 = { scale:1.05, color:'#d4c840', opacity:0.10, blur:0, ellipse:0.08, compress:0 };
+const BG = {
+  baseColor:'#ece8e3',
+  b1Color:'#dce7f0', b1x:0.22, b1y:0.22, b1size:0.55, b1op:0.85,
+  b2Color:'#d6d3e2', b2x:0.78, b2y:0.28, b2size:0.50, b2op:0.75,
+  b3Color:'#f0ddc9', b3x:0.50, b3y:0.72, b3size:0.60, b3op:0.70,
+};
 
 // ── Physique ──────────────────────────────────────────────
 const CURL_BEHIND=3.0, CURL_FRONT=0.25, ATTR_FAR_CLOSE=0.05, ATTR_FAR_FAR=4.0;
@@ -174,8 +180,24 @@ function drawSmoothClosed(pts){
   ctx.closePath();
 }
 
+function drawBackground(){
+  ctx.fillStyle=BG.baseColor;
+  ctx.fillRect(0,0,W,H);
+  [[BG.b1Color,BG.b1x,BG.b1y,BG.b1size,BG.b1op],
+   [BG.b2Color,BG.b2x,BG.b2y,BG.b2size,BG.b2op],
+   [BG.b3Color,BG.b3x,BG.b3y,BG.b3size,BG.b3op]
+  ].forEach(([col,x,y,sz,op])=>{
+    const cx=x*W,cy=y*H,r=sz*Math.max(W,H);
+    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+    g.addColorStop(0,hexToRgba(col,op));
+    g.addColorStop(1,hexToRgba(col,0));
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  });
+}
+
 function draw(t){
   ctx.clearRect(0,0,W,H);
+  drawBackground();
   const [a,b]=particles,phaseList=[phases0,phases1];
 
   // Ligne de liaison (debug)
@@ -243,12 +265,13 @@ function applyConfig(cfg){
   if(cfg.L3) Object.assign(L3, cfg.L3);
   if(cfg.L4) Object.assign(L4, cfg.L4);
   if(cfg.L5) Object.assign(L5, cfg.L5);
+  if(cfg.BG) Object.assign(BG, cfg.BG);
   if(cfg.switchSpeed!==undefined) window._switchSpeed=cfg.switchSpeed;
   if(cfg.M&&cfg.M.nbPts){ phases0=buildPhases(M.nbPts); phases1=buildPhases(M.nbPts); }
 }
 
 // Au refresh : publie les valeurs par défaut (réinitialise params/setup si ouverts)
-try{ localStorage.setItem(CFG_KEY, JSON.stringify({P:{...P},M:{...M},L3:{...L3},L4:{...L4},L5:{...L5},switchSpeed:window._switchSpeed})); }catch(e){}
+try{ localStorage.setItem(CFG_KEY, JSON.stringify({P:{...P},M:{...M},L3:{...L3},L4:{...L4},L5:{...L5},BG:{...BG},switchSpeed:window._switchSpeed})); }catch(e){}
 
 // Reçoit les updates de la fenêtre de contrôles
 window.addEventListener('storage',e=>{
@@ -286,7 +309,7 @@ document.getElementById('btn-params').addEventListener('click',()=>{
   paramsWin=window.open(
     'params.html',
     'gap-params',
-    'width=560,height=820,left=20,top=20'
+    'width=780,height=820,left=20,top=20'
   );
 });
 document.getElementById('btn-setup').addEventListener('click',()=>{

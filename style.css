@@ -196,6 +196,7 @@ main {
   font-variation-settings: "ital" 0, "wght" 803, "wdth" 121;
   transform              : scaleY(0.88);
   transform-origin       : bottom left;
+  color                  : #fff;
 }
 
 /* ── H1 extérieur : THE / BXL ── */
@@ -205,6 +206,7 @@ main {
   font-variation-settings: "ital" 0, "wght" 500, "wdth" 100;
   transform              : scaleY(0.88);
   transform-origin       : bottom left;
+  color                  : #fff;
 }
 
 /* ── H2 : PAIRING / IS CARING ── */
@@ -214,6 +216,7 @@ main {
   font-variation-settings: "ital" 0, "wght" 699, "wdth" 121;
   transform              : scaleY(0.88);
   transform-origin       : bottom left;
+  color                  : #fff;
 }
 
 /* ── Ligne d'appel ── */

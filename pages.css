@@ -5,9 +5,17 @@
 
 /* ── Overrides body pour pages de contenu ── */
 body.is-page {
-  cursor: default;
-  user-select: text;
+  cursor            : default;
+  user-select       : text;
   -webkit-user-select: text;
+  background        :
+    radial-gradient(ellipse 160% 100% at 35% 12%,  rgba(221,144,120, 0.95) 0%, transparent 62%),
+    radial-gradient(ellipse 110%  75% at 75%  6%,  rgba(204,176,168, 0.75) 0%, transparent 58%),
+    radial-gradient(ellipse  90%  65% at 52% 16%,  rgba(244,196,184, 0.65) 0%, transparent 52%),
+    radial-gradient(ellipse 120%  60% at 80% 70%,  rgba(196,190,200, 0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 100%  50% at 15% 85%,  rgba(184,187,200, 0.14) 0%, transparent 65%),
+    var(--paper);
+  background-attachment: fixed;
 }
 
 /* ── Gestion des langues ── */
@@ -45,6 +53,7 @@ main.page h1 {
   transform              : scaleY(0.88);
   transform-origin       : bottom left;
   margin-bottom          : calc(48 * var(--u));
+  color                  : var(--ink);
 }
 
 /* ── H2 : intermédiaire ── */

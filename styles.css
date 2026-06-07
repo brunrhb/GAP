@@ -1,0 +1,525 @@
+/* =========================================================
+   The Gap Group BXL — styles complets (auras incluses)
+   Organisation par régions pour faciliter la navigation
+   ========================================================= */
+
+/* #region Reset & base */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, 'Roboto', sans-serif;
+  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+  line-height: 1.6;
+  color: #1a1a1a;
+  min-height: 100vh;
+  background: linear-gradient(to top, #ECE8E3 0%, #DCE7F0 50%, #F0DDC9 100%) fixed;
+  /* Les marges latérales sont déplacées dans un conteneur wrapper pour ne pas décentrer les auras */
+}
+/* #endregion */
+
+/* #region Typographie & police */
+@font-face {
+  font-family: 'DINdong';
+  src: url('fonts/DINdong.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+/* #endregion */
+
+
+
+/* #region TITRE - */
+.hero-svg-title {
+  display: block;
+  width: clamp(400px, 50vw, 600px);
+  height: auto;
+  margin-bottom: 1rem;
+}
+
+.hero-row {
+  display: flex;
+}
+
+.hero-row {
+  margin-top:2vw ;
+}
+
+.hero-svg-subtitle {
+  display: block;
+  width: clamp(300px, 40vw, 500px);
+  width: 40vw;
+  height: auto;
+  margin-left: clamp(100px, 30vw , 300px);
+  margin-left: 10vw;
+  margin-top: 0rem;
+  margin-bottom: 1rem;
+}
+/* #endregion */
+
+
+
+
+
+
+
+
+
+
+/* #region AURA - 4 breakpoints proportionnels */
+
+/* #region 1. VARIABLES (breakpoints) */
+
+/* Base : écran moyen petit 1001‑1200px (facteur 1) */
+@media (max-width: 1200px) and (min-width: 1001px) {
+  :root {
+    --core-size: 300px; --core-blur: 20px;
+    --nucleus-size: 400px; --nucleus-blur: 50px;
+    --spread-size: 1000px; --spread-blur: 100px;
+
+    --drift-offset-Aura1-x: 100px; --drift-offset-Aura1-x2: 100px;
+    --drift-offset-Aura1-y: 100px; --drift-offset-Aura1-y2: 100px;
+
+    --drift-offset-Aura2-x: 100px; --drift-offset-Aura2-x2: 100px;
+    --drift-offset-Aura2-y: 100px; --drift-offset-Aura2-y2: 100px;
+
+    --drift-duration-1: 13s; --drift-duration-2: 16s;
+  }
+}
+
+/* Écran moyen large 1201‑1400px (facteur 1.3) */
+@media (max-width: 1400px) and (min-width: 1201px) {
+  :root {
+    --core-size: 390px; --core-blur: 26px;
+    --nucleus-size: 400px; --nucleus-blur: 70px;
+    --spread-size: 1300px; --spread-blur: 65px;
+
+    --drift-offset-Aura1-x: 130px; --drift-offset-Aura1-x2: 130px;
+    --drift-offset-Aura1-y: 130px; --drift-offset-Aura1-y2: 130px;
+
+    --drift-offset-Aura2-x: 130px; --drift-offset-Aura2-x2: 130px;
+    --drift-offset-Aura2-y: 130px; --drift-offset-Aura2-y2: 130px;
+
+    --drift-duration-1: 10s; --drift-duration-2: 12s;
+  }
+}
+
+/* Grand écran >1400px (facteur 1.6) */
+@media (min-width: 1401px) {
+  :root {
+    --core-size: 480px; --core-blur: 32px;
+    --nucleus-size: 1120px; --nucleus-blur: 112px;
+    --spread-size: 1600px; --spread-blur: 80px;
+
+    --drift-offset-Aura1-x: 160px; --drift-offset-Aura1-x2: 160px;
+    --drift-offset-Aura1-y: 160px; --drift-offset-Aura1-y2: 160px;
+
+    --drift-offset-Aura2-x: 160px; --drift-offset-Aura2-x2: 160px;
+    --drift-offset-Aura2-y: 160px; --drift-offset-Aura2-y2: 160px;
+
+    --drift-duration-1: 21s; --drift-duration-2: 26s;
+  }
+}
+
+/* Mobile ≤800px (facteur 0.6) */
+@media (max-width: 800px) {
+  :root {
+    --core-size: 180px; --core-blur: 12px;
+    --nucleus-size: 420px; --nucleus-blur: 42px;
+    --spread-size: 600px; --spread-blur: 30px;
+
+    --drift-offset-Aura1-x: 60px; --drift-offset-Aura1-x2: 60px;
+    --drift-offset-Aura1-y: 60px; --drift-offset-Aura1-y2: 60px;
+
+    --drift-offset-Aura2-x: 60px; --drift-offset-Aura2-x2: 60px;
+    --drift-offset-Aura2-y: 60px; --drift-offset-Aura2-y2: 60px;
+
+    --drift-duration-1: 8s; --drift-duration-2: 10s;
+  }
+}
+
+/* #endregion */
+
+/* #region 2. STRUCTURE & VISUELS (couches indépendantes) */
+
+/* Base commune à toutes les couches */
+.spread, .core, .nucleus {
+  position: fixed;
+  top: 30%;
+  left: 30%;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Styles spécifiques */
+
+.core {
+  width: var(--core-size);
+  height: var(--core-size);
+  background: radial-gradient(circle at 50% 50%, #F45800 0%, #F47B00 100%);        /* ← à remplacer par couleur chaude intermédiaire */
+  border-radius: 45% 55% 40% 60% / 55% 45% 60% 40%;
+  filter: blur(var(--core-blur));
+  opacity: 0.8;
+}
+.nucleus {
+  width: var(--nucleus-size);
+  height: var(--nucleus-size);
+  background: radial-gradient(circle at 50% 50%, #F47B00 0%, #FFCBA4 100%) ;      /* ← à remplacer par couleur très chaude (noyau) */
+  filter: blur(var(--nucleus-blur));
+  opacity: 0.9;
+}
+
+.spread {
+  width: var(--spread-size);
+  height: var(--spread-size);
+ background: radial-gradient(circle at 50% 50%, #FFCBA4 0%, rgba(255, 203, 164, 0) 100%);       /* ← à remplacer par couleur froide finale */
+  border-radius: 55% 45% 60% 40% / 50% 55% 45% 50%;
+  filter: blur(var(--spread-blur));
+  opacity: 0.7;
+}
+
+/* Positions individuelles (top/left) 
+.spread-1, .core-1, .nucleus-1 {
+  top: 30%;
+  left: 50%;
+}
+.spread-2, .core-2, .nucleus-2 {
+  top: 80%;
+  left: 50%;
+}*/
+
+/* Z-index : chaque niveau (spread, core, nucleus) a la même valeur pour les deux auras */
+.spread-1, .spread-2   { z-index: 1; }
+.nucleus-1, .nucleus-2 { z-index: 2; }
+.core-1, .core-2 { z-index: 3; }
+
+/* Si tu veux des intercalages plus fins (ex: nucleus-2 sous spread-1), ajoute des règles spécifiques après */
+/* .nucleus-2 { z-index: 0; }  */
+
+/* #endregion */
+
+
+/* #region 2b. FORMES & DÉFORMATIONS STATIQUES (individualisées) */
+
+/* AURA 1 */
+
+.core-1 {
+ border-radius: 70% 30% 55% 45% / 60% 40% 45% 55%;
+  transform: translate(-50%, -50%) scale(1.1, 0.9) rotate(-25deg);
+}
+.nucleus-1 {
+ border-radius: 70% 30% 55% 45% / 60% 40% 45% 55%;
+  transform: translate(-50%, -50%) scale(1.1, 0.9) rotate(-25deg);
+}
+
+.spread-1 {
+ border-radius: 70% 30% 55% 45% / 60% 40% 45% 55%;
+  transform: translate(-50%, -50%) scale(1.1, 0.9) rotate(-25deg);
+}
+
+/* AURA 2 */
+
+.core-2 {
+ border-radius: 70% 30% 55% 45% / 60% 40% 45% 55%;
+  transform: translate(-50%, -50%) scale(1.1, 0.9) rotate(-70deg);
+}
+.nucleus-2 {
+ border-radius: 70% 30% 55% 45% / 60% 40% 45% 55%;
+  transform: translate(-50%, -50%) scale(1.1, 0.9) rotate(-25deg);
+}
+
+.spread-2 {
+ border-radius: 70% 30% 55% 45% / 60% 40% 45% 55%;
+  transform: translate(-50%, -50%) scale(1.1, 0.9) rotate(-25deg);
+}
+
+/* #endregion */
+
+
+
+/* #region 3. ANIMATIONS & DÉFORMATIONS (commenté) */
+
+
+@keyframes drift1 {
+  0% { transform: translate(calc(-50% + var(--drift-offset-Aura1-x)), calc(-50% - var(--drift-offset-au))) rotate(18deg); }
+  100% { transform: translate(calc(-50% - var(--drift-offset-Aura1-x2)), calc(-50% + var(--drift-offset-y2))) rotate(-18deg); }
+}
+@keyframes drift2 {
+  0% { transform: translate(calc(-50% - var(--drift-offset-Aura2-x)), calc(-50% + var(--drift-offset-Aur2-y))) rotate(18deg); }
+  100% { transform: translate(calc(-50% + var(--drift-offset-Aura2-x2)), calc(-50% - var(--drift-offset-Aura2-y2))) rotate(-18deg); }
+}
+
+.spread-1, .core-1, .nucleus-1 {
+  animation: drift1 var(--drift-duration-1) ease-in-out infinite alternate;
+}
+.spread-2, .core-2, .nucleus-2 {
+  animation: drift2 var(--drift-duration-2) ease-in-out infinite alternate-reverse;
+}
+
+.spread-1 {
+  transform: translate(-50%, -50%) scale(1.3, 0.9) rotate(15deg);
+}
+.core-1 {
+  transform: translate(-50%, -50%) scale(1.1, 0.85) rotate(5deg);
+}
+.nucleus-1 {
+  transform: translate(calc(-50% + 38px), calc(-50% + 25px)) scale(1.2, 0.8) rotate(-10deg);
+}
+.spread-2 {
+  transform: translate(-50%, -50%) scale(0.9, 1.3) rotate(-20deg);
+}
+.core-2 {
+  transform: translate(-50%, -50%) scale(0.85, 1.1) rotate(-5deg);
+}
+.nucleus-2 {
+  transform: translate(calc(-50% - 30px), calc(-50% - 20px)) scale(0.9, 1.2) rotate(15deg);
+}
+
+
+/* #endregion */
+
+/* #region Layout principal (wrapper pour le contenu texte) */
+/* On retire le padding du body pour ne pas décaler les auras,
+   et on l’applique à un conteneur interne */
+body {
+  padding: 0;  /* override des marges précédentes */
+}
+.page-wrap {
+  padding: 0 5vw 0 15vw;
+  position: relative;
+  z-index: 4;  /* au-dessus des auras (z-index 2 et 3) */
+}
+/* #endregion */
+
+/* #region Header & navigation */
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 0;
+  gap: 1rem;
+  position: relative;
+  z-index: 4;
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  color: inherit;
+  font-size: clamp(1rem, 0.9rem + 0.4vw, 1.2rem);
+}
+
+.main-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.nav-list {
+  list-style: none;
+  display: flex;
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-list a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+.nav-list a:hover,
+.nav-list a[aria-current="page"] {
+  border-bottom-color: currentColor;
+}
+
+.lang-switch {
+  display: flex;
+  gap: 0.25rem;
+}
+.lang-switch button {
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.3);
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  color: inherit;
+  border-radius: 2px;
+}
+.lang-switch button.active {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+.nav-toggle {
+  display: none;
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.3);
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+/* #endregion */
+
+/* #region Hero (page d'accueil) */
+.hero {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4rem 0;
+  position: relative;
+  z-index: 4;
+}
+
+.hero-title {
+  font-family: 'DINdong', system-ui, sans-serif;
+  font-weight: 900;
+  font-size: clamp(2.5rem, 6vw + 1rem, 7rem);
+  line-height: 0.95;
+  margin: 0 0 1rem 0;
+  letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+  font-size: clamp(1.25rem, 1.5vw + 0.8rem, 2rem);
+  font-weight: 600;
+  margin: 0 0 2rem 0;
+  letter-spacing: 0.05em;
+}
+
+.hero-hook {
+  font-size: clamp(1rem, 0.5vw + 0.9rem, 1.25rem);
+  margin: 0 0 2.5rem 0;
+  max-width: 50ch;
+  opacity: 0.85;
+}
+/* #endregion */
+
+/* #region Pages génériques (About, Programme) */
+.page {
+  padding: 2rem 0 4rem;
+  max-width: 70ch;
+  position: relative;
+  z-index: 4;
+}
+
+.page h1 {
+  font-family: 'DINdong', system-ui, sans-serif;
+  font-size: clamp(2rem, 3vw + 1rem, 3.5rem);
+  line-height: 1.05;
+  margin: 0 0 1.5rem 0;
+}
+.page h2 {
+  font-size: clamp(1.25rem, 1vw + 1rem, 1.75rem);
+  margin: 2.5rem 0 0.75rem;
+}
+.page p { margin: 0 0 1rem; }
+.page ul {
+  padding-left: 1.25rem;
+  margin: 0 0 1rem;
+}
+.page li { margin-bottom: 0.5rem; }
+
+.lede {
+  font-size: clamp(1.1rem, 0.7vw + 1rem, 1.35rem);
+  font-weight: 500;
+  margin-bottom: 2rem;
+}
+
+.cta-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.partners {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  font-style: italic;
+}
+/* #endregion */
+
+/* #region Boutons */
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: #1a1a1a;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border-radius: 2px;
+  transition: opacity 0.2s;
+  align-self: flex-start;
+}
+.btn:hover { opacity: 0.85; }
+/* #endregion */
+
+/* #region Footer */
+.site-footer {
+  padding: 3rem 0 2rem;
+  border-top: 1px solid rgba(0,0,0,0.15);
+  margin-top: 4rem;
+  font-size: 0.9rem;
+  opacity: 0.8;
+  position: relative;
+  z-index: 4;
+}
+.site-footer p { margin: 0.25rem 0; }
+.site-footer a { color: inherit; }
+/* #endregion */
+
+/* #region Gestion des langues (affichage sélectif) */
+.lang-fr, .lang-en, .lang-nl { display: none; }
+html.show-fr .lang-fr { display: revert; }
+html.show-en .lang-en { display: revert; }
+html.show-nl .lang-nl { display: revert; }
+html.show-fr span.lang-fr,
+html.show-en span.lang-en,
+html.show-nl span.lang-nl { display: inline; }
+/* #endregion */
+
+/* #region Responsive (mobile) */
+@media (max-width: 800px) {
+  .page-wrap {
+    padding: 0 1rem;
+  }
+  .nav-toggle {
+    display: inline-block;
+  }
+  .nav-list {
+    display: none;
+    flex-basis: 100%;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 0;
+    order: 3;
+  }
+  .main-nav.open .nav-list {
+    display: flex;
+  }
+  .hero {
+    min-height: 60vh;
+    padding: 2rem 0;
+  }
+  .site-footer {
+    margin-top: 2rem;
+  }
+}
+/* #endregion */

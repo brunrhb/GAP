@@ -56,6 +56,11 @@ main.page h2 {
   margin-bottom          : calc(16 * var(--u));
 }
 
+/* ── Gras sur variable font : surcharge le wght axis ── */
+main.page strong {
+  font-variation-settings: "ital" 0, "wght" 700, "wdth" 100;
+}
+
 /* ── Corps de texte : clamp pour plancher lisible sur mobile ── */
 main.page p,
 main.page li {
@@ -99,6 +104,16 @@ main.page li { margin-bottom: 0.5em; }
   transition             : opacity 0.2s;
 }
 .cta-line a:not(.btn):hover { opacity: 1; }
+
+/* ── Nom du programme (sous-titre du h1) ── */
+.programme-title {
+  font-size              : clamp(16px, calc(22 * var(--u)), 30px);
+  font-variation-settings: "ital" 0, "wght" 550, "wdth" 105;
+  line-height            : 1.2;
+  opacity                : 0.6;
+  margin-top             : calc(-36 * var(--u));
+  margin-bottom          : calc(36 * var(--u));
+}
 
 /* ── Ligne partenaires (texte, pas logos) ── */
 p.partners {

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GAP — Anim lvl4</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#f0ece4; overflow:hidden; font-family:monospace; }
+    canvas { display:block; position:fixed; inset:0; }
+    #btn-bar {
+      position:fixed; bottom:1rem; right:1rem; z-index:999;
+      display:flex; gap:0.4em;
+    }
+    .btn-win {
+      background:rgba(12,11,10,0.72); color:#f0ece4;
+      border:1px solid rgba(255,255,255,0.13);
+      font-family:monospace; font-size:13px;
+      padding:0.45em 0.9em; border-radius:0.35em;
+      cursor:pointer; backdrop-filter:blur(10px);
+      transition:background 0.15s;
+    }
+    .btn-win:hover { background:rgba(30,28,25,0.9); }
+    #status {
+      position:fixed; bottom:1rem; left:1rem; z-index:999;
+      font-family:monospace; font-size:11px;
+      color:rgba(240,236,228,0.28);
+      pointer-events:none;
+    }
+  </style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="btn-bar">
+  <button class="btn-win" id="btn-params">⚙ Paramètres</button>
+  <button class="btn-win" id="btn-setup">⚙ Setup</button>
+</div>
+<div id="status">—</div>
+
+<script>
+/* ── GAP — Anim debug lvl4 — animation seule
+   Params  → anim-debug-lvl4-params.html (window.open)
+   Setup   → anim-debug-lvl4-setup.html  (window.open)
+   Sync via localStorage  key=gap_lvl4_cfg / gap_lvl4_dbg
+   ─────────────────────────────────────────── */
+
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+const CFG_KEY = 'gap_lvl4_cfg';
+const DBG_KEY = 'gap_lvl4_dbg';
+
+function hexToRgba(hex, alpha, darken=1) {
+  const r=Math.round(parseInt(hex.slice(1,3),16)*darken);
+  const g=Math.round(parseInt(hex.slice(3,5),16)*darken);
+  const b=Math.round(parseInt(hex.slice(5,7),16)*darken);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// ── Params (valeurs par défaut) ───────────────────────────
+const P = {
+  attrK:5, fricK:1.0, repK:1500000, curlK:2940, restitution:0.55,
+  proxMult:3.5, contourStr:0.65,
+  coreR:112, coreColor:'#e87040', coreOpacity:0.88, coreBlur:0,
+  limitR:270, limitOpacity:0.22,
+};
+const M = {
+  memR:120, nbPts:10, ampli:18, vitesse:0.6, twist:0.08,
+  bulge:35, tentacleStr:50, tentacleDecay:0.4,
+  color:'#a0cde6', opacity:0.38, blur:0,
+};
+const L3 = { scale:1.05, color:'#64c878', opacity:0.22, blur:0, ellipse:0.18 };
+const L4 = { scale:1.05, color:'#9b6abf', opacity:0.16, blur:0, ellipse:0.00, compress:0 };
+const L5 = { scale:1.05, color:'#d4c840', opacity:0.10, blur:0, ellipse:0.08, compress:0 };
+
+// ── Physique ──────────────────────────────────────────────
+const CURL_BEHIND=3.0, CURL_FRONT=0.25, ATTR_FAR_CLOSE=0.05, ATTR_FAR_FAR=4.0;
+const dominance=[0.0,1.0];
+
+function buildPhases(n){
+  const phi=1.6180339887;
+  return Array.from({length:n},(_,i)=>i*phi*Math.PI*2);
+}
+let phases0=buildPhases(M.nbPts), phases1=buildPhases(M.nbPts);
+let W=0, H=0, cursor=null, lastTs=null, elapsed=0;
+const particles=[{x:0,y:0,vx:0,vy:0},{x:0,y:0,vx:0,vy:0}];
+
+function resize(){
+  W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight;
+  if(!particles[0].x){ particles[0].x=W/2-200; particles[0].y=H/2; particles[1].x=W/2+200; particles[1].y=H/2; }
+}
+window.addEventListener('resize',resize); resize();
+window.addEventListener('mousemove',e=>{cursor={x:e.clientX,y:e.clientY};});
+function getCursor(){return cursor??{x:W/2,y:H/2};}
+
+function physics(dt){
+  const c=getCursor(),[a,b]=particles;
+  const dx=b.x-a.x,dy=b.y-a.y,dist=Math.max(Math.sqrt(dx*dx+dy*dy),1);
+  const nx=dx/dist,ny=dy/dist,repMag=P.repK/(dist*dist),curlMag=P.curlK/dist,tx=-ny,ty=nx;
+  const dA=Math.sqrt((c.x-a.x)**2+(c.y-a.y)**2),dB=Math.sqrt((c.x-b.x)**2+(c.y-b.y)**2);
+  const farIdx=dA>dB?0:1,targetDom=[0.0,0.0];
+  targetDom[farIdx]=1.0;
+  const speed=window._switchSpeed??1.2;
+  for(let i=0;i<2;i++) dominance[i]+=(targetDom[i]-dominance[i])*Math.min(speed*dt,1);
+  const threshold=P.limitR*P.proxMult,proximity=Math.min(dist/threshold,1);
+  for(let i=0;i<2;i++){
+    const p=particles[i],sign=i===0?-1:1,dom=dominance[i];
+    const challAttr=ATTR_FAR_CLOSE+proximity*(ATTR_FAR_FAR-ATTR_FAR_CLOSE);
+    const attrFactor=1.0+dom*(challAttr-1.0),curlFactor=CURL_FRONT+dom*(CURL_BEHIND-CURL_FRONT);
+    let fax=(c.x-p.x)*P.attrK*attrFactor,fay=(c.y-p.y)*P.attrK*attrFactor;
+    const cw=dom*(1-proximity)*P.contourStr;
+    if(cw>0.001){
+      const o=particles[1-i],tox=o.x-p.x,toy=o.y-p.y,tod=Math.max(Math.sqrt(tox*tox+toy*toy),1);
+      const t1x=-toy/tod,t1y=tox/tod,t2x=toy/tod,t2y=-tox/tod;
+      const pcx=c.x-p.x,pcy=c.y-p.y,d1=t1x*pcx+t1y*pcy,d2=t2x*pcx+t2y*pcy;
+      const btx=d1>=d2?t1x:t2x,bty=d1>=d2?t1y:t2y,mag=Math.sqrt(fax*fax+fay*fay);
+      fax=fax*(1-cw)+btx*mag*cw; fay=fay*(1-cw)+bty*mag*cw;
+    }
+    p.vx+=(fax+sign*nx*repMag+sign*tx*curlMag*curlFactor-p.vx*P.fricK)*dt;
+    p.vy+=(fay+sign*ny*repMag+sign*ty*curlMag*curlFactor-p.vy*P.fricK)*dt;
+    p.x+=p.vx*dt; p.y+=p.vy*dt;
+  }
+}
+
+function collide(){
+  const [a,b]=particles,dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy),minD=P.limitR*2;
+  if(dist<minD&&dist>0.01){
+    const nx=dx/dist,ny=dy/dist,ov=(minD-dist)*0.5;
+    a.x-=nx*ov;a.y-=ny*ov;b.x+=nx*ov;b.y+=ny*ov;
+    const dvn=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+    if(dvn<0){const imp=-(1+P.restitution)*dvn*0.5;a.vx-=imp*nx;a.vy-=imp*ny;b.vx+=imp*nx;b.vy+=imp*ny;}
+  }
+}
+
+function membranePoints(p,other,phases,t){
+  const n=M.nbPts,toOtherAngle=Math.atan2(other.y-p.y,other.x-p.x);
+  let leaderJ=0,leaderDiff=Infinity;
+  for(let j=0;j<n;j++){
+    const ba=(j/n)*Math.PI*2;
+    let diff=Math.abs(((ba-toOtherAngle)%(Math.PI*2)+Math.PI*2)%(Math.PI*2));
+    if(diff>Math.PI)diff=Math.PI*2-diff;
+    if(diff<leaderDiff){leaderDiff=diff;leaderJ=j;}
+  }
+  const tp=0.55+0.45*Math.sin(t*M.vitesse*0.55+1.2),pts=[];
+  for(let j=0;j<n;j++){
+    const ba=(j/n)*Math.PI*2,ph=phases[j%phases.length];
+    const noise=M.ampli*Math.sin(t*M.vitesse+ph)+M.ampli*0.4*Math.sin(t*M.vitesse*1.618+ph*2.414);
+    const bulgeR=M.bulge*Math.max(0,Math.cos(ba-toOtherAngle));
+    const cd=Math.min(Math.abs(j-leaderJ),n-Math.abs(j-leaderJ));
+    const inf=Math.pow(M.tentacleDecay,cd);
+    const tentR=M.tentacleStr*inf*tp;
+    const nbN=cd>0?M.tentacleStr*0.18*inf*Math.sin(t*M.vitesse*1.3+ph+cd):0;
+    const r=M.memR+noise+bulgeR+tentR+nbN,angle=ba+M.twist*Math.sin(t*M.vitesse*0.7+ph);
+    pts.push({x:p.x+Math.cos(angle)*r,y:p.y+Math.sin(angle)*r});
+  }
+  return pts;
+}
+
+function auraPoints(basePts, center, scale, ellipseStr, compressStr, axisAngle){
+  const cos=Math.cos(axisAngle),sin=Math.sin(axisAngle);
+  const sa=(1+ellipseStr)/(1+compressStr);
+  const sp=Math.sqrt((1+compressStr)/(1+ellipseStr));
+  return basePts.map(pt=>{
+    const dx=(pt.x-center.x)*scale,dy=(pt.y-center.y)*scale;
+    const along=dx*cos+dy*sin,perp=-dx*sin+dy*cos;
+    return{x:center.x+along*sa*cos-perp*sp*sin,y:center.y+along*sa*sin+perp*sp*cos};
+  });
+}
+
+function drawSmoothClosed(pts){
+  const n=pts.length;if(n<3)return;
+  ctx.beginPath();
+  ctx.moveTo((pts[n-1].x+pts[0].x)/2,(pts[n-1].y+pts[0].y)/2);
+  for(let i=0;i<n;i++){const p=pts[i],nx=pts[(i+1)%n];ctx.quadraticCurveTo(p.x,p.y,(p.x+nx.x)/2,(p.y+nx.y)/2);}
+  ctx.closePath();
+}
+
+function draw(t){
+  ctx.clearRect(0,0,W,H);
+  const [a,b]=particles,phaseList=[phases0,phases1];
+
+  // Ligne de liaison (debug)
+  ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+  ctx.strokeStyle='rgba(180,90,40,0.07)';ctx.lineWidth=1;ctx.stroke();
+
+  // ── 1. Calcul géométrie des deux particules ───────────────
+  const geom=particles.map((p,i)=>{
+    const other=particles[1-i];
+    const pts=membranePoints(p,other,phaseList[i],t);
+    const axisAngle=Math.atan2(other.y-p.y,other.x-p.x);
+    const a3=auraPoints(pts, p, L3.scale, L3.ellipse, 0,           axisAngle);
+    const a4=auraPoints(a3,  p, L4.scale, L4.ellipse, L4.compress, axisAngle);
+    const a5=auraPoints(a4,  p, L5.scale, L5.ellipse, L5.compress, axisAngle);
+    const dark=i===0?1:0.88;
+    return {p,pts,a3,a4,a5,dark};
+  });
+
+  // ── 2. Rendu par couche globale (z-order unifié) ──────────
+
+  // L5 — les deux
+  ctx.filter=L5.blur>0?`blur(${L5.blur}px)`:'none';
+  geom.forEach(({a5,dark})=>{drawSmoothClosed(a5);ctx.fillStyle=hexToRgba(L5.color,L5.opacity,dark);ctx.fill();});
+
+  // L4 — les deux
+  ctx.filter=L4.blur>0?`blur(${L4.blur}px)`:'none';
+  geom.forEach(({a4,dark})=>{drawSmoothClosed(a4);ctx.fillStyle=hexToRgba(L4.color,L4.opacity,dark);ctx.fill();});
+
+  // L3 — les deux
+  ctx.filter=L3.blur>0?`blur(${L3.blur}px)`:'none';
+  geom.forEach(({a3,dark})=>{drawSmoothClosed(a3);ctx.fillStyle=hexToRgba(L3.color,L3.opacity,dark);ctx.fill();});
+
+  // L2 membrane — les deux
+  ctx.filter=M.blur>0?`blur(${M.blur}px)`:'none';
+  geom.forEach(({pts,dark})=>{drawSmoothClosed(pts);ctx.fillStyle=hexToRgba(M.color,M.opacity,dark);ctx.fill();});
+  ctx.filter='none';
+
+  // Debug circles — les deux (entre L2 et L1)
+  if(P.limitOpacity>0.01){
+    geom.forEach(({p})=>{
+      ctx.save();ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(p.x,p.y,P.limitR,0,Math.PI*2);
+      ctx.strokeStyle=hexToRgba(P.coreColor,P.limitOpacity);ctx.lineWidth=1;ctx.stroke();ctx.restore();
+    });
+  }
+
+  // L1 core — les deux
+  ctx.filter=P.coreBlur>0?`blur(${P.coreBlur}px)`:'none';
+  geom.forEach(({p,dark})=>{
+    ctx.beginPath();ctx.arc(p.x,p.y,P.coreR,0,Math.PI*2);
+    ctx.fillStyle=hexToRgba(P.coreColor,P.coreOpacity,dark);ctx.fill();
+  });
+  ctx.filter='none';
+
+  // Dots — les deux (toujours au-dessus)
+  geom.forEach(({p})=>{
+    ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fill();
+  });
+}
+
+// ── Sync localStorage ─────────────────────────────────────
+function applyConfig(cfg){
+  if(cfg.P) Object.assign(P, cfg.P);
+  if(cfg.M) Object.assign(M, cfg.M);
+  if(cfg.L3) Object.assign(L3, cfg.L3);
+  if(cfg.L4) Object.assign(L4, cfg.L4);
+  if(cfg.L5) Object.assign(L5, cfg.L5);
+  if(cfg.switchSpeed!==undefined) window._switchSpeed=cfg.switchSpeed;
+  if(cfg.M&&cfg.M.nbPts){ phases0=buildPhases(M.nbPts); phases1=buildPhases(M.nbPts); }
+}
+
+// Au refresh : publie les valeurs par défaut (réinitialise params/setup si ouverts)
+try{ localStorage.setItem(CFG_KEY, JSON.stringify({P:{...P},M:{...M},L3:{...L3},L4:{...L4},L5:{...L5},switchSpeed:window._switchSpeed})); }catch(e){}
+
+// Reçoit les updates de la fenêtre de contrôles
+window.addEventListener('storage',e=>{
+  if(e.key===CFG_KEY&&e.newValue){
+    try{ applyConfig(JSON.parse(e.newValue)); }catch(err){}
+  }
+});
+
+// Envoie debug vers contrôles (throttlé ~5fps)
+let dbgLast=0;
+const statusEl=document.getElementById('status');
+function pushDebug(dist,d0,d1){
+  const now=Date.now();
+  if(now-dbgLast<200)return;
+  dbgLast=now;
+  const dbg={dist:dist.toFixed(0),d0:d0.toFixed(2),d1:d1.toFixed(2)};
+  statusEl.textContent=`dist ${dbg.dist}px · dom ${dbg.d0}/${dbg.d1}`;
+  try{ localStorage.setItem(DBG_KEY,JSON.stringify(dbg)); }catch(e){}
+}
+
+// ── Loop ──────────────────────────────────────────────────
+function loop(ts){
+  const dt=lastTs===null?0.016:Math.min((ts-lastTs)/1000,0.05);
+  lastTs=ts; elapsed+=dt;
+  physics(dt); collide(); draw(elapsed);
+  const [a,b]=particles,dx=b.x-a.x,dy=b.y-a.y;
+  pushDebug(Math.sqrt(dx*dx+dy*dy),dominance[0],dominance[1]);
+  requestAnimationFrame(loop);
+}
+
+// ── Boutons fenêtres ──────────────────────────────────────
+let paramsWin=null, setupWin=null;
+document.getElementById('btn-params').addEventListener('click',()=>{
+  if(paramsWin&&!paramsWin.closed){ paramsWin.focus(); return; }
+  paramsWin=window.open(
+    'anim-debug-lvl4-params.html',
+    'gap-params',
+    'width=560,height=820,left=20,top=20'
+  );
+});
+document.getElementById('btn-setup').addEventListener('click',()=>{
+  if(setupWin&&!setupWin.closed){ setupWin.focus(); return; }
+  setupWin=window.open(
+    'anim-debug-lvl4-setup.html',
+    'gap-setup',
+    'width=360,height=640,left=600,top=20'
+  );
+});
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

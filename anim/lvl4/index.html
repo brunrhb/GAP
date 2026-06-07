@@ -39,8 +39,8 @@
 
 <script>
 /* ── GAP — Anim debug lvl4 — animation seule
-   Params  → anim-debug-lvl4-params.html (window.open)
-   Setup   → anim-debug-lvl4-setup.html  (window.open)
+   Params  → params.html (window.open)
+   Setup   → setup.html  (window.open)
    Sync via localStorage  key=gap_lvl4_cfg / gap_lvl4_dbg
    ─────────────────────────────────────────── */
 
@@ -177,44 +177,63 @@ function drawSmoothClosed(pts){
 function draw(t){
   ctx.clearRect(0,0,W,H);
   const [a,b]=particles,phaseList=[phases0,phases1];
+
+  // Ligne de liaison (debug)
   ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
   ctx.strokeStyle='rgba(180,90,40,0.07)';ctx.lineWidth=1;ctx.stroke();
 
-  for(let i=0;i<2;i++){
-    const p=particles[i],other=particles[1-i],dark=i===0?1:0.88;
+  // ── 1. Calcul géométrie des deux particules ───────────────
+  const geom=particles.map((p,i)=>{
+    const other=particles[1-i];
     const pts=membranePoints(p,other,phaseList[i],t);
     const axisAngle=Math.atan2(other.y-p.y,other.x-p.x);
-
     const a3=auraPoints(pts, p, L3.scale, L3.ellipse, 0,           axisAngle);
     const a4=auraPoints(a3,  p, L4.scale, L4.ellipse, L4.compress, axisAngle);
     const a5=auraPoints(a4,  p, L5.scale, L5.ellipse, L5.compress, axisAngle);
+    const dark=i===0?1:0.88;
+    return {p,pts,a3,a4,a5,dark};
+  });
 
-    ctx.filter=L5.blur>0?`blur(${L5.blur}px)`:'none';
-    drawSmoothClosed(a5);ctx.fillStyle=hexToRgba(L5.color,L5.opacity,dark);ctx.fill();
+  // ── 2. Rendu par couche globale (z-order unifié) ──────────
 
-    ctx.filter=L4.blur>0?`blur(${L4.blur}px)`:'none';
-    drawSmoothClosed(a4);ctx.fillStyle=hexToRgba(L4.color,L4.opacity,dark);ctx.fill();
+  // L5 — les deux
+  ctx.filter=L5.blur>0?`blur(${L5.blur}px)`:'none';
+  geom.forEach(({a5,dark})=>{drawSmoothClosed(a5);ctx.fillStyle=hexToRgba(L5.color,L5.opacity,dark);ctx.fill();});
 
-    ctx.filter=L3.blur>0?`blur(${L3.blur}px)`:'none';
-    drawSmoothClosed(a3);ctx.fillStyle=hexToRgba(L3.color,L3.opacity,dark);ctx.fill();
+  // L4 — les deux
+  ctx.filter=L4.blur>0?`blur(${L4.blur}px)`:'none';
+  geom.forEach(({a4,dark})=>{drawSmoothClosed(a4);ctx.fillStyle=hexToRgba(L4.color,L4.opacity,dark);ctx.fill();});
 
-    ctx.filter=M.blur>0?`blur(${M.blur}px)`:'none';
-    drawSmoothClosed(pts);ctx.fillStyle=hexToRgba(M.color,M.opacity,dark);ctx.fill();
-    ctx.filter='none';
+  // L3 — les deux
+  ctx.filter=L3.blur>0?`blur(${L3.blur}px)`:'none';
+  geom.forEach(({a3,dark})=>{drawSmoothClosed(a3);ctx.fillStyle=hexToRgba(L3.color,L3.opacity,dark);ctx.fill();});
 
-    if(P.limitOpacity>0.01){
+  // L2 membrane — les deux
+  ctx.filter=M.blur>0?`blur(${M.blur}px)`:'none';
+  geom.forEach(({pts,dark})=>{drawSmoothClosed(pts);ctx.fillStyle=hexToRgba(M.color,M.opacity,dark);ctx.fill();});
+  ctx.filter='none';
+
+  // Debug circles — les deux (entre L2 et L1)
+  if(P.limitOpacity>0.01){
+    geom.forEach(({p})=>{
       ctx.save();ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(p.x,p.y,P.limitR,0,Math.PI*2);
       ctx.strokeStyle=hexToRgba(P.coreColor,P.limitOpacity);ctx.lineWidth=1;ctx.stroke();ctx.restore();
-    }
+    });
+  }
 
-    ctx.filter=P.coreBlur>0?`blur(${P.coreBlur}px)`:'none';
+  // L1 core — les deux
+  ctx.filter=P.coreBlur>0?`blur(${P.coreBlur}px)`:'none';
+  geom.forEach(({p,dark})=>{
     ctx.beginPath();ctx.arc(p.x,p.y,P.coreR,0,Math.PI*2);
     ctx.fillStyle=hexToRgba(P.coreColor,P.coreOpacity,dark);ctx.fill();
-    ctx.filter='none';
+  });
+  ctx.filter='none';
 
+  // Dots — les deux (toujours au-dessus)
+  geom.forEach(({p})=>{
     ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);
     ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fill();
-  }
+  });
 }
 
 // ── Sync localStorage ─────────────────────────────────────
@@ -265,7 +284,7 @@ let paramsWin=null, setupWin=null;
 document.getElementById('btn-params').addEventListener('click',()=>{
   if(paramsWin&&!paramsWin.closed){ paramsWin.focus(); return; }
   paramsWin=window.open(
-    'anim-debug-lvl4-params.html',
+    'params.html',
     'gap-params',
     'width=560,height=820,left=20,top=20'
   );
@@ -273,7 +292,7 @@ document.getElementById('btn-params').addEventListener('click',()=>{
 document.getElementById('btn-setup').addEventListener('click',()=>{
   if(setupWin&&!setupWin.closed){ setupWin.focus(); return; }
   setupWin=window.open(
-    'anim-debug-lvl4-setup.html',
+    'setup.html',
     'gap-setup',
     'width=360,height=640,left=600,top=20'
   );

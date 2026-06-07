@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GAP — Paramètres lvl4</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      background:#0e0d0c;
+      color:#f0ece4;
+      font-family:monospace;
+      font-size:13px;
+      overflow:hidden;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+
+    #top {
+      flex-shrink:0;
+      background:#0e0d0c;
+      border-bottom:1px solid rgba(255,255,255,0.09);
+      padding:0.55em 1em;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    #top h1 { font-size:0.85em; letter-spacing:0.1em; text-transform:uppercase; opacity:0.4; }
+    #debug-info { font-size:0.75em; opacity:0.28; }
+
+    #cols {
+      flex:1;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      overflow:hidden;
+    }
+    .col {
+      overflow-y:auto;
+      overflow-x:hidden;
+      height:100%;
+    }
+    .col:first-child { border-right:1px solid rgba(255,255,255,0.07); }
+
+    .panel { border-bottom:1px solid rgba(255,255,255,0.06); }
+
+    .panel-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0.55em 0.75em;
+      cursor:pointer;
+      border-left:3px solid transparent;
+      user-select:none;
+    }
+    .panel-header:hover { background:rgba(255,255,255,0.03); }
+
+    .panel-title {
+      font-size:0.84em; font-weight:bold;
+      letter-spacing:0.06em; text-transform:uppercase;
+    }
+    .panel-toggle {
+      background:none; border:none; color:inherit;
+      cursor:pointer; font-size:0.82em; opacity:0.35;
+      padding:0; line-height:1;
+    }
+    .panel-body {
+      padding:0.45em 0.75em 0.7em;
+      display:flex; flex-direction:column; gap:0.25em;
+      overflow:hidden;
+      transition:max-height 0.2s ease, opacity 0.15s ease, padding 0.2s ease;
+      max-height:120em; opacity:1;
+    }
+    .panel.collapsed .panel-body {
+      max-height:0; opacity:0; padding-top:0; padding-bottom:0;
+    }
+
+    #p-l5 .panel-header { border-left-color:rgba(212,200,64,0.6); }
+    #p-l4 .panel-header { border-left-color:rgba(155,106,191,0.6); }
+    #p-l3 .panel-header { border-left-color:rgba(100,200,120,0.6); }
+    #p-l2 .panel-header { border-left-color:rgba(120,180,220,0.6); }
+    #p-l1 .panel-header { border-left-color:rgba(232,112,64,0.6); }
+
+    #p-l5 input[type=range] { accent-color:#d4c840; }
+    #p-l4 input[type=range] { accent-color:#9b6abf; }
+    #p-l3 input[type=range] { accent-color:#64c878; }
+    #p-l2 input[type=range] { accent-color:#7ab8d8; }
+    #p-l1 input[type=range] { accent-color:#e87040; }
+
+    .s-label {
+      font-size:0.7em; letter-spacing:0.07em; text-transform:uppercase;
+      opacity:0.28; margin-top:0.35em; padding-top:0.28em;
+      border-top:1px solid rgba(255,255,255,0.06);
+    }
+    .s-label:first-child { margin-top:0; border-top:none; }
+
+    .row { display:flex; align-items:center; gap:0.3em; }
+    .row label {
+      white-space:nowrap; font-size:0.82em; opacity:0.55;
+      flex:0 0 4.8em;
+    }
+    input[type=range] { flex:1; cursor:pointer; height:0.8em; min-width:0; }
+    input[type=color] {
+      width:1.6em; height:1.2em; border:none; border-radius:0.2em;
+      cursor:pointer; padding:1px; background:rgba(255,255,255,0.08); flex-shrink:0;
+    }
+    .val { width:2.8em; text-align:right; opacity:0.72; font-size:0.82em; flex-shrink:0; }
+  </style>
+</head>
+<body>
+
+<div id="top">
+  <h1>GAP — Paramètres</h1>
+  <div id="debug-info">—</div>
+</div>
+
+<div id="cols">
+<div class="col">
+
+<!-- ═══ NIV.5 ═══ -->
+<div class="panel" id="p-l5">
+  <div class="panel-header">
+    <span class="panel-title" style="color:#e8dc70;">Niv.5 — Aura</span>
+    <button class="panel-toggle">▾</button>
+  </div>
+  <div class="panel-body">
+    <div class="s-label">Forme</div>
+    <div class="row"><label>échelle</label><input type="range" id="sScale5" min="1.05" max="5" step="0.01" value="1.05"><span class="val" id="vScale5">1.05×</span></div>
+    <div class="row"><label>ellipse</label><input type="range" id="sEllipse5" min="0" max="1.2" step="0.01" value="0.08"><span class="val" id="vEllipse5">0.08</span></div>
+    <div class="row"><label>compress</label><input type="range" id="sCompress5" min="0" max="1.2" step="0.01" value="0"><span class="val" id="vCompress5">0</span></div>
+    <div class="s-label">Apparence</div>
+    <div class="row"><label>couleur</label><input type="color" id="cCol5" value="#d4c840"></div>
+    <div class="row"><label>opacité</label><input type="range" id="sOp5" min="0" max="1" step="0.01" value="0.10"><span class="val" id="vOp5">0.10</span></div>
+    <div class="row"><label>flou</label><input type="range" id="sBlur5" min="0" max="100" step="0.5" value="0"><span class="val" id="vBlur5">0px</span></div>
+  </div>
+</div>
+
+<!-- ═══ NIV.4 ═══ -->
+<div class="panel" id="p-l4">
+  <div class="panel-header">
+    <span class="panel-title" style="color:#c8a8e8;">Niv.4 — Aura</span>
+    <button class="panel-toggle">▾</button>
+  </div>
+  <div class="panel-body">
+    <div class="s-label">Forme</div>
+    <div class="row"><label>échelle</label><input type="range" id="sScale4" min="1.05" max="3.5" step="0.01" value="1.05"><span class="val" id="vScale4">1.05×</span></div>
+    <div class="row"><label>ellipse</label><input type="range" id="sEllipse4" min="0" max="1.2" step="0.01" value="0"><span class="val" id="vEllipse4">0</span></div>
+    <div class="row"><label>compress</label><input type="range" id="sCompress4" min="0" max="1.2" step="0.01" value="0"><span class="val" id="vCompress4">0</span></div>
+    <div class="s-label">Apparence</div>
+    <div class="row"><label>couleur</label><input type="color" id="cCol4" value="#9b6abf"></div>
+    <div class="row"><label>opacité</label><input type="range" id="sOp4" min="0" max="1" step="0.01" value="0.16"><span class="val" id="vOp4">0.16</span></div>
+    <div class="row"><label>flou</label><input type="range" id="sBlur4" min="0" max="80" step="0.5" value="0"><span class="val" id="vBlur4">0px</span></div>
+  </div>
+</div>
+
+<!-- ═══ NIV.3 ═══ -->
+<div class="panel" id="p-l3">
+  <div class="panel-header">
+    <span class="panel-title" style="color:#a8d890;">Niv.3 — Aura</span>
+    <button class="panel-toggle">▾</button>
+  </div>
+  <div class="panel-body">
+    <div class="s-label">Forme</div>
+    <div class="row"><label>échelle</label><input type="range" id="sScale3" min="1.05" max="2.5" step="0.01" value="1.05"><span class="val" id="vScale3">1.05×</span></div>
+    <div class="row"><label>ellipse</label><input type="range" id="sEllipse3" min="0" max="1.2" step="0.01" value="0.18"><span class="val" id="vEllipse3">0.18</span></div>
+    <div class="s-label">Apparence</div>
+    <div class="row"><label>couleur</label><input type="color" id="cCol3" value="#64c878"></div>
+    <div class="row"><label>opacité</label><input type="range" id="sOp3" min="0" max="1" step="0.01" value="0.22"><span class="val" id="vOp3">0.22</span></div>
+    <div class="row"><label>flou</label><input type="range" id="sBlur3" min="0" max="60" step="0.5" value="0"><span class="val" id="vBlur3">0px</span></div>
+  </div>
+</div>
+
+</div><!-- /col gauche -->
+<div class="col">
+
+<!-- ═══ NIV.2 ═══ -->
+<div class="panel" id="p-l2">
+  <div class="panel-header">
+    <span class="panel-title" style="color:#a0cde6;">Niv.2 — Membrane</span>
+    <button class="panel-toggle">▾</button>
+  </div>
+  <div class="panel-body">
+    <div class="s-label">Forme</div>
+    <div class="row"><label>rayon</label><input type="range" id="sMemR" min="10" max="400" step="1" value="120"><span class="val" id="vMemR">120</span></div>
+    <div class="row"><label>nb pts</label><input type="range" id="sNbPts" min="4" max="32" step="1" value="10"><span class="val" id="vNbPts">10</span></div>
+    <div class="row"><label>amplitude</label><input type="range" id="sAmpli" min="0" max="80" step="1" value="18"><span class="val" id="vAmpli">18</span></div>
+    <div class="row"><label>vitesse</label><input type="range" id="sVit" min="0.05" max="3" step="0.05" value="0.6"><span class="val" id="vVit">0.6</span></div>
+    <div class="row"><label>twist</label><input type="range" id="sTwist" min="0" max="0.5" step="0.01" value="0.08"><span class="val" id="vTwist">0.08</span></div>
+    <div class="row"><label>bulge</label><input type="range" id="sBulge" min="0" max="120" step="1" value="35"><span class="val" id="vBulge">35</span></div>
+    <div class="row"><label>tentacule</label><input type="range" id="sTent" min="0" max="120" step="1" value="50"><span class="val" id="vTent">50</span></div>
+    <div class="row"><label>portée</label><input type="range" id="sPortee" min="0.05" max="0.95" step="0.05" value="0.4"><span class="val" id="vPortee">0.4</span></div>
+    <div class="s-label">Apparence</div>
+    <div class="row"><label>couleur</label><input type="color" id="cCol2" value="#a0cde6"></div>
+    <div class="row"><label>opacité</label><input type="range" id="sMemO" min="0" max="1" step="0.01" value="0.38"><span class="val" id="vMemO">0.38</span></div>
+    <div class="row"><label>flou</label><input type="range" id="sBlur2" min="0" max="40" step="0.5" value="0"><span class="val" id="vBlur2">0px</span></div>
+  </div>
+</div>
+
+<!-- ═══ NIV.1 ═══ -->
+<div class="panel" id="p-l1">
+  <div class="panel-header">
+    <span class="panel-title" style="color:#e8a080;">Niv.1 — Core + Physique</span>
+    <button class="panel-toggle">▾</button>
+  </div>
+  <div class="panel-body">
+    <div class="s-label">Core</div>
+    <div class="row"><label>couleur</label><input type="color" id="cCol1" value="#e87040"></div>
+    <div class="row"><label>opacité</label><input type="range" id="sCoreO" min="0" max="1" step="0.01" value="0.88"><span class="val" id="vCoreO">0.88</span></div>
+    <div class="row"><label>flou</label><input type="range" id="sBlur1" min="0" max="40" step="0.5" value="0"><span class="val" id="vBlur1">0px</span></div>
+    <div class="row"><label>rayon</label><input type="range" id="sCoreR" min="10" max="300" step="1" value="112"><span class="val" id="vCoreR">112</span></div>
+    <div class="s-label">Physique</div>
+    <div class="row"><label>attraction</label><input type="range" id="sAttr" min="0.5" max="20" step="0.1" value="5"><span class="val" id="vAttr">5</span></div>
+    <div class="row"><label>friction</label><input type="range" id="sFric" min="0.1" max="12" step="0.1" value="1.0"><span class="val" id="vFric">1.0</span></div>
+    <div class="row"><label>répulsion</label><input type="range" id="sRep" min="1000" max="5000000" step="1000" value="1500000"><span class="val" id="vRep">1.5M</span></div>
+    <div class="row"><label>rebond</label><input type="range" id="sRest" min="0" max="1" step="0.05" value="0.55"><span class="val" id="vRest">0.55</span></div>
+    <div class="s-label">Orbite / Rôles</div>
+    <div class="row"><label>orbite</label><input type="range" id="sCurl" min="0" max="3000" step="10" value="2940"><span class="val" id="vCurl">2940</span></div>
+    <div class="row"><label>seuil</label><input type="range" id="sProx" min="1.5" max="8" step="0.1" value="3.5"><span class="val" id="vProx">3.5×</span></div>
+    <div class="row"><label>délai rôle</label><input type="range" id="sSwitch" min="0.2" max="4" step="0.1" value="1.2"><span class="val" id="vSwitch">1.2</span></div>
+    <div class="row"><label>contour</label><input type="range" id="sContour" min="0" max="1" step="0.05" value="0.65"><span class="val" id="vContour">0.65</span></div>
+    <div class="s-label">Debug</div>
+    <div class="row"><label>rayon lim.</label><input type="range" id="sLimitR" min="30" max="400" step="1" value="270"><span class="val" id="vLimitR">270</span></div>
+    <div class="row"><label>opac. lim.</label><input type="range" id="sLimitO" min="0" max="1" step="0.01" value="0.22"><span class="val" id="vLimitO">0.22</span></div>
+  </div>
+</div>
+
+</div><!-- /col droite -->
+</div><!-- /cols -->
+
+<script>
+/* ── GAP — Paramètres lvl4
+   Écrit gap_lvl4_cfg → animation lit
+   Reçoit gap_lvl4_cfg depuis setup (rando/restore) → resync DOM
+   Reçoit gap_lvl4_dbg depuis animation → affiche debug
+   ──────────────────────────────────────────────────────── */
+
+const CFG_KEY = 'gap_lvl4_cfg';
+const DBG_KEY = 'gap_lvl4_dbg';
+
+const P = {
+  attrK:5, fricK:1.0, repK:1500000, curlK:2940, restitution:0.55,
+  proxMult:3.5, contourStr:0.65,
+  coreR:112, coreColor:'#e87040', coreOpacity:0.88, coreBlur:0,
+  limitR:270, limitOpacity:0.22,
+};
+const M = {
+  memR:120, nbPts:10, ampli:18, vitesse:0.6, twist:0.08,
+  bulge:35, tentacleStr:50, tentacleDecay:0.4,
+  color:'#a0cde6', opacity:0.38, blur:0,
+};
+const L3 = { scale:1.05, color:'#64c878', opacity:0.22, blur:0, ellipse:0.18 };
+const L4 = { scale:1.05, color:'#9b6abf', opacity:0.16, blur:0, ellipse:0.00, compress:0 };
+const L5 = { scale:1.05, color:'#d4c840', opacity:0.10, blur:0, ellipse:0.08, compress:0 };
+let _switchSpeed = 1.2;
+
+const sliderMap = {
+  sScale5:    { obj:L5, key:'scale' },
+  sEllipse5:  { obj:L5, key:'ellipse' },
+  sCompress5: { obj:L5, key:'compress' },
+  sOp5:       { obj:L5, key:'opacity' },
+  sBlur5:     { obj:L5, key:'blur' },
+  sScale4:    { obj:L4, key:'scale' },
+  sEllipse4:  { obj:L4, key:'ellipse' },
+  sCompress4: { obj:L4, key:'compress' },
+  sOp4:       { obj:L4, key:'opacity' },
+  sBlur4:     { obj:L4, key:'blur' },
+  sScale3:    { obj:L3, key:'scale' },
+  sEllipse3:  { obj:L3, key:'ellipse' },
+  sOp3:       { obj:L3, key:'opacity' },
+  sBlur3:     { obj:L3, key:'blur' },
+  sMemR:      { obj:M,  key:'memR' },
+  sNbPts:     { obj:M,  key:'nbPts' },
+  sAmpli:     { obj:M,  key:'ampli' },
+  sVit:       { obj:M,  key:'vitesse' },
+  sTwist:     { obj:M,  key:'twist' },
+  sBulge:     { obj:M,  key:'bulge' },
+  sTent:      { obj:M,  key:'tentacleStr' },
+  sPortee:    { obj:M,  key:'tentacleDecay' },
+  sMemO:      { obj:M,  key:'opacity' },
+  sBlur2:     { obj:M,  key:'blur' },
+  sCoreO:     { obj:P,  key:'coreOpacity' },
+  sBlur1:     { obj:P,  key:'coreBlur' },
+  sCoreR:     { obj:P,  key:'coreR' },
+  sAttr:      { obj:P,  key:'attrK' },
+  sFric:      { obj:P,  key:'fricK' },
+  sRep:       { obj:P,  key:'repK' },
+  sRest:      { obj:P,  key:'restitution' },
+  sCurl:      { obj:P,  key:'curlK' },
+  sProx:      { obj:P,  key:'proxMult' },
+  sSwitch:    { obj:null, key:'switchSpeed' },
+  sContour:   { obj:P,  key:'contourStr' },
+  sLimitR:    { obj:P,  key:'limitR' },
+  sLimitO:    { obj:P,  key:'limitOpacity' },
+};
+const colorMap = {
+  cCol5:{ obj:L5, key:'color' },
+  cCol4:{ obj:L4, key:'color' },
+  cCol3:{ obj:L3, key:'color' },
+  cCol2:{ obj:M,  key:'color' },
+  cCol1:{ obj:P,  key:'coreColor' },
+};
+
+const fmts = {
+  sScale5:  v=>v.toFixed(2)+'×', sEllipse5:v=>v.toFixed(2), sCompress5:v=>v.toFixed(2),
+  sOp5:     v=>v.toFixed(2),     sBlur5:   v=>v.toFixed(1)+'px',
+  sScale4:  v=>v.toFixed(2)+'×', sEllipse4:v=>v.toFixed(2), sCompress4:v=>v.toFixed(2),
+  sOp4:     v=>v.toFixed(2),     sBlur4:   v=>v.toFixed(1)+'px',
+  sScale3:  v=>v.toFixed(2)+'×', sEllipse3:v=>v.toFixed(2),
+  sOp3:     v=>v.toFixed(2),     sBlur3:   v=>v.toFixed(1)+'px',
+  sMemR:    v=>Math.round(v),    sNbPts:   v=>Math.round(v),
+  sAmpli:   v=>Math.round(v),   sVit:     v=>v.toFixed(2),
+  sTwist:   v=>v.toFixed(2),    sBulge:   v=>Math.round(v),
+  sTent:    v=>Math.round(v),   sPortee:  v=>v.toFixed(2),
+  sMemO:    v=>v.toFixed(2),    sBlur2:   v=>v.toFixed(1)+'px',
+  sCoreO:   v=>v.toFixed(2),    sBlur1:   v=>v.toFixed(1)+'px',
+  sCoreR:   v=>Math.round(v),   sAttr:    v=>v.toFixed(1),
+  sFric:    v=>v.toFixed(1),
+  sRep:     v=>v>=1000000?(v/1e6).toFixed(1)+'M':(v/1000).toFixed(0)+'k',
+  sRest:    v=>v.toFixed(2),    sCurl:    v=>Math.round(v),
+  sProx:    v=>v.toFixed(1)+'×', sSwitch: v=>v.toFixed(1),
+  sContour: v=>v.toFixed(2),    sLimitR:  v=>Math.round(v),
+  sLimitO:  v=>v.toFixed(2),
+};
+
+function getConfig(){
+  return { P:{...P}, M:{...M}, L3:{...L3}, L4:{...L4}, L5:{...L5}, switchSpeed:_switchSpeed };
+}
+function broadcast(){
+  try{ localStorage.setItem(CFG_KEY, JSON.stringify(getConfig())); }catch(e){}
+}
+
+// Sync DOM uniquement (sans re-broadcaster, pour éviter les boucles)
+function syncDOM(){
+  for(const [id,info] of Object.entries(sliderMap)){
+    const el=document.getElementById(id); if(!el) continue;
+    const v=info.obj?info.obj[info.key]:_switchSpeed;
+    el.value=v;
+    const vEl=document.getElementById('v'+id.slice(1));
+    if(vEl) vEl.textContent=(fmts[id]||(x=>x))(parseFloat(v));
+  }
+  for(const [id,info] of Object.entries(colorMap)){
+    const el=document.getElementById(id); if(!el) continue;
+    el.value=info.obj[info.key];
+  }
+}
+function syncAllInputs(){ syncDOM(); broadcast(); }
+
+function applyConfig(cfg, doBroadcast=true){
+  if(cfg.P)  Object.assign(P, cfg.P);
+  if(cfg.M)  Object.assign(M, cfg.M);
+  if(cfg.L3) Object.assign(L3, cfg.L3);
+  if(cfg.L4) Object.assign(L4, cfg.L4);
+  if(cfg.L5) Object.assign(L5, cfg.L5);
+  if(cfg.switchSpeed!==undefined) _switchSpeed=cfg.switchSpeed;
+  if(doBroadcast) syncAllInputs(); else syncDOM();
+}
+
+// Charge config initiale depuis localStorage
+try{ const s=localStorage.getItem(CFG_KEY); if(s) applyConfig(JSON.parse(s), false); }catch(e){}
+
+// Bindings sliders → broadcast
+function initSlider(id){
+  const info=sliderMap[id];
+  const s=document.getElementById(id); if(!s) return;
+  const vEl=document.getElementById('v'+id.slice(1));
+  const fmt=fmts[id]||(v=>v);
+  s.addEventListener('input',()=>{
+    const v=parseFloat(s.value);
+    if(info.obj) info.obj[info.key]=v; else _switchSpeed=v;
+    if(vEl) vEl.textContent=fmt(v);
+    broadcast();
+  });
+}
+function initColor(id){
+  const info=colorMap[id];
+  const el=document.getElementById(id); if(!el) return;
+  el.addEventListener('input',()=>{ info.obj[info.key]=el.value; broadcast(); });
+}
+Object.keys(sliderMap).forEach(initSlider);
+Object.keys(colorMap).forEach(initColor);
+
+// Reçoit depuis setup (rando/restore) → resync DOM sans re-broadcaster
+const debugEl=document.getElementById('debug-info');
+window.addEventListener('storage',e=>{
+  if(e.key===CFG_KEY && e.newValue){
+    try{ applyConfig(JSON.parse(e.newValue), false); }catch(err){}
+  }
+  if(e.key===DBG_KEY && e.newValue){
+    try{
+      const d=JSON.parse(e.newValue);
+      debugEl.textContent=`dist ${d.dist}px · dom ${d.d0}/${d.d1}`;
+    }catch(err){}
+  }
+});
+
+// Collapse panels
+document.querySelectorAll('.panel-header').forEach(header=>{
+  header.addEventListener('click',()=>{
+    const panel=header.closest('.panel');
+    const btn=header.querySelector('.panel-toggle');
+    btn.textContent=panel.classList.toggle('collapsed')?'▸':'▾';
+  });
+});
+</script>
+</body>
+</html>

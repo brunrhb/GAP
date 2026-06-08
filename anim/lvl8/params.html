@@ -84,6 +84,7 @@
     #p-bg3 .panel-header { border-left-color:rgba(230,190,145,0.6); }
     #p-bg4 .panel-header { border-left-color:rgba(168,208,192,0.6); }
     #p-bg5 .panel-header { border-left-color:rgba(208,192,168,0.6); }
+    #p-css .panel-header { border-left-color:rgba(240,168,200,0.6); }
 
     #p-l5  input[type=range] { accent-color:#d4c840; }
     #p-l4  input[type=range] { accent-color:#9b6abf; }
@@ -96,6 +97,7 @@
     #p-bg3 input[type=range] { accent-color:#e0b888; }
     #p-bg4 input[type=range] { accent-color:#a8d0c0; }
     #p-bg5 input[type=range] { accent-color:#d0c0a8; }
+    #p-css input[type=range] { accent-color:#f090b8; }
 
     .s-label {
       font-size:0.7em; letter-spacing:0.07em; text-transform:uppercase;
@@ -344,6 +346,31 @@
   </div>
 </div>
 
+<!-- ═══ CSS BLOB ═══ -->
+<div class="panel" id="p-css">
+  <div class="panel-header">
+    <span class="panel-title" style="color:#f0a8c8;">CSS — Surcouche</span>
+    <button class="panel-toggle">▾</button>
+  </div>
+  <div class="panel-body">
+    <div class="row"><label>couleur</label><input type="color" id="cCssColor" value="#E87050"></div>
+    <div class="row"><label>opacité</label><input type="range" id="sCssOp" min="0" max="1" step="0.01" value="0.45"><span class="val" id="vCssOp">0.45</span></div>
+    <div class="row"><label>taille</label><input type="range" id="sCssScale" min="50" max="600" step="5" value="260"><span class="val" id="vCssScale">260px</span></div>
+    <div class="row"><label>flou CSS</label><input type="range" id="sCssBlur" min="0" max="80" step="1" value="28"><span class="val" id="vCssBlur">28px</span></div>
+    <div class="row"><label>vitesse</label><input type="range" id="sCssSpeed" min="2" max="30" step="0.5" value="9"><span class="val" id="vCssSpeed">9.0s</span></div>
+    <div class="row"><label>blend</label>
+      <select id="sCssBlend" style="flex:1;background:#1a1917;color:#f0ece4;border:1px solid rgba(255,255,255,0.12);border-radius:0.2em;font-family:monospace;font-size:0.82em;padding:0.15em 0.3em;cursor:pointer;">
+        <option value="overlay">overlay</option>
+        <option value="screen">screen</option>
+        <option value="soft-light">soft-light</option>
+        <option value="multiply">multiply</option>
+        <option value="lighten">lighten</option>
+        <option value="normal">normal</option>
+      </select>
+    </div>
+  </div>
+</div>
+
 </div><!-- /col droite -->
 </div><!-- /cols -->
 
@@ -383,6 +410,7 @@ const BG = {
   warpAmt:0.05,
 };
 let _switchSpeed = 1.2;
+const CSS = { opacity:0.45, scale:260, blur:28, color:'#E87050', speed:9, blendMode:'overlay' };
 
 const sliderMap = {
   sScale5:    { obj:L5, key:'scale' },
@@ -448,6 +476,10 @@ const sliderMap = {
   sBgB4op:    { obj:BG, key:'b4op' },
   sBgB5sz:    { obj:BG, key:'b5size' },
   sBgB5op:    { obj:BG, key:'b5op' },
+  sCssOp:     { obj:CSS, key:'opacity' },
+  sCssScale:  { obj:CSS, key:'scale' },
+  sCssBlur:   { obj:CSS, key:'blur' },
+  sCssSpeed:  { obj:CSS, key:'speed' },
 };
 const colorMap = {
   cCol5:   { obj:L5, key:'color' },  cCol5b: { obj:L5, key:'color2' },
@@ -460,7 +492,8 @@ const colorMap = {
   cBgB2:   { obj:BG, key:'b2Color' },
   cBgB3:   { obj:BG, key:'b3Color' },
   cBgB4:   { obj:BG, key:'b4Color' },
-  cBgB5:   { obj:BG, key:'b5Color' },
+  cBgB5:     { obj:BG,  key:'b5Color' },
+  cCssColor: { obj:CSS, key:'color' },
 };
 
 const fmts = {
@@ -493,11 +526,13 @@ const fmts = {
   sBgB2sz:  v=>v.toFixed(2),   sBgB2op:  v=>v.toFixed(2),
   sBgB3sz:  v=>v.toFixed(2),   sBgB3op:  v=>v.toFixed(2),
   sBgB4sz:  v=>v.toFixed(2),   sBgB4op:  v=>v.toFixed(2),
-  sBgB5sz:  v=>v.toFixed(2),   sBgB5op:  v=>v.toFixed(2),
+  sBgB5sz:   v=>v.toFixed(2),  sBgB5op:  v=>v.toFixed(2),
+  sCssOp:    v=>v.toFixed(2),  sCssScale:v=>Math.round(v)+'px',
+  sCssBlur:  v=>Math.round(v)+'px', sCssSpeed:v=>v.toFixed(1)+'s',
 };
 
 function getConfig(){
-  return { P:{...P}, M:{...M}, L3:{...L3}, L4:{...L4}, L5:{...L5}, BG:{...BG}, switchSpeed:_switchSpeed };
+  return { P:{...P}, M:{...M}, L3:{...L3}, L4:{...L4}, L5:{...L5}, BG:{...BG}, CSS:{...CSS}, switchSpeed:_switchSpeed };
 }
 function broadcast(){
   try{ localStorage.setItem(CFG_KEY, JSON.stringify(getConfig())); }catch(e){}
@@ -516,17 +551,20 @@ function syncDOM(){
     const el=document.getElementById(id); if(!el) continue;
     el.value=info.obj[info.key];
   }
+  const blendSel=document.getElementById('sCssBlend');
+  if(blendSel) blendSel.value=CSS.blendMode;
   if(typeof drawBgCanvas==='function') drawBgCanvas();
 }
 function syncAllInputs(){ syncDOM(); broadcast(); }
 
 function applyConfig(cfg, doBroadcast=true){
-  if(cfg.P)  Object.assign(P, cfg.P);
-  if(cfg.M)  Object.assign(M, cfg.M);
-  if(cfg.L3) Object.assign(L3, cfg.L3);
-  if(cfg.L4) Object.assign(L4, cfg.L4);
-  if(cfg.L5) Object.assign(L5, cfg.L5);
-  if(cfg.BG) Object.assign(BG, cfg.BG);
+  if(cfg.P)   Object.assign(P, cfg.P);
+  if(cfg.M)   Object.assign(M, cfg.M);
+  if(cfg.L3)  Object.assign(L3, cfg.L3);
+  if(cfg.L4)  Object.assign(L4, cfg.L4);
+  if(cfg.L5)  Object.assign(L5, cfg.L5);
+  if(cfg.BG)  Object.assign(BG, cfg.BG);
+  if(cfg.CSS) Object.assign(CSS, cfg.CSS);
   if(cfg.switchSpeed!==undefined) _switchSpeed=cfg.switchSpeed;
   if(doBroadcast) syncAllInputs(); else syncDOM();
 }
@@ -554,6 +592,7 @@ function initColor(id){
 }
 Object.keys(sliderMap).forEach(initSlider);
 Object.keys(colorMap).forEach(initColor);
+document.getElementById('sCssBlend').addEventListener('change',e=>{ CSS.blendMode=e.target.value; broadcast(); });
 
 // Reçoit depuis setup (rando/restore) → resync DOM sans re-broadcaster
 const debugEl=document.getElementById('debug-info');

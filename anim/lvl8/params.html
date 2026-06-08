@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GAP — Paramètres lvl6</title>
+  <title>GAP — Paramètres lvl8</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -120,7 +120,8 @@
 <body>
 
 <div id="top">
-  <h1>GAP — Paramètres</h1>
+  <h1>GAP — Paramètres lvl8</h1>
+  <button id="btn-copy-cfg" onclick="copyCfg()" style="font-family:monospace;font-size:0.75em;padding:0.2em 0.55em;border-radius:0.25em;cursor:pointer;border:1px solid rgba(255,140,40,0.45);color:rgba(255,170,60,0.9);background:rgba(255,140,40,0.08);">📋 Config</button>
   <div id="debug-info">—</div>
 </div>
 
@@ -348,13 +349,13 @@
 
 <script>
 /* ── GAP — Paramètres lvl5
-   Écrit gap_lvl6_cfg → animation lit
-   Reçoit gap_lvl6_cfg depuis setup (rando/restore) → resync DOM
-   Reçoit gap_lvl6_dbg depuis animation → affiche debug
+   Écrit gap_lvl8_cfg → animation lit
+   Reçoit gap_lvl8_cfg depuis setup (rando/restore) → resync DOM
+   Reçoit gap_lvl8_dbg depuis animation → affiche debug
    ──────────────────────────────────────────────────────── */
 
-const CFG_KEY = 'gap_lvl6_cfg';
-const DBG_KEY = 'gap_lvl6_dbg';
+const CFG_KEY = 'gap_lvl8_cfg';
+const DBG_KEY = 'gap_lvl8_dbg';
 
 const P = {
   attrK:5, fricK:1.0, repK:1500000, curlK:2940, restitution:0.55,
@@ -634,6 +635,16 @@ bgCvs.addEventListener('mousemove',e=>{
 });
 bgCvs.addEventListener('mouseup',()=>dragBlob=-1);
 bgCvs.addEventListener('mouseleave',()=>dragBlob=-1);
+
+// ── Copier config JSON ───────────────────────────────────
+function copyCfg() {
+  const json = JSON.stringify(getConfig(), null, 2);
+  navigator.clipboard.writeText(json).then(() => {
+    const btn = document.getElementById('btn-copy-cfg');
+    btn.textContent = '✓ Copié';
+    setTimeout(() => btn.textContent = '📋 Config', 2000);
+  });
+}
 
 // Collapse panels
 document.querySelectorAll('.panel-header').forEach(header=>{

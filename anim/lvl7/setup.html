@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GAP — Setup lvl5</title>
+  <title>GAP — Setup lvl7</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -27,6 +27,14 @@
     }
     #top h1 { font-size:0.85em; letter-spacing:0.1em; text-transform:uppercase; opacity:0.4; }
     #sync-status { font-size:0.75em; opacity:0.28; }
+    #btn-connect {
+      font-family:monospace; font-size:0.75em;
+      padding:0.2em 0.55em; border-radius:0.25em; cursor:pointer;
+      border:1px solid rgba(255,140,40,0.45); color:rgba(255,170,60,0.9);
+      background:rgba(255,140,40,0.08); transition:background 0.1s;
+    }
+    #btn-connect:hover { background:rgba(255,140,40,0.2); }
+    #btn-connect.connected { border-color:rgba(80,220,140,0.45); color:rgba(80,220,140,0.9); background:rgba(80,220,140,0.07); cursor:default; }
 
     #content {
       flex:1;
@@ -162,7 +170,8 @@
 <body>
 
 <div id="top">
-  <h1>GAP — Setup</h1>
+  <h1>GAP — Setup lvl7</h1>
+  <button id="btn-connect" onclick="connectFile()">🔗 Connecter</button>
   <div id="sync-status">—</div>
 </div>
 
@@ -234,13 +243,13 @@
 
 <script>
 /* ── GAP — Setup lvl5
-   Maintient des copies locales de P/M/L3/L4/L5 synchronisées depuis gap_lvl5_cfg.
-   Rando : modifie objets locaux → écrit gap_lvl5_cfg → params page resync ses sliders.
-   Presets : sauvegarde depuis gap_lvl5_cfg courant ; restaure en écrivant gap_lvl5_cfg.
+   Maintient des copies locales de P/M/L3/L4/L5 synchronisées depuis gap_lvl7_cfg.
+   Rando : modifie objets locaux → écrit gap_lvl7_cfg → params page resync ses sliders.
+   Presets : sauvegarde depuis gap_lvl7_cfg courant ; restaure en écrivant gap_lvl7_cfg.
    ──────────────────────────────────────────────────────── */
 
-const CFG_KEY    = 'gap_lvl5_cfg';
-const PRESET_PREFIX = 'gap_lvl5_preset__';
+const CFG_KEY    = 'gap_lvl7_cfg';
+const PRESET_PREFIX = 'gap_lvl7_preset__';
 
 // Copies locales — tenues à jour via storage event depuis la page params
 const P = {
@@ -558,7 +567,7 @@ const SCENES = [
       switchSpeed: 0.8,
     }
   },
-];
+/* SCENES_END */];
 
 (function buildScenes(){
   const grid = document.getElementById('scene-grid');
@@ -640,7 +649,7 @@ function randParam(spec,intensity){
 function applyRando(specs){
   const intensity=parseFloat(document.getElementById('rando-intensity').value);
   specs.forEach(s=>randParam(s,intensity));
-  broadcast(); // envoie aux autres pages via gap_lvl5_cfg
+  broadcast(); // envoie aux autres pages via gap_lvl7_cfg
 }
 
 document.querySelectorAll('[data-rando]').forEach(btn=>{
@@ -680,12 +689,62 @@ function renderPresets(){
   });
 }
 
-document.getElementById('btn-save-preset').addEventListener('click',()=>{
-  const input=document.getElementById('preset-name-input');
-  const name=input.value.trim(); if(!name) return;
-  // Sauvegarde le config courant (objets locaux = last known state)
-  localStorage.setItem(PRESET_PREFIX+name, JSON.stringify(getConfig()));
-  input.value=''; renderPresets();
+/// ── File System : écriture directe dans setup.html ───────
+let _fh = null; // FileSystemFileHandle mémorisé pour la session
+
+async function connectFile() {
+  try {
+    const [h] = await window.showOpenFilePicker({
+      id: 'lvl7-setup',
+      types: [{ description: 'setup.html', accept: { 'text/html': ['.html'] } }],
+      multiple: false,
+    });
+    _fh = h;
+    const btn = document.getElementById('btn-connect');
+    btn.textContent = '✓ Connecté';
+    btn.classList.add('connected');
+    btn.onclick = null;
+    document.getElementById('sync-status').textContent = `Fichier: ${h.name}`;
+    setTimeout(() => document.getElementById('sync-status').textContent = '—', 3000);
+  } catch(e) {
+    if (e.name !== 'AbortError') console.error('Connect failed:', e);
+  }
+}
+
+async function persistPresetToFile(name, cfg) {
+  try {
+    if (!_fh) {
+      document.getElementById('sync-status').textContent = '⚠ Cliquer "Connecter" d\'abord';
+      setTimeout(() => document.getElementById('sync-status').textContent = '—', 3000);
+      return;
+    }
+    const file  = await _fh.getFile();
+    const text  = await file.text();
+    const color = cfg.M?.color || '#F4C4B8';
+    const entry = `  ,\n  {\n    name: '${name}', color: '${color}',\n    cfg: ${JSON.stringify(cfg)}\n  },\n`;
+    const marker = '/* SCENES_END */';
+    const idx = text.indexOf(marker);
+    if (idx === -1) { alert('Marqueur SCENES_END introuvable dans le fichier.'); return; }
+    const newText = text.slice(0, idx) + entry + text.slice(idx);
+    const w = await _fh.createWritable();
+    await w.write(newText);
+    await w.close();
+    document.getElementById('sync-status').textContent = `✓ "${name}" écrit dans le fichier`;
+    setTimeout(() => document.getElementById('sync-status').textContent = '—', 3000);
+  } catch(e) {
+    if (e.name !== 'AbortError') console.error('File write failed:', e);
+  }
+}
+
+document.getElementById('btn-save-preset').addEventListener('click', async () => {
+  const input = document.getElementById('preset-name-input');
+  const name  = input.value.trim(); if (!name) return;
+  const cfg   = getConfig();
+  // 1. localStorage (fallback rapide)
+  localStorage.setItem(PRESET_PREFIX + name, JSON.stringify(cfg));
+  // 2. Écriture directe dans setup.html
+  await persistPresetToFile(name, cfg);
+  input.value = ''; renderPresets();
 });
 document.getElementById('preset-name-input').addEventListener('keydown',e=>{
   if(e.key==='Enter') document.getElementById('btn-save-preset').click();

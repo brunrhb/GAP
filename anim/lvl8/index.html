@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GAP — Anim lvl6</title>
+  <title>GAP — Anim lvl8</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { background:#ece8e3; overflow:hidden; font-family:monospace; }
-    canvas { display:block; position:fixed; inset:0; }
+    body { background: linear-gradient(to top, #ECE8E3 0%, #C4BEC8 50%, #D4BEB0 100%) fixed; overflow:hidden; font-family:monospace; }
+    canvas { display:block; position:fixed; inset:0; z-index:1; }
     #btn-bar {
       position:fixed; bottom:1rem; right:1rem; z-index:999;
       display:flex; gap:0.4em;
@@ -27,6 +27,7 @@
       color:rgba(240,236,228,0.28);
       pointer-events:none;
     }
+
   </style>
 </head>
 <body>
@@ -41,13 +42,13 @@
 /* ── GAP — Anim debug lvl4 — animation seule
    Params  → params.html (window.open)
    Setup   → setup.html  (window.open)
-   Sync via localStorage  key=gap_lvl6_cfg / gap_lvl6_dbg
+   Sync via localStorage  key=gap_lvl8_cfg / gap_lvl8_dbg
    ─────────────────────────────────────────── */
 
 const canvas = document.getElementById('c');
 const ctx    = canvas.getContext('2d');
-const CFG_KEY = 'gap_lvl6_cfg';
-const DBG_KEY = 'gap_lvl6_dbg';
+const CFG_KEY = 'gap_lvl8_cfg';
+const DBG_KEY = 'gap_lvl8_dbg';
 
 function hexToRgba(hex, alpha, darken=1) {
   const r=Math.round(parseInt(hex.slice(1,3),16)*darken);
@@ -74,30 +75,29 @@ function makeAuraFill(layer, ptsOrR, cx, cy, dark){
 
 // ── Params (valeurs par défaut) ───────────────────────────
 const P = {
-  attrK:6, fricK:1, repK:750000, curlK:2200, restitution:0.3,
-  proxMult:5, contourStr:0.35,
-  coreR:90, coreColor:'#F4C4B8', coreOpacity:0.06, coreBlur:0,
-  coreColor2:'#F4C4B8', coreOp2:0.03, coreGStop1:0, coreGStop2:0.28,
-  limitR:241, limitOpacity:0,
-  dotOpacity:0,
+  attrK:6, fricK:1.0, repK:750000, curlK:2200, restitution:0.3,
+  proxMult:5.0, contourStr:0.35,
+  coreR:90, coreColor:'#F4C4B8', coreOpacity:0.45, coreBlur:0,
+  coreColor2:'#F4C4B8', coreOp2:0.0, coreGStop1:0, coreGStop2:0.5,
+  limitR:241, limitOpacity:0, dotOpacity:0,
 };
 const M = {
   memR:115, nbPts:10, ampli:8, vitesse:0.25, twist:0.04,
   bulge:90, tentacleStr:5, tentacleDecay:0.5,
-  color:'#D95030', opacity:0.65, blur:0,
-  color2:'#D95030', op2:0, gStop1:0, gStop2:0.55,
+  color:'#D95030', opacity:0.55, blur:0,
+  color2:'#D95030', op2:0.0, gStop1:0.0, gStop2:0.55,
 };
-const L3 = { scale:1.35, color:'#E87050', opacity:0.55, blur:6.8,  ellipse:0.05, color2:'#E87050', op2:0, gStop1:0.35, gStop2:1 };
-const L4 = { scale:1.70, color:'#F09070', opacity:0.35, blur:16,   ellipse:0.03, compress:0, color2:'#F09070', op2:0, gStop1:0.25, gStop2:1 };
-const L5 = { scale:2.30, color:'#F0A888', opacity:0.20, blur:26,   ellipse:0.02, compress:0, color2:'#F0A888', op2:0, gStop1:0.18, gStop2:1 };
+const L3 = { scale:1.35, color:'#E87050', opacity:0.40, blur:6,   ellipse:0.05, color2:'#E87050', op2:0.0, gStop1:0.35, gStop2:1 };
+const L4 = { scale:1.70, color:'#F09070', opacity:0.22, blur:14,  ellipse:0.03, compress:0, color2:'#F09070', op2:0.0, gStop1:0.25, gStop2:1 };
+const L5 = { scale:2.30, color:'#F0A888', opacity:0.12, blur:22,  ellipse:0.02, compress:0, color2:'#F0A888', op2:0.0, gStop1:0.18, gStop2:1 };
 const BG = {
-  baseColor:'#C4BEC8',
-  b1Color:'#DDA090', b1x:0.35, b1y:0.22, b1size:0.85, b1op:1.0,
-  b2Color:'#CCB0A8', b2x:0.60, b2y:0.20, b2size:0.65, b2op:0.80,
-  b3Color:'#B8BBC8', b3x:0.50, b3y:0.88, b3size:0.90, b3op:1.0,
-  b4Color:'#C8C0C4', b4x:0.15, b4y:0.65, b4size:0.55, b4op:0.70,
-  b5Color:'#D4BEB8', b5x:0.80, b5y:0.55, b5size:0.45, b5op:0.60,
-  warpAmt:0.12,
+  baseColor:'#ece8e3',
+  b1Color:'#dce7f0', b1x:0.18, b1y:0.18, b1size:0.65, b1op:1.0,
+  b2Color:'#d6d3e2', b2x:0.82, b2y:0.22, b2size:0.60, b2op:1.0,
+  b3Color:'#f0ddc9', b3x:0.50, b3y:0.75, b3size:0.70, b3op:1.0,
+  b4Color:'#dce7f0', b4x:0.72, b4y:0.65, b4size:0.50, b4op:0.85,
+  b5Color:'#f0ddc9', b5x:0.18, b5y:0.78, b5size:0.45, b5op:0.80,
+  warpAmt:0.08,
 };
 
 // ── Physique ──────────────────────────────────────────────
@@ -254,7 +254,7 @@ function drawBackground(){
 
 function draw(t){
   ctx.clearRect(0,0,W,H);
-  drawBackground();
+  // drawBackground() retiré — le fond est géré par les auras CSS
   const [a,b]=particles,phaseList=[phases0,phases1];
 
   // Ligne de liaison (debug)
@@ -330,12 +330,33 @@ function applyConfig(cfg){
   if(cfg.M&&cfg.M.nbPts){ phases0=buildPhases(M.nbPts); phases1=buildPhases(M.nbPts); }
 }
 
-// Init : toujours les defaults codés en dur — pas de localStorage
+// Init : charge preset URL (?preset=nom), sinon localStorage existant, sinon écrit les defaults
+(function initConfig(){
+  const params=new URLSearchParams(location.search);
+  const presetName=params.get('preset');
+  if(presetName){
+    try{
+      const s=localStorage.getItem('gap_lvl8_preset__'+presetName);
+      if(s){ applyConfig(JSON.parse(s)); return; }
+    }catch(e){}
+  }
+  try{
+    const s=localStorage.getItem(CFG_KEY);
+    if(s){ applyConfig(JSON.parse(s)); return; }
+  }catch(e){}
+  // Aucun config trouvé — écrit les defaults
+  try{ localStorage.setItem(CFG_KEY, JSON.stringify({P:{...P},M:{...M},L3:{...L3},L4:{...L4},L5:{...L5},BG:{...BG},switchSpeed:window._switchSpeed})); }catch(e){}
+})();
 
 // Cache les boutons si en iframe
 if(window.self!==window.top) document.getElementById('btn-bar').style.display='none';
 
-// lvl6 = home figée — pas de sync localStorage
+// Reçoit les updates de la fenêtre de contrôles
+window.addEventListener('storage',e=>{
+  if(e.key===CFG_KEY&&e.newValue){
+    try{ applyConfig(JSON.parse(e.newValue)); }catch(err){}
+  }
+});
 
 // Envoie debug vers contrôles (throttlé ~5fps)
 let dbgLast=0;

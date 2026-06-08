@@ -3,51 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GAP — Anim lvl6</title>
+  <title>GAP — Home</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { background:#ece8e3; overflow:hidden; font-family:monospace; }
-    canvas { display:block; position:fixed; inset:0; }
-    #btn-bar {
-      position:fixed; bottom:1rem; right:1rem; z-index:999;
-      display:flex; gap:0.4em;
-    }
-    .btn-win {
-      background:rgba(12,11,10,0.72); color:#f0ece4;
-      border:1px solid rgba(255,255,255,0.13);
-      font-family:monospace; font-size:13px;
-      padding:0.45em 0.9em; border-radius:0.35em;
-      cursor:pointer; backdrop-filter:blur(10px);
-      transition:background 0.15s;
-    }
-    .btn-win:hover { background:rgba(30,28,25,0.9); }
-    #status {
-      position:fixed; bottom:1rem; left:1rem; z-index:999;
-      font-family:monospace; font-size:11px;
-      color:rgba(240,236,228,0.28);
-      pointer-events:none;
-    }
+    body { background:#C4BEC8; overflow:hidden; }
+    canvas { display:block; position:fixed; inset:0; z-index:1; }
   </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-<div id="btn-bar">
-  <button class="btn-win" id="btn-params">⚙ Paramètres</button>
-  <button class="btn-win" id="btn-setup">⚙ Setup</button>
-</div>
-<div id="status">—</div>
 
 <script>
-/* ── GAP — Anim debug lvl4 — animation seule
-   Params  → params.html (window.open)
-   Setup   → setup.html  (window.open)
-   Sync via localStorage  key=gap_lvl6_cfg / gap_lvl6_dbg
-   ─────────────────────────────────────────── */
+/* ── GAP — Home animation — REWORK16 hardcodé, zéro localStorage ── */
 
 const canvas = document.getElementById('c');
 const ctx    = canvas.getContext('2d');
-const CFG_KEY = 'gap_lvl6_cfg';
-const DBG_KEY = 'gap_lvl6_dbg';
+
+window._switchSpeed = 0.8;
 
 function hexToRgba(hex, alpha, darken=1) {
   const r=Math.round(parseInt(hex.slice(1,3),16)*darken);
@@ -55,13 +27,10 @@ function hexToRgba(hex, alpha, darken=1) {
   const b=Math.round(parseInt(hex.slice(5,7),16)*darken);
   return `rgba(${r},${g},${b},${alpha})`;
 }
-// Gradient radial pour les auras — centre → bord
-// ptsOrR : tableau de points OU nombre (rayon direct pour le core)
 function makeAuraFill(layer, ptsOrR, cx, cy, dark){
   const s1=layer.gStop1??0, s2=Math.max((layer.gStop1??0)+0.001, layer.gStop2??1);
   const c1=hexToRgba(layer.color, layer.opacity, dark);
   const c2=hexToRgba(layer.color2||layer.color, layer.op2??layer.opacity, dark);
-  // Flat si pas de dégradé utile
   if(s1===0 && s2>=1 && (layer.op2??layer.opacity)===layer.opacity && (layer.color2||layer.color)===layer.color) return c1;
   const r=typeof ptsOrR==='number' ? ptsOrR : (Math.max(...ptsOrR.map(pt=>Math.hypot(pt.x-cx,pt.y-cy)))||1);
   const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
@@ -72,29 +41,28 @@ function makeAuraFill(layer, ptsOrR, cx, cy, dark){
   return g;
 }
 
-// ── Params (valeurs par défaut) ───────────────────────────
+// ── REWORK16 ──────────────────────────────────────────────────────
 const P = {
-  attrK:6, fricK:1, repK:750000, curlK:2200, restitution:0.3,
-  proxMult:5, contourStr:0.35,
-  coreR:90, coreColor:'#F4C4B8', coreOpacity:0.06, coreBlur:0,
-  coreColor2:'#F4C4B8', coreOp2:0.03, coreGStop1:0, coreGStop2:0.28,
-  limitR:241, limitOpacity:0,
-  dotOpacity:0,
+  attrK:6, fricK:1, repK:1100000, curlK:2200, restitution:0.5,
+  proxMult:3.5, contourStr:0.55,
+  coreR:90, coreColor:'#F4C4B8', coreOpacity:0.05, coreBlur:5.5,
+  coreColor2:'#F4C4B8', coreOp2:0, coreGStop1:0, coreGStop2:0.28,
+  limitR:219, limitOpacity:0, dotOpacity:0,
 };
 const M = {
-  memR:115, nbPts:10, ampli:8, vitesse:0.25, twist:0.04,
-  bulge:90, tentacleStr:5, tentacleDecay:0.5,
-  color:'#D95030', opacity:0.65, blur:0,
+  memR:115, nbPts:10, ampli:8, vitesse:0.4, twist:0.04,
+  bulge:71, tentacleStr:5, tentacleDecay:0.5,
+  color:'#D95030', opacity:1, blur:25,
   color2:'#D95030', op2:0, gStop1:0, gStop2:0.55,
 };
-const L3 = { scale:1.35, color:'#E87050', opacity:0.55, blur:6.8,  ellipse:0.05, color2:'#E87050', op2:0, gStop1:0.35, gStop2:1 };
-const L4 = { scale:1.70, color:'#F09070', opacity:0.35, blur:16,   ellipse:0.03, compress:0, color2:'#F09070', op2:0, gStop1:0.25, gStop2:1 };
-const L5 = { scale:2.30, color:'#F0A888', opacity:0.20, blur:26,   ellipse:0.02, compress:0, color2:'#F0A888', op2:0, gStop1:0.18, gStop2:1 };
+const L3 = { scale:1.35, color:'#E87050', opacity:0.55, blur:12.5, ellipse:0.05, color2:'#E87050', op2:0, gStop1:0.35, gStop2:1 };
+const L4 = { scale:2.12, color:'#F09070', opacity:0.35, blur:16,   ellipse:0.03, compress:0, color2:'#F09070', op2:0, gStop1:0.25, gStop2:0.58 };
+const L5 = { scale:2.3,  color:'#F0A888', opacity:0.20, blur:26,   ellipse:0.02, compress:0, color2:'#F0A888', op2:0, gStop1:0.18, gStop2:1 };
 const BG = {
   baseColor:'#C4BEC8',
-  b1Color:'#DDA090', b1x:0.35, b1y:0.22, b1size:0.85, b1op:1.0,
+  b1Color:'#DDA090', b1x:0.35, b1y:0.22, b1size:0.85, b1op:1,
   b2Color:'#CCB0A8', b2x:0.60, b2y:0.20, b2size:0.65, b2op:0.80,
-  b3Color:'#B8BBC8', b3x:0.50, b3y:0.88, b3size:0.90, b3op:1.0,
+  b3Color:'#B8BBC8', b3x:0.50, b3y:0.88, b3size:0.90, b3op:1,
   b4Color:'#C8C0C4', b4x:0.15, b4y:0.65, b4size:0.55, b4op:0.70,
   b5Color:'#D4BEB8', b5x:0.80, b5y:0.55, b5size:0.45, b5op:0.60,
   warpAmt:0.12,
@@ -120,12 +88,11 @@ function resize(){
 window.addEventListener('resize',resize); resize();
 window.addEventListener('mousemove',e=>{
   cursor={x:e.clientX,y:e.clientY};
-  smoothCursor=cursor; // suivi immédiat quand dans la fenêtre
+  smoothCursor=cursor;
 });
 document.addEventListener('mouseleave',()=>{cursor=null;});
 document.addEventListener('mouseout',e=>{if(!e.relatedTarget)cursor=null;});
 window.addEventListener('blur',()=>{cursor=null;});
-// Curseur forwardé depuis la page parente (mode iframe)
 window.addEventListener('message',e=>{
   if(e.data?.type==='cursor'){
     if(e.data.x===null){ cursor=null; }
@@ -135,7 +102,6 @@ window.addEventListener('message',e=>{
 function getCursor(){return smoothCursor??{x:W/2,y:H/2};}
 
 function physics(dt){
-  // Lerp smoothCursor → centre quand curseur hors fenêtre
   if(!cursor && smoothCursor){
     const k=Math.min(1.5*dt,1);
     smoothCursor={x:smoothCursor.x+(W/2-smoothCursor.x)*k, y:smoothCursor.y+(H/2-smoothCursor.y)*k};
@@ -181,9 +147,9 @@ function collide(){
 function bounceWalls(){
   const ox=W*0.1, oy=H*0.1;
   for(const p of particles){
-    if(p.x<-ox)    { p.x=-ox;  if(p.vx<0) p.vx=-p.vx*P.restitution; }
+    if(p.x<-ox)     { p.x=-ox;  if(p.vx<0) p.vx=-p.vx*P.restitution; }
     else if(p.x>W+ox){ p.x=W+ox; if(p.vx>0) p.vx=-p.vx*P.restitution; }
-    if(p.y<-oy)    { p.y=-oy;  if(p.vy<0) p.vy=-p.vy*P.restitution; }
+    if(p.y<-oy)     { p.y=-oy;  if(p.vy<0) p.vy=-p.vy*P.restitution; }
     else if(p.y>H+oy){ p.y=H+oy; if(p.vy>0) p.vy=-p.vy*P.restitution; }
   }
 }
@@ -241,7 +207,6 @@ function drawBackground(){
     [BG.b4Color,BG.b4x,BG.b4y,BG.b4size,BG.b4op],
     [BG.b5Color,BG.b5x,BG.b5y,BG.b5size,BG.b5op],
   ].forEach(([col,x,y,sz,op],i)=>{
-    // warp statique par blob (casse la symétrie circulaire)
     const wx=Math.sin(i*2.1+0.5)*BG.warpAmt;
     const wy=Math.cos(i*1.7+1.2)*BG.warpAmt;
     const cx=(x+wx)*W, cy=(y+wy)*H, r=sz*Math.max(W,H);
@@ -257,11 +222,6 @@ function draw(t){
   drawBackground();
   const [a,b]=particles,phaseList=[phases0,phases1];
 
-  // Ligne de liaison (debug)
-  ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
-  ctx.strokeStyle='rgba(180,90,40,0.07)';ctx.lineWidth=1;ctx.stroke();
-
-  // ── 1. Calcul géométrie des deux particules ───────────────
   const geom=particles.map((p,i)=>{
     const other=particles[1-i];
     const pts=membranePoints(p,other,phaseList[i],t);
@@ -269,30 +229,22 @@ function draw(t){
     const a3=auraPoints(pts, p, L3.scale, L3.ellipse, 0,           axisAngle);
     const a4=auraPoints(a3,  p, L4.scale, L4.ellipse, L4.compress, axisAngle);
     const a5=auraPoints(a4,  p, L5.scale, L5.ellipse, L5.compress, axisAngle);
-    const dark=1;
-    return {p,pts,a3,a4,a5,dark};
+    return {p,pts,a3,a4,a5,dark:1};
   });
 
-  // ── 2. Rendu par couche globale (z-order unifié) ──────────
-
-  // L5 — les deux
   ctx.filter=L5.blur>0?`blur(${L5.blur}px)`:'none';
   geom.forEach(({p,a5,dark})=>{drawSmoothClosed(a5);ctx.fillStyle=makeAuraFill(L5,a5,p.x,p.y,dark);ctx.fill();});
 
-  // L4 — les deux
   ctx.filter=L4.blur>0?`blur(${L4.blur}px)`:'none';
   geom.forEach(({p,a4,dark})=>{drawSmoothClosed(a4);ctx.fillStyle=makeAuraFill(L4,a4,p.x,p.y,dark);ctx.fill();});
 
-  // L3 — les deux
   ctx.filter=L3.blur>0?`blur(${L3.blur}px)`:'none';
   geom.forEach(({p,a3,dark})=>{drawSmoothClosed(a3);ctx.fillStyle=makeAuraFill(L3,a3,p.x,p.y,dark);ctx.fill();});
 
-  // L2 membrane — les deux
   ctx.filter=M.blur>0?`blur(${M.blur}px)`:'none';
   geom.forEach(({p,pts,dark})=>{drawSmoothClosed(pts);ctx.fillStyle=makeAuraFill(M,pts,p.x,p.y,dark);ctx.fill();});
   ctx.filter='none';
 
-  // Debug circles — les deux (entre L2 et L1)
   if(P.limitOpacity>0.01){
     geom.forEach(({p})=>{
       ctx.save();ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(p.x,p.y,P.limitR*U,0,Math.PI*2);
@@ -300,7 +252,6 @@ function draw(t){
     });
   }
 
-  // L1 core — les deux
   ctx.filter=P.coreBlur>0?`blur(${P.coreBlur}px)`:'none';
   geom.forEach(({p,dark})=>{
     ctx.beginPath();ctx.arc(p.x,p.y,P.coreR*U,0,Math.PI*2);
@@ -309,75 +260,21 @@ function draw(t){
   });
   ctx.filter='none';
 
-  // Dots — les deux (toujours au-dessus)
-  if((P.dotOpacity??0.5)>0){
+  if((P.dotOpacity??0)>0){
     geom.forEach(({p})=>{
       ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);
-      ctx.fillStyle=`rgba(255,255,255,${P.dotOpacity??0.5})`;ctx.fill();
+      ctx.fillStyle=`rgba(255,255,255,${P.dotOpacity})`;ctx.fill();
     });
   }
 }
 
-// ── Sync localStorage ─────────────────────────────────────
-function applyConfig(cfg){
-  if(cfg.P) Object.assign(P, cfg.P);
-  if(cfg.M) Object.assign(M, cfg.M);
-  if(cfg.L3) Object.assign(L3, cfg.L3);
-  if(cfg.L4) Object.assign(L4, cfg.L4);
-  if(cfg.L5) Object.assign(L5, cfg.L5);
-  if(cfg.BG) Object.assign(BG, cfg.BG);
-  if(cfg.switchSpeed!==undefined) window._switchSpeed=cfg.switchSpeed;
-  if(cfg.M&&cfg.M.nbPts){ phases0=buildPhases(M.nbPts); phases1=buildPhases(M.nbPts); }
-}
-
-// Init : toujours les defaults codés en dur — pas de localStorage
-
-// Cache les boutons si en iframe
-if(window.self!==window.top) document.getElementById('btn-bar').style.display='none';
-
-// lvl6 = home figée — pas de sync localStorage
-
-// Envoie debug vers contrôles (throttlé ~5fps)
-let dbgLast=0;
-const statusEl=document.getElementById('status');
-function pushDebug(dist,d0,d1){
-  const now=Date.now();
-  if(now-dbgLast<200)return;
-  dbgLast=now;
-  const dbg={dist:dist.toFixed(0),d0:d0.toFixed(2),d1:d1.toFixed(2)};
-  statusEl.textContent=`dist ${dbg.dist}px · dom ${dbg.d0}/${dbg.d1}`;
-  try{ localStorage.setItem(DBG_KEY,JSON.stringify(dbg)); }catch(e){}
-}
-
-// ── Loop ──────────────────────────────────────────────────
+// ── Loop ─────────────────────────────────────────────────
 function loop(ts){
   const dt=lastTs===null?0.016:Math.min((ts-lastTs)/1000,0.05);
   lastTs=ts; elapsed+=dt;
   physics(dt); collide(); bounceWalls(); draw(elapsed);
-  const [a,b]=particles,dx=b.x-a.x,dy=b.y-a.y;
-  pushDebug(Math.sqrt(dx*dx+dy*dy),dominance[0],dominance[1]);
   requestAnimationFrame(loop);
 }
-
-// ── Boutons fenêtres ──────────────────────────────────────
-let paramsWin=null, setupWin=null;
-document.getElementById('btn-params').addEventListener('click',()=>{
-  if(paramsWin&&!paramsWin.closed){ paramsWin.focus(); return; }
-  paramsWin=window.open(
-    'params.html',
-    'gap-params',
-    'width=780,height=820,left=20,top=20'
-  );
-});
-document.getElementById('btn-setup').addEventListener('click',()=>{
-  if(setupWin&&!setupWin.closed){ setupWin.focus(); return; }
-  setupWin=window.open(
-    'setup.html',
-    'gap-setup',
-    'width=360,height=640,left=600,top=20'
-  );
-});
-
 requestAnimationFrame(loop);
 </script>
 </body>

@@ -403,15 +403,18 @@
     <!-- Col droite : border-radius -->
     <div>
       <div class="s-label">Forme — horizontale (TL · TR · BR · BL)</div>
-      <div class="row"><label>TL</label><input type="range" id="sCssBrTLh" min="0" max="100" step="1" value="70"><span class="val" id="vCssBrTLh">70%</span></div>
-      <div class="row"><label>TR</label><input type="range" id="sCssBrTRh" min="0" max="100" step="1" value="30"><span class="val" id="vCssBrTRh">30%</span></div>
-      <div class="row"><label>BR</label><input type="range" id="sCssBrBRh" min="0" max="100" step="1" value="55"><span class="val" id="vCssBrBRh">55%</span></div>
-      <div class="row"><label>BL</label><input type="range" id="sCssBrBLh" min="0" max="100" step="1" value="45"><span class="val" id="vCssBrBLh">45%</span></div>
+      <div class="row"><label>TL</label><input type="range" id="sCssBrTLh" min="-100" max="200" step="1" value="70"><span class="val" id="vCssBrTLh">70%</span></div>
+      <div class="row"><label>TR</label><input type="range" id="sCssBrTRh" min="-100" max="200" step="1" value="30"><span class="val" id="vCssBrTRh">30%</span></div>
+      <div class="row"><label>BR</label><input type="range" id="sCssBrBRh" min="-100" max="200" step="1" value="55"><span class="val" id="vCssBrBRh">55%</span></div>
+      <div class="row"><label>BL</label><input type="range" id="sCssBrBLh" min="-100" max="200" step="1" value="45"><span class="val" id="vCssBrBLh">45%</span></div>
       <div class="s-label">Forme — verticale (TL · TR · BR · BL)</div>
-      <div class="row"><label>TL</label><input type="range" id="sCssBrTLv" min="0" max="100" step="1" value="60"><span class="val" id="vCssBrTLv">60%</span></div>
-      <div class="row"><label>TR</label><input type="range" id="sCssBrTRv" min="0" max="100" step="1" value="40"><span class="val" id="vCssBrTRv">40%</span></div>
-      <div class="row"><label>BR</label><input type="range" id="sCssBrBRv" min="0" max="100" step="1" value="45"><span class="val" id="vCssBrBRv">45%</span></div>
-      <div class="row"><label>BL</label><input type="range" id="sCssBrBLv" min="0" max="100" step="1" value="55"><span class="val" id="vCssBrBLv">55%</span></div>
+      <div class="row"><label>TL</label><input type="range" id="sCssBrTLv" min="-100" max="200" step="1" value="60"><span class="val" id="vCssBrTLv">60%</span></div>
+      <div class="row"><label>TR</label><input type="range" id="sCssBrTRv" min="-100" max="200" step="1" value="40"><span class="val" id="vCssBrTRv">40%</span></div>
+      <div class="row"><label>BR</label><input type="range" id="sCssBrBRv" min="-100" max="200" step="1" value="45"><span class="val" id="vCssBrBRv">45%</span></div>
+      <div class="row"><label>BL</label><input type="range" id="sCssBrBLv" min="-100" max="200" step="1" value="55"><span class="val" id="vCssBrBLv">55%</span></div>
+      <div class="s-label" style="margin-top:0.6em;">Déformation</div>
+      <div class="row"><label>scaleX</label><input type="range" id="sCssScaleX" min="-200" max="200" step="1" value="100"><span class="val" id="vCssScaleX">100%</span></div>
+      <div class="row"><label>scaleY</label><input type="range" id="sCssScaleY" min="-200" max="200" step="1" value="100"><span class="val" id="vCssScaleY">100%</span></div>
     </div>
 
   </div>
@@ -454,7 +457,8 @@ const BG = {
 };
 let _switchSpeed = 1.2;
 const CSS = { opacity:0.45, scale:260, blur:28, color:'#E87050', speed:9, blendMode:'normal', morphAmpli:1, pulseAmpli:0.12, radialFill:false,
-  brTLh:70, brTRh:30, brBRh:55, brBLh:45, brTLv:60, brTRv:40, brBRv:45, brBLv:55 };
+  brTLh:70, brTRh:30, brBRh:55, brBLh:45, brTLv:60, brTRv:40, brBRv:45, brBLv:55,
+  scaleX:100, scaleY:100 };
 
 const sliderMap = {
   sScale5:    { obj:L5, key:'scale' },
@@ -530,6 +534,7 @@ const sliderMap = {
   sCssBrBRh: { obj:CSS, key:'brBRh' }, sCssBrBLh: { obj:CSS, key:'brBLh' },
   sCssBrTLv: { obj:CSS, key:'brTLv' }, sCssBrTRv: { obj:CSS, key:'brTRv' },
   sCssBrBRv: { obj:CSS, key:'brBRv' }, sCssBrBLv: { obj:CSS, key:'brBLv' },
+  sCssScaleX: { obj:CSS, key:'scaleX' }, sCssScaleY: { obj:CSS, key:'scaleY' },
 };
 const colorMap = {
   cCol5:   { obj:L5, key:'color' },  cCol5b: { obj:L5, key:'color2' },
@@ -584,6 +589,7 @@ const fmts = {
   sCssBrBRh:v=>Math.round(v)+'%', sCssBrBLh:v=>Math.round(v)+'%',
   sCssBrTLv:v=>Math.round(v)+'%', sCssBrTRv:v=>Math.round(v)+'%',
   sCssBrBRv:v=>Math.round(v)+'%', sCssBrBLv:v=>Math.round(v)+'%',
+  sCssScaleX:v=>Math.round(v)+'%', sCssScaleY:v=>Math.round(v)+'%',
 };
 
 function getConfig(){

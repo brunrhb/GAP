@@ -77,7 +77,8 @@ const ctx    = canvas.getContext('2d');
 const CFG_KEY = 'gap_lvl8_cfg';
 const DBG_KEY = 'gap_lvl8_dbg';
 const CSS = { opacity:1, scale:300, blur:0, color:'#E87050', speed:9, blendMode:'normal', morphAmpli:1, pulseAmpli:0.12, radialFill:false,
-  brTLh:70, brTRh:30, brBRh:55, brBLh:45, brTLv:60, brTRv:40, brBRv:45, brBLv:55 };
+  brTLh:70, brTRh:30, brBRh:55, brBLh:45, brTLv:60, brTRv:40, brBRv:45, brBLv:55,
+  scaleX:100, scaleY:100 };
 
 function hexToRgba(hex, alpha, darken=1) {
   const r=Math.round(parseInt(hex.slice(1,3),16)*darken);
@@ -356,8 +357,9 @@ function updateBlobKeyframes(){
   const ma=CSS.morphAmpli??1, pa=CSS.pulseAmpli??0.12;
   const bh=[CSS.brTLh??60, CSS.brTRh??40, CSS.brBRh??30, CSS.brBLh??70];
   const bv=[CSS.brTLv??60, CSS.brTRv??30, CSS.brBRv??70, CSS.brBLv??40];
-  _kfIdx=1-_kfIdx; // alterne entre blob-morph-0 et blob-morph-1
-  const kfName=`blob-morph-${_kfIdx}`;
+  const bh1=bh.map(v=>-v); // inversion symétrique blob-1
+  const bv1=bv.map(v=>-v);
+  _kfIdx=1-_kfIdx;
   const frames=[
     {pct:'0%',   dh:[0,0,0,0],       dv:[0,0,0,0],       s:1},
     {pct:'25%',  dh:[-10,10,-5,5],   dv:[-5,5,10,-10],   s:1+pa},
@@ -365,18 +367,21 @@ function updateBlobKeyframes(){
     {pct:'75%',  dh:[-5,5,-10,10],   dv:[10,-10,5,-5],   s:1-pa*0.5},
     {pct:'100%', dh:[0,0,0,0],       dv:[0,0,0,0],       s:1},
   ];
-  let kf=`@keyframes ${kfName} {\n`;
-  frames.forEach(({pct,dh,dv,s})=>{
-    const hr=dh.map((d,i)=>Math.max(5,Math.min(95,Math.round(bh[i]+d*ma)))+'%').join(' ');
-    const vr=dv.map((d,i)=>Math.max(5,Math.min(95,Math.round(bv[i]+d*ma)))+'%').join(' ');
-    kf+=`  ${pct} { border-radius:${hr} / ${vr}; transform:scale(${s.toFixed(3)}); }\n`;
-  });
-  kf+='}';
+  function buildKf(name, basH, basV){
+    let kf=`@keyframes ${name} {\n`;
+    frames.forEach(({pct,dh,dv,s})=>{
+      const hr=dh.map((d,i)=>Math.round(basH[i]+d*ma)+'%').join(' ');
+      const vr=dv.map((d,i)=>Math.round(basV[i]+d*ma)+'%').join(' ');
+      kf+=`  ${pct} { border-radius:${hr} / ${vr}; transform:scale(${s.toFixed(3)}); }\n`;
+    });
+    return kf+'}';
+  }
+  const n0=`blob-morph-0${_kfIdx}`, n1=`blob-morph-1${_kfIdx}`;
   let st=document.getElementById('blob-keyframes');
   if(!st){st=document.createElement('style');st.id='blob-keyframes';document.head.appendChild(st);}
-  st.textContent=kf;
-  // Changer le nom force le browser à redémarrer l'animation avec les nouveaux keyframes
-  _blobs.forEach(el=>el.style.setProperty('--kf-name', kfName));
+  st.textContent=buildKf(n0,bh,bv)+'\n'+buildKf(n1,bh1,bv1);
+  _blobs[0].style.setProperty('--kf-name', n0);
+  _blobs[1].style.setProperty('--kf-name', n1);
 }
 
 function applyBlobStyles(){
@@ -450,7 +455,7 @@ function pushDebug(dist,d0,d1){
 
 function updateBlobs(){
   particles.forEach((p,i)=>{
-    _blobs[i].style.transform=`translate(${p.x}px,${p.y}px) translate(-50%,-50%)`;
+    _blobs[i].style.transform=`translate(${p.x}px,${p.y}px) translate(-50%,-50%) scaleX(${(CSS.scaleX??100)/100}) scaleY(${(CSS.scaleY??100)/100})`;
   });
 }
 

@@ -69,16 +69,16 @@
 /* ── GAP — Anim debug lvl4 — animation seule
    Params  → params.html (window.open)
    Setup   → setup.html  (window.open)
-   Sync via localStorage  key=gap_lvl8_cfg / gap_lvl8_dbg
+   Sync via localStorage  key=gap_lvl8_cfg_v2 / gap_lvl8_dbg
    ─────────────────────────────────────────── */
 
 const canvas = document.getElementById('c');
 const ctx    = canvas.getContext('2d');
-const CFG_KEY = 'gap_lvl8_cfg';
+const CFG_KEY = 'gap_lvl8_cfg_v2';
 const DBG_KEY = 'gap_lvl8_dbg';
-const CSS = { opacity:1, scale:300, blur:0, color:'#E87050', speed:9, blendMode:'normal', morphAmpli:1, pulseAmpli:0.12, radialFill:false,
-  brTLh:70, brTRh:30, brBRh:55, brBLh:45, brTLv:60, brTRv:40, brBRv:45, brBLv:55,
-  scaleX:100, scaleY:100 };
+const CSS = { opacity:1, scale:495, blur:31, color:'#F2C4A0', speed:22, blendMode:'normal', morphAmpli:1, pulseAmpli:0.5, radialFill:false,
+  brTLh:60, brTRh:33, brBRh:79, brBLh:11, brTLv:90, brTRv:-77, brBRv:71, brBLv:-44,
+  scaleX:156, scaleY:146, rotateSpeed:43 };
 
 function hexToRgba(hex, alpha, darken=1) {
   const r=Math.round(parseInt(hex.slice(1,3),16)*darken);
@@ -105,7 +105,7 @@ function makeAuraFill(layer, ptsOrR, cx, cy, dark){
 
 // ── Params (valeurs par défaut) ───────────────────────────
 const P = {
-  attrK:6, fricK:1.0, repK:750000, curlK:2200, restitution:0.3,
+  attrK:6, fricK:1.0, repK:750000, curlK:1800, restitution:0.2,
   proxMult:5.0, contourStr:0.35,
   coreR:90, coreColor:'#F4C4B8', coreOpacity:0.45, coreBlur:0,
   coreColor2:'#F4C4B8', coreOp2:0.0, coreGStop1:0, coreGStop2:0.5,
@@ -350,6 +350,7 @@ function draw(t){
 
 // ── CSS Blobs — suivi des particules ─────────────────────
 const _blobs=[document.getElementById('blob-0'),document.getElementById('blob-1')];
+const _blobAngles=[0,0];
 
 // ── Sync localStorage ─────────────────────────────────────
 let _kfIdx=0;
@@ -357,8 +358,8 @@ function updateBlobKeyframes(){
   const ma=CSS.morphAmpli??1, pa=CSS.pulseAmpli??0.12;
   const bh=[CSS.brTLh??60, CSS.brTRh??40, CSS.brBRh??30, CSS.brBLh??70];
   const bv=[CSS.brTLv??60, CSS.brTRv??30, CSS.brBRv??70, CSS.brBLv??40];
-  const bh1=bh.map(v=>-v); // inversion symétrique blob-1
-  const bv1=bv.map(v=>-v);
+  const bh1=bh.map(v=>100-v); // inversion blob-1 : coins bombés ↔ plats
+  const bv1=bv.map(v=>100-v);
   _kfIdx=1-_kfIdx;
   const frames=[
     {pct:'0%',   dh:[0,0,0,0],       dv:[0,0,0,0],       s:1},
@@ -411,7 +412,7 @@ function applyConfig(cfg){
   if(cfg.M&&cfg.M.nbPts){ phases0=buildPhases(M.nbPts); phases1=buildPhases(M.nbPts); }
 }
 
-// Init : charge preset URL (?preset=nom), sinon localStorage existant, sinon écrit les defaults
+// Init : charge preset URL (?preset=nom), sinon force les defaults du code
 (function initConfig(){
   const params=new URLSearchParams(location.search);
   const presetName=params.get('preset');
@@ -421,12 +422,8 @@ function applyConfig(cfg){
       if(s){ applyConfig(JSON.parse(s)); return; }
     }catch(e){}
   }
-  try{
-    const s=localStorage.getItem(CFG_KEY);
-    if(s){ applyConfig(JSON.parse(s)); return; }
-  }catch(e){}
-  // Aucun config trouvé — écrit les defaults
-  try{ localStorage.setItem(CFG_KEY, JSON.stringify({P:{...P},M:{...M},L3:{...L3},L4:{...L4},L5:{...L5},BG:{...BG},switchSpeed:window._switchSpeed})); }catch(e){}
+  // Force toujours les defaults du code — écrase le localStorage
+  try{ localStorage.setItem(CFG_KEY, JSON.stringify({P:{...P},M:{...M},L3:{...L3},L4:{...L4},L5:{...L5},BG:{...BG},CSS:{...CSS},switchSpeed:window._switchSpeed})); }catch(e){}
 })();
 
 applyBlobStyles();
@@ -453,9 +450,11 @@ function pushDebug(dist,d0,d1){
   try{ localStorage.setItem(DBG_KEY,JSON.stringify(dbg)); }catch(e){}
 }
 
-function updateBlobs(){
+function updateBlobs(dt){
+  const spd=CSS.rotateSpeed??0;
   particles.forEach((p,i)=>{
-    _blobs[i].style.transform=`translate(${p.x}px,${p.y}px) translate(-50%,-50%) scaleX(${(CSS.scaleX??100)/100}) scaleY(${(CSS.scaleY??100)/100})`;
+    _blobAngles[i]+= spd * (i===0?1:-1) * dt;
+    _blobs[i].style.transform=`translate(${p.x}px,${p.y}px) translate(-50%,-50%) rotate(${_blobAngles[i].toFixed(2)}deg) scaleX(${(CSS.scaleX??100)/100}) scaleY(${(CSS.scaleY??100)/100})`;
   });
 }
 
@@ -464,7 +463,7 @@ function loop(ts){
   const dt=lastTs===null?0.016:Math.min((ts-lastTs)/1000,0.05);
   lastTs=ts; elapsed+=dt;
   physics(dt); collide(); bounceWalls(); draw(elapsed);
-  updateBlobs();
+  updateBlobs(dt);
   const [a,b]=particles,dx=b.x-a.x,dy=b.y-a.y;
   pushDebug(Math.sqrt(dx*dx+dy*dy),dominance[0],dominance[1]);
   requestAnimationFrame(loop);

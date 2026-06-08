@@ -6,20 +6,33 @@
   <title>GAP — Home</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { background:#C4BEC8; overflow:hidden; }
-    canvas { display:block; position:fixed; inset:0; z-index:1; }
+    body { background:#ece8e3; overflow:hidden; }
+    #bg-canvas { display:block; position:fixed; inset:0; z-index:-1; }
+    .css-blob { position:fixed; top:0; left:0; pointer-events:none; z-index:0; will-change:transform; }
+    .css-blob::after {
+      content:''; display:block; width:100%; height:100%;
+      background:radial-gradient(circle at 50% 50%, var(--blob-color,#f0a787) 0%, var(--blob-color,#f0a787) var(--r-mid,0%), transparent var(--r-end,70%));
+      border-radius:60% 40% 30% 70% / 60% 30% 70% 40%;
+      animation:var(--kf-name, blob-morph-00) var(--dur, 2s) ease-in-out infinite;
+    }
+    canvas#c { display:block; position:fixed; inset:0; z-index:1; }
   </style>
 </head>
 <body>
+<canvas id="bg-canvas"></canvas>
+<div class="css-blob" id="blob-0"></div>
+<div class="css-blob" id="blob-1" style="animation-delay:-1s"></div>
 <canvas id="c"></canvas>
 
 <script>
-/* ── GAP — Home animation — REWORK16 hardcodé, zéro localStorage ── */
+/* ── GAP — Home animation — Cellules, zéro localStorage ── */
 
-const canvas = document.getElementById('c');
-const ctx    = canvas.getContext('2d');
+const canvas   = document.getElementById('c');
+const ctx      = canvas.getContext('2d');
+const bgCanvas = document.getElementById('bg-canvas');
+const bgCtx    = bgCanvas.getContext('2d');
 
-window._switchSpeed = 0.8;
+window._switchSpeed = 1.8;
 
 function hexToRgba(hex, alpha, darken=1) {
   const r=Math.round(parseInt(hex.slice(1,3),16)*darken);
@@ -41,32 +54,98 @@ function makeAuraFill(layer, ptsOrR, cx, cy, dark){
   return g;
 }
 
-// ── REWORK16 ──────────────────────────────────────────────────────
+// ── Cellules ──────────────────────────────────────────────
 const P = {
-  attrK:6, fricK:1, repK:1100000, curlK:2200, restitution:0.5,
-  proxMult:3.5, contourStr:0.55,
-  coreR:90, coreColor:'#F4C4B8', coreOpacity:0.05, coreBlur:5.5,
-  coreColor2:'#F4C4B8', coreOp2:0, coreGStop1:0, coreGStop2:0.28,
-  limitR:219, limitOpacity:0, dotOpacity:0,
+  attrK:6, fricK:3.5, repK:750000, curlK:1800, restitution:0.2,
+  proxMult:5, contourStr:0.4,
+  coreR:90, coreColor:'#c9c800', coreOpacity:1, coreBlur:29,
+  coreColor2:'#d9502f', coreOp2:0, coreGStop1:0, coreGStop2:0.5,
+  limitR:185, limitOpacity:0, dotOpacity:0,
 };
 const M = {
-  memR:115, nbPts:10, ampli:8, vitesse:0.4, twist:0.04,
-  bulge:71, tentacleStr:5, tentacleDecay:0.5,
-  color:'#D95030', opacity:1, blur:25,
-  color2:'#D95030', op2:0, gStop1:0, gStop2:0.55,
+  memR:67, nbPts:10, ampli:13, vitesse:1.35, twist:0.04,
+  bulge:38, tentacleStr:35, tentacleDecay:0.1,
+  color:'#D95030', opacity:1, blur:12.5,
+  color2:'#D95030', op2:1, gStop1:0, gStop2:0.55,
 };
-const L3 = { scale:1.35, color:'#E87050', opacity:0.55, blur:12.5, ellipse:0.05, color2:'#E87050', op2:0, gStop1:0.35, gStop2:1 };
-const L4 = { scale:2.12, color:'#F09070', opacity:0.35, blur:16,   ellipse:0.03, compress:0, color2:'#F09070', op2:0, gStop1:0.25, gStop2:0.58 };
-const L5 = { scale:2.3,  color:'#F0A888', opacity:0.20, blur:26,   ellipse:0.02, compress:0, color2:'#F0A888', op2:0, gStop1:0.18, gStop2:1 };
+const L3 = { scale:1.35, color:'#E87050', opacity:0.4,  blur:6,  ellipse:0.05, color2:'#E87050', op2:0.29, gStop1:0.35, gStop2:1 };
+const L4 = { scale:1.47, color:'#f09070', opacity:1,    blur:45, ellipse:0.29, compress:0.12, color2:'#F09070', op2:0, gStop1:0.25, gStop2:1 };
+const L5 = { scale:1.33, color:'#F0A888', opacity:1,    blur:22, ellipse:0.02, compress:0,    color2:'#F0A888', op2:0, gStop1:0.18, gStop2:1 };
 const BG = {
-  baseColor:'#C4BEC8',
-  b1Color:'#DDA090', b1x:0.35, b1y:0.22, b1size:0.85, b1op:1,
-  b2Color:'#CCB0A8', b2x:0.60, b2y:0.20, b2size:0.65, b2op:0.80,
-  b3Color:'#B8BBC8', b3x:0.50, b3y:0.88, b3size:0.90, b3op:1,
-  b4Color:'#C8C0C4', b4x:0.15, b4y:0.65, b4size:0.55, b4op:0.70,
-  b5Color:'#D4BEB8', b5x:0.80, b5y:0.55, b5size:0.45, b5op:0.60,
-  warpAmt:0.12,
+  baseColor:'#ece8e3',
+  b1Color:'#dce7f0', b1x:0.18, b1y:0.18, b1size:0.65, b1op:1,
+  b2Color:'#d6d3e2', b2x:0.82, b2y:0.22, b2size:0.6,  b2op:1,
+  b3Color:'#f0ddc9', b3x:0.5,  b3y:0.75, b3size:0.7,  b3op:1,
+  b4Color:'#dce7f0', b4x:0.72, b4y:0.65, b4size:0.5,  b4op:0.85,
+  b5Color:'#f0ddc9', b5x:0.18, b5y:0.78, b5size:0.45, b5op:0.8,
+  warpAmt:0.08,
 };
+const CSS = {
+  opacity:1, scale:495, blur:31, color:'#f0a787', speed:2,
+  blendMode:'normal', morphAmpli:1, pulseAmpli:0.5, radialFill:false,
+  brTLh:60, brTRh:33, brBRh:79, brBLh:11,
+  brTLv:90, brTRv:-77, brBRv:71, brBLv:-44,
+  scaleX:156, scaleY:146, rotateSpeed:360,
+};
+
+// ── CSS Blobs ─────────────────────────────────────────────
+const _blobs=[document.getElementById('blob-0'),document.getElementById('blob-1')];
+const _blobAngles=[0,0];
+let _kfIdx=0;
+
+function updateBlobKeyframes(){
+  const ma=CSS.morphAmpli??1, pa=CSS.pulseAmpli??0.5;
+  const bh=[CSS.brTLh, CSS.brTRh, CSS.brBRh, CSS.brBLh];
+  const bv=[CSS.brTLv, CSS.brTRv, CSS.brBRv, CSS.brBLv];
+  const bh1=bh.map(v=>100-v);
+  const bv1=bv.map(v=>100-v);
+  _kfIdx=1-_kfIdx;
+  const frames=[
+    {pct:'0%',   dh:[0,0,0,0],       dv:[0,0,0,0],       s:1},
+    {pct:'25%',  dh:[-10,10,-5,5],   dv:[-5,5,10,-10],   s:1+pa},
+    {pct:'50%',  dh:[10,-10,5,-5],   dv:[5,-5,-10,10],   s:1},
+    {pct:'75%',  dh:[-5,5,-10,10],   dv:[10,-10,5,-5],   s:1-pa*0.5},
+    {pct:'100%', dh:[0,0,0,0],       dv:[0,0,0,0],       s:1},
+  ];
+  function buildKf(name, basH, basV){
+    let kf=`@keyframes ${name} {\n`;
+    frames.forEach(({pct,dh,dv,s})=>{
+      const hr=dh.map((d,i)=>Math.round(basH[i]+d*ma)+'%').join(' ');
+      const vr=dv.map((d,i)=>Math.round(basV[i]+d*ma)+'%').join(' ');
+      kf+=`  ${pct} { border-radius:${hr} / ${vr}; transform:scale(${s.toFixed(3)}); }\n`;
+    });
+    return kf+'}';
+  }
+  const n0=`blob-morph-0${_kfIdx}`, n1=`blob-morph-1${_kfIdx}`;
+  let st=document.getElementById('blob-keyframes');
+  if(!st){st=document.createElement('style');st.id='blob-keyframes';document.head.appendChild(st);}
+  st.textContent=buildKf(n0,bh,bv)+'\n'+buildKf(n1,bh1,bv1);
+  _blobs[0].style.setProperty('--kf-name', n0);
+  _blobs[1].style.setProperty('--kf-name', n1);
+}
+
+function applyBlobStyles(){
+  updateBlobKeyframes();
+  _blobs.forEach((el,i)=>{
+    el.style.width        = CSS.scale+'px';
+    el.style.height       = CSS.scale+'px';
+    el.style.opacity      = CSS.opacity;
+    el.style.filter       = CSS.blur>0?`blur(${CSS.blur}px)`:'none';
+    el.style.mixBlendMode = CSS.blendMode;
+    el.style.setProperty('--blob-color', CSS.color);
+    el.style.setProperty('--dur', (CSS.speed*(i===0?1:1.44)).toFixed(1)+'s');
+    el.style.setProperty('--r-mid', CSS.radialFill ? '60%' : '0%');
+    el.style.setProperty('--r-end', CSS.radialFill ? '100%' : '70%');
+  });
+}
+
+function updateBlobs(dt){
+  const spd=CSS.rotateSpeed??0;
+  particles.forEach((p,i)=>{
+    _blobAngles[i]+= spd * (i===0?1:-1) * dt;
+    _blobs[i].style.transform=`translate(${p.x}px,${p.y}px) translate(-50%,-50%) rotate(${_blobAngles[i].toFixed(2)}deg) scaleX(${(CSS.scaleX??100)/100}) scaleY(${(CSS.scaleY??100)/100})`;
+  });
+}
 
 // ── Physique ──────────────────────────────────────────────
 const CURL_BEHIND=3.0, CURL_FRONT=0.25, ATTR_FAR_CLOSE=0.05, ATTR_FAR_FAR=4.0;
@@ -81,17 +160,16 @@ let W=0, H=0, U=1, cursor=null, smoothCursor=null, lastTs=null, elapsed=0;
 const particles=[{x:0,y:0,vx:0,vy:0},{x:0,y:0,vx:0,vy:0}];
 
 function resize(){
-  W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight;
+  W=canvas.width=bgCanvas.width=window.innerWidth;
+  H=canvas.height=bgCanvas.height=window.innerHeight;
   U=Math.min(Math.max(Math.min(W/1280,H/900),0.5),1.5);
   if(!particles[0].x){ particles[0].x=W/2-200*U; particles[0].y=H/2; particles[1].x=W/2+200*U; particles[1].y=H/2; }
+  drawBackground();
 }
 window.addEventListener('resize',resize); resize();
-window.addEventListener('mousemove',e=>{
-  cursor={x:e.clientX,y:e.clientY};
-  smoothCursor=cursor;
-});
+
+window.addEventListener('mousemove',e=>{ cursor={x:e.clientX,y:e.clientY}; smoothCursor=cursor; });
 document.addEventListener('mouseleave',()=>{cursor=null;});
-document.addEventListener('mouseout',e=>{if(!e.relatedTarget)cursor=null;});
 window.addEventListener('blur',()=>{cursor=null;});
 window.addEventListener('message',e=>{
   if(e.data?.type==='cursor'){
@@ -112,7 +190,7 @@ function physics(dt){
   const dA=Math.sqrt((c.x-a.x)**2+(c.y-a.y)**2),dB=Math.sqrt((c.x-b.x)**2+(c.y-b.y)**2);
   const farIdx=dA>dB?0:1,targetDom=[0.0,0.0];
   targetDom[farIdx]=1.0;
-  const speed=window._switchSpeed??1.2;
+  const speed=window._switchSpeed??1.8;
   for(let i=0;i<2;i++) dominance[i]+=(targetDom[i]-dominance[i])*Math.min(speed*dt,1);
   const threshold=P.limitR*U*P.proxMult,proximity=Math.min(dist/threshold,1);
   for(let i=0;i<2;i++){
@@ -147,9 +225,9 @@ function collide(){
 function bounceWalls(){
   const ox=W*0.1, oy=H*0.1;
   for(const p of particles){
-    if(p.x<-ox)     { p.x=-ox;  if(p.vx<0) p.vx=-p.vx*P.restitution; }
+    if(p.x<-ox)      { p.x=-ox;  if(p.vx<0) p.vx=-p.vx*P.restitution; }
     else if(p.x>W+ox){ p.x=W+ox; if(p.vx>0) p.vx=-p.vx*P.restitution; }
-    if(p.y<-oy)     { p.y=-oy;  if(p.vy<0) p.vy=-p.vy*P.restitution; }
+    if(p.y<-oy)      { p.y=-oy;  if(p.vy<0) p.vy=-p.vy*P.restitution; }
     else if(p.y>H+oy){ p.y=H+oy; if(p.vy>0) p.vy=-p.vy*P.restitution; }
   }
 }
@@ -198,8 +276,8 @@ function drawSmoothClosed(pts){
 }
 
 function drawBackground(){
-  ctx.fillStyle=BG.baseColor;
-  ctx.fillRect(0,0,W,H);
+  bgCtx.fillStyle=BG.baseColor;
+  bgCtx.fillRect(0,0,W,H);
   [
     [BG.b1Color,BG.b1x,BG.b1y,BG.b1size,BG.b1op],
     [BG.b2Color,BG.b2x,BG.b2y,BG.b2size,BG.b2op],
@@ -210,16 +288,15 @@ function drawBackground(){
     const wx=Math.sin(i*2.1+0.5)*BG.warpAmt;
     const wy=Math.cos(i*1.7+1.2)*BG.warpAmt;
     const cx=(x+wx)*W, cy=(y+wy)*H, r=sz*Math.max(W,H);
-    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+    const g=bgCtx.createRadialGradient(cx,cy,0,cx,cy,r);
     g.addColorStop(0,hexToRgba(col,op));
     g.addColorStop(1,hexToRgba(col,0));
-    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    bgCtx.fillStyle=g; bgCtx.fillRect(0,0,W,H);
   });
 }
 
 function draw(t){
   ctx.clearRect(0,0,W,H);
-  drawBackground();
   const [a,b]=particles,phaseList=[phases0,phases1];
 
   const geom=particles.map((p,i)=>{
@@ -245,13 +322,6 @@ function draw(t){
   geom.forEach(({p,pts,dark})=>{drawSmoothClosed(pts);ctx.fillStyle=makeAuraFill(M,pts,p.x,p.y,dark);ctx.fill();});
   ctx.filter='none';
 
-  if(P.limitOpacity>0.01){
-    geom.forEach(({p})=>{
-      ctx.save();ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(p.x,p.y,P.limitR*U,0,Math.PI*2);
-      ctx.strokeStyle=hexToRgba(P.coreColor,P.limitOpacity);ctx.lineWidth=1;ctx.stroke();ctx.restore();
-    });
-  }
-
   ctx.filter=P.coreBlur>0?`blur(${P.coreBlur}px)`:'none';
   geom.forEach(({p,dark})=>{
     ctx.beginPath();ctx.arc(p.x,p.y,P.coreR*U,0,Math.PI*2);
@@ -259,13 +329,6 @@ function draw(t){
     ctx.fillStyle=makeAuraFill(coreLayer,P.coreR*U,p.x,p.y,dark);ctx.fill();
   });
   ctx.filter='none';
-
-  if((P.dotOpacity??0)>0){
-    geom.forEach(({p})=>{
-      ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);
-      ctx.fillStyle=`rgba(255,255,255,${P.dotOpacity})`;ctx.fill();
-    });
-  }
 }
 
 // ── Loop ─────────────────────────────────────────────────
@@ -273,8 +336,11 @@ function loop(ts){
   const dt=lastTs===null?0.016:Math.min((ts-lastTs)/1000,0.05);
   lastTs=ts; elapsed+=dt;
   physics(dt); collide(); bounceWalls(); draw(elapsed);
+  updateBlobs(dt);
   requestAnimationFrame(loop);
 }
+
+applyBlobStyles();
 requestAnimationFrame(loop);
 </script>
 </body>

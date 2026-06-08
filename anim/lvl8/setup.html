@@ -248,7 +248,7 @@
    Presets : sauvegarde depuis gap_lvl8_cfg courant ; restaure en écrivant gap_lvl8_cfg.
    ──────────────────────────────────────────────────────── */
 
-const CFG_KEY    = 'gap_lvl8_cfg';
+const CFG_KEY    = 'gap_lvl8_cfg_v2';
 const PRESET_PREFIX = 'gap_lvl8_preset__';
 
 // Copies locales — tenues à jour via storage event depuis la page params
@@ -279,9 +279,11 @@ const BG = {
   warpAmt:0.08,
 };
 let _switchSpeed = 1.2;
+const CSS = { opacity:1, scale:495, blur:31, color:'#f0a787', speed:2, blendMode:'normal', morphAmpli:1, pulseAmpli:0.5, radialFill:false,
+  brTLh:60, brTRh:33, brBRh:79, brBLh:11, brTLv:90, brTRv:-77, brBRv:71, brBLv:-44, scaleX:156, scaleY:146, rotateSpeed:360 };
 
 function getConfig(){
-  return { P:{...P}, M:{...M}, L3:{...L3}, L4:{...L4}, L5:{...L5}, BG:{...BG}, switchSpeed:_switchSpeed };
+  return { P:{...P}, M:{...M}, L3:{...L3}, L4:{...L4}, L5:{...L5}, BG:{...BG}, CSS:{...CSS}, switchSpeed:_switchSpeed };
 }
 function broadcast(){
   try{ localStorage.setItem(CFG_KEY, JSON.stringify(getConfig())); }catch(e){}
@@ -296,6 +298,7 @@ function absorbConfig(cfg){
   if(cfg.L4) Object.assign(L4, cfg.L4);
   if(cfg.L5) Object.assign(L5, cfg.L5);
   if(cfg.BG) Object.assign(BG, cfg.BG);
+  if(cfg.CSS) Object.assign(CSS, cfg.CSS);
   if(cfg.switchSpeed!==undefined) _switchSpeed=cfg.switchSpeed;
 }
 
@@ -592,6 +595,20 @@ const SCENES = [
       L4: { scale:1.70, color:'#F09070', opacity:0.35, blur:16,   ellipse:0.03, compress:0, color2:'#F09070', op2:0, gStop1:0.25, gStop2:1 },
       L5: { scale:2.30, color:'#F0A888', opacity:0.20, blur:26,   ellipse:0.02, compress:0, color2:'#F0A888', op2:0, gStop1:0.18, gStop2:1 },
       switchSpeed: 0.65,
+    }
+  },
+  ,
+  {
+    name: 'Cellules', color: '#f0a787',
+    cfg: {
+      P: { attrK:6, fricK:3.5, repK:750000, curlK:1800, restitution:0.2, proxMult:5, contourStr:0.4, coreR:90, coreColor:'#c9c800', coreOpacity:1, coreBlur:29, coreColor2:'#d9502f', coreOp2:0, coreGStop1:0, coreGStop2:0.5, limitR:185, limitOpacity:0, dotOpacity:0 },
+      M: { memR:67, nbPts:10, ampli:13, vitesse:1.35, twist:0.04, bulge:38, tentacleStr:35, tentacleDecay:0.1, color:'#D95030', opacity:1, blur:12.5, color2:'#D95030', op2:1, gStop1:0, gStop2:0.55 },
+      L3: { scale:1.35, color:'#E87050', opacity:0.4, blur:6, ellipse:0.05, color2:'#E87050', op2:0.29, gStop1:0.35, gStop2:1 },
+      L4: { scale:1.47, color:'#f09070', opacity:1, blur:45, ellipse:0.29, compress:0.12, color2:'#F09070', op2:0, gStop1:0.25, gStop2:1 },
+      L5: { scale:1.33, color:'#F0A888', opacity:1, blur:22, ellipse:0.02, compress:0, color2:'#F0A888', op2:0, gStop1:0.18, gStop2:1 },
+      BG: { baseColor:'#ece8e3', b1Color:'#dce7f0', b1x:0.18, b1y:0.18, b1size:0.65, b1op:1, b2Color:'#d6d3e2', b2x:0.82, b2y:0.22, b2size:0.6, b2op:1, b3Color:'#f0ddc9', b3x:0.5, b3y:0.75, b3size:0.7, b3op:1, b4Color:'#dce7f0', b4x:0.72, b4y:0.65, b4size:0.5, b4op:0.85, b5Color:'#f0ddc9', b5x:0.18, b5y:0.78, b5size:0.45, b5op:0.8, warpAmt:0.08 },
+      CSS: { opacity:1, scale:495, blur:31, color:'#f0a787', speed:2, blendMode:'normal', morphAmpli:1, pulseAmpli:0.5, radialFill:false, brTLh:60, brTRh:33, brBRh:79, brBLh:11, brTLv:90, brTRv:-77, brBRv:71, brBLv:-44, scaleX:156, scaleY:146, rotateSpeed:360 },
+      switchSpeed: 1.8,
     }
   },
 /* SCENES_END */];

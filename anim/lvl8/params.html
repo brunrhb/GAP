@@ -29,7 +29,7 @@
     #debug-info { font-size:0.75em; opacity:0.28; }
 
     #cols {
-      flex:1;
+      flex:1; min-height:0;
       display:grid;
       grid-template-columns: 1fr 1fr 1fr;
       overflow:hidden;
@@ -84,7 +84,21 @@
     #p-bg3 .panel-header { border-left-color:rgba(230,190,145,0.6); }
     #p-bg4 .panel-header { border-left-color:rgba(168,208,192,0.6); }
     #p-bg5 .panel-header { border-left-color:rgba(208,192,168,0.6); }
-    #p-css .panel-header { border-left-color:rgba(240,168,200,0.6); }
+    #css-row {
+      flex-shrink:0;
+      border-top:1px solid rgba(255,255,255,0.09);
+      padding:0.5em 0.75em 0.65em;
+      background:#0e0d0c;
+    }
+    #css-row .row-header {
+      border-left:3px solid rgba(240,168,200,0.6);
+      padding-left:0.55em; margin-bottom:0.4em;
+      display:flex; align-items:center;
+    }
+    #css-row .css-cols {
+      display:grid; grid-template-columns:1fr 1fr; gap:0 2.5em;
+    }
+    #css-row input[type=range] { accent-color:#f090b8; }
 
     #p-l5  input[type=range] { accent-color:#d4c840; }
     #p-l4  input[type=range] { accent-color:#9b6abf; }
@@ -346,35 +360,62 @@
   </div>
 </div>
 
-<!-- ═══ CSS BLOB ═══ -->
-<div class="panel" id="p-css">
-  <div class="panel-header">
-    <span class="panel-title" style="color:#f0a8c8;">CSS — Surcouche</span>
-    <button class="panel-toggle">▾</button>
-  </div>
-  <div class="panel-body">
-    <div class="row"><label>couleur</label><input type="color" id="cCssColor" value="#E87050"></div>
-    <div class="row"><label>opacité</label><input type="range" id="sCssOp" min="0" max="1" step="0.01" value="0.45"><span class="val" id="vCssOp">0.45</span></div>
-    <div class="row"><label>taille</label><input type="range" id="sCssScale" min="50" max="600" step="5" value="260"><span class="val" id="vCssScale">260px</span></div>
-    <div class="row"><label>flou CSS</label><input type="range" id="sCssBlur" min="0" max="80" step="1" value="28"><span class="val" id="vCssBlur">28px</span></div>
-    <div class="row"><label>vitesse</label><input type="range" id="sCssSpeed" min="2" max="30" step="0.5" value="9"><span class="val" id="vCssSpeed">9.0s</span></div>
-    <div class="row"><label>morph</label><input type="range" id="sCssMorphAmpli" min="0" max="1" step="0.01" value="1"><span class="val" id="vCssMorphAmpli">1.00</span></div>
-    <div class="row"><label>pulse</label><input type="range" id="sCssPulseAmpli" min="0" max="0.5" step="0.01" value="0.12"><span class="val" id="vCssPulseAmpli">0.12</span></div>
-    <div class="row"><label>blend</label>
-      <select id="sCssBlend" style="flex:1;background:#1a1917;color:#f0ece4;border:1px solid rgba(255,255,255,0.12);border-radius:0.2em;font-family:monospace;font-size:0.82em;padding:0.15em 0.3em;cursor:pointer;">
-        <option value="overlay">overlay</option>
-        <option value="screen">screen</option>
-        <option value="soft-light">soft-light</option>
-        <option value="multiply">multiply</option>
-        <option value="lighten">lighten</option>
-        <option value="normal">normal</option>
-      </select>
-    </div>
-  </div>
-</div>
 
 </div><!-- /col droite -->
 </div><!-- /cols -->
+
+<!-- ═══ SOUS-COUCHE CSS ═══ -->
+<div id="css-row">
+  <div class="row-header">
+    <span class="panel-title" style="color:#f0a8c8;">Sous-couche CSS</span>
+  </div>
+  <div class="css-cols">
+
+    <!-- Col gauche : params généraux -->
+    <div>
+      <div class="row" style="margin-bottom:0.3em;">
+        <label style="flex:initial;opacity:1;font-size:0.78em;display:flex;align-items:center;gap:0.4em;cursor:pointer;">
+          <input type="checkbox" id="cCssRadialFill" style="cursor:pointer;">
+          debug forme
+        </label>
+      </div>
+      <div class="s-label">Apparence</div>
+      <div class="row"><label>couleur</label><input type="color" id="cCssColor" value="#E87050"></div>
+      <div class="row"><label>opacité</label><input type="range" id="sCssOp" min="0" max="1" step="0.01" value="0.45"><span class="val" id="vCssOp">0.45</span></div>
+      <div class="row"><label>taille</label><input type="range" id="sCssScale" min="50" max="600" step="5" value="260"><span class="val" id="vCssScale">260px</span></div>
+      <div class="row"><label>flou CSS</label><input type="range" id="sCssBlur" min="0" max="80" step="1" value="28"><span class="val" id="vCssBlur">28px</span></div>
+      <div class="s-label">Animation</div>
+      <div class="row"><label>vitesse</label><input type="range" id="sCssSpeed" min="2" max="30" step="0.5" value="9"><span class="val" id="vCssSpeed">9.0s</span></div>
+      <div class="row"><label>morph</label><input type="range" id="sCssMorphAmpli" min="0" max="1" step="0.01" value="1"><span class="val" id="vCssMorphAmpli">1.00</span></div>
+      <div class="row"><label>pulse</label><input type="range" id="sCssPulseAmpli" min="0" max="0.5" step="0.01" value="0.12"><span class="val" id="vCssPulseAmpli">0.12</span></div>
+      <div class="row"><label>blend</label>
+        <select id="sCssBlend" style="flex:1;background:#1a1917;color:#f0ece4;border:1px solid rgba(255,255,255,0.12);border-radius:0.2em;font-family:monospace;font-size:0.82em;padding:0.15em 0.3em;cursor:pointer;">
+          <option value="normal">normal</option>
+          <option value="overlay">overlay</option>
+          <option value="screen">screen</option>
+          <option value="soft-light">soft-light</option>
+          <option value="multiply">multiply</option>
+          <option value="lighten">lighten</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Col droite : border-radius -->
+    <div>
+      <div class="s-label">Forme — horizontale (TL · TR · BR · BL)</div>
+      <div class="row"><label>TL</label><input type="range" id="sCssBrTLh" min="0" max="100" step="1" value="70"><span class="val" id="vCssBrTLh">70%</span></div>
+      <div class="row"><label>TR</label><input type="range" id="sCssBrTRh" min="0" max="100" step="1" value="30"><span class="val" id="vCssBrTRh">30%</span></div>
+      <div class="row"><label>BR</label><input type="range" id="sCssBrBRh" min="0" max="100" step="1" value="55"><span class="val" id="vCssBrBRh">55%</span></div>
+      <div class="row"><label>BL</label><input type="range" id="sCssBrBLh" min="0" max="100" step="1" value="45"><span class="val" id="vCssBrBLh">45%</span></div>
+      <div class="s-label">Forme — verticale (TL · TR · BR · BL)</div>
+      <div class="row"><label>TL</label><input type="range" id="sCssBrTLv" min="0" max="100" step="1" value="60"><span class="val" id="vCssBrTLv">60%</span></div>
+      <div class="row"><label>TR</label><input type="range" id="sCssBrTRv" min="0" max="100" step="1" value="40"><span class="val" id="vCssBrTRv">40%</span></div>
+      <div class="row"><label>BR</label><input type="range" id="sCssBrBRv" min="0" max="100" step="1" value="45"><span class="val" id="vCssBrBRv">45%</span></div>
+      <div class="row"><label>BL</label><input type="range" id="sCssBrBLv" min="0" max="100" step="1" value="55"><span class="val" id="vCssBrBLv">55%</span></div>
+    </div>
+
+  </div>
+</div>
 
 <script>
 /* ── GAP — Paramètres lvl5
@@ -412,7 +453,8 @@ const BG = {
   warpAmt:0.05,
 };
 let _switchSpeed = 1.2;
-const CSS = { opacity:0.45, scale:260, blur:28, color:'#E87050', speed:9, blendMode:'normal', morphAmpli:1, pulseAmpli:0.12 };
+const CSS = { opacity:0.45, scale:260, blur:28, color:'#E87050', speed:9, blendMode:'normal', morphAmpli:1, pulseAmpli:0.12, radialFill:false,
+  brTLh:70, brTRh:30, brBRh:55, brBLh:45, brTLv:60, brTRv:40, brBRv:45, brBLv:55 };
 
 const sliderMap = {
   sScale5:    { obj:L5, key:'scale' },
@@ -484,6 +526,10 @@ const sliderMap = {
   sCssSpeed:       { obj:CSS, key:'speed' },
   sCssMorphAmpli:  { obj:CSS, key:'morphAmpli' },
   sCssPulseAmpli:  { obj:CSS, key:'pulseAmpli' },
+  sCssBrTLh: { obj:CSS, key:'brTLh' }, sCssBrTRh: { obj:CSS, key:'brTRh' },
+  sCssBrBRh: { obj:CSS, key:'brBRh' }, sCssBrBLh: { obj:CSS, key:'brBLh' },
+  sCssBrTLv: { obj:CSS, key:'brTLv' }, sCssBrTRv: { obj:CSS, key:'brTRv' },
+  sCssBrBRv: { obj:CSS, key:'brBRv' }, sCssBrBLv: { obj:CSS, key:'brBLv' },
 };
 const colorMap = {
   cCol5:   { obj:L5, key:'color' },  cCol5b: { obj:L5, key:'color2' },
@@ -534,6 +580,10 @@ const fmts = {
   sCssOp:         v=>v.toFixed(2),       sCssScale:       v=>Math.round(v)+'px',
   sCssBlur:       v=>Math.round(v)+'px', sCssSpeed:       v=>v.toFixed(1)+'s',
   sCssMorphAmpli: v=>v.toFixed(2),       sCssPulseAmpli:  v=>v.toFixed(2),
+  sCssBrTLh:v=>Math.round(v)+'%', sCssBrTRh:v=>Math.round(v)+'%',
+  sCssBrBRh:v=>Math.round(v)+'%', sCssBrBLh:v=>Math.round(v)+'%',
+  sCssBrTLv:v=>Math.round(v)+'%', sCssBrTRv:v=>Math.round(v)+'%',
+  sCssBrBRv:v=>Math.round(v)+'%', sCssBrBLv:v=>Math.round(v)+'%',
 };
 
 function getConfig(){
@@ -558,6 +608,8 @@ function syncDOM(){
   }
   const blendSel=document.getElementById('sCssBlend');
   if(blendSel) blendSel.value=CSS.blendMode;
+  const rfCb=document.getElementById('cCssRadialFill');
+  if(rfCb) rfCb.checked=!!CSS.radialFill;
   if(typeof drawBgCanvas==='function') drawBgCanvas();
 }
 function syncAllInputs(){ syncDOM(); broadcast(); }
@@ -598,6 +650,7 @@ function initColor(id){
 Object.keys(sliderMap).forEach(initSlider);
 Object.keys(colorMap).forEach(initColor);
 document.getElementById('sCssBlend').addEventListener('change',e=>{ CSS.blendMode=e.target.value; broadcast(); });
+document.getElementById('cCssRadialFill').addEventListener('change',e=>{ CSS.radialFill=e.target.checked; broadcast(); });
 
 // Reçoit depuis setup (rando/restore) → resync DOM sans re-broadcaster
 const debugEl=document.getElementById('debug-info');

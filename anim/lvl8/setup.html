@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GAP — Setup lvl6</title>
+  <title>GAP — Setup lvl8</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -27,6 +27,14 @@
     }
     #top h1 { font-size:0.85em; letter-spacing:0.1em; text-transform:uppercase; opacity:0.4; }
     #sync-status { font-size:0.75em; opacity:0.28; }
+    #btn-connect {
+      font-family:monospace; font-size:0.75em;
+      padding:0.2em 0.55em; border-radius:0.25em; cursor:pointer;
+      border:1px solid rgba(255,140,40,0.45); color:rgba(255,170,60,0.9);
+      background:rgba(255,140,40,0.08); transition:background 0.1s;
+    }
+    #btn-connect:hover { background:rgba(255,140,40,0.2); }
+    #btn-connect.connected { border-color:rgba(80,220,140,0.45); color:rgba(80,220,140,0.9); background:rgba(80,220,140,0.07); cursor:default; }
 
     #content {
       flex:1;
@@ -162,7 +170,8 @@
 <body>
 
 <div id="top">
-  <h1>GAP — Setup</h1>
+  <h1>GAP — Setup lvl8</h1>
+  <button id="btn-connect" onclick="connectFile()">🔗 Connecter</button>
   <div id="sync-status">—</div>
 </div>
 
@@ -234,13 +243,13 @@
 
 <script>
 /* ── GAP — Setup lvl5
-   Maintient des copies locales de P/M/L3/L4/L5 synchronisées depuis gap_lvl6_cfg.
-   Rando : modifie objets locaux → écrit gap_lvl6_cfg → params page resync ses sliders.
-   Presets : sauvegarde depuis gap_lvl6_cfg courant ; restaure en écrivant gap_lvl6_cfg.
+   Maintient des copies locales de P/M/L3/L4/L5 synchronisées depuis gap_lvl8_cfg.
+   Rando : modifie objets locaux → écrit gap_lvl8_cfg → params page resync ses sliders.
+   Presets : sauvegarde depuis gap_lvl8_cfg courant ; restaure en écrivant gap_lvl8_cfg.
    ──────────────────────────────────────────────────────── */
 
-const CFG_KEY    = 'gap_lvl6_cfg';
-const PRESET_PREFIX = 'gap_lvl6_preset__';
+const CFG_KEY    = 'gap_lvl8_cfg';
+const PRESET_PREFIX = 'gap_lvl8_preset__';
 
 // Copies locales — tenues à jour via storage event depuis la page params
 const P = {
@@ -546,7 +555,33 @@ const SCENES = [
       switchSpeed: 0.8,
     }
   },
-];
+  ,
+  {
+    name: 'sun2', color: '#D95030',
+    cfg: {
+      BG: { baseColor:'#ece8e3', b1Color:'#F4C4B8', b1x:0.72, b1y:0.28, b1size:0.85, b1op:1.00, b2Color:'#dce7f0', b2x:0.87, b2y:0.18, b2size:0.65, b2op:0.80, b3Color:'#d4c8b0', b3x:0.62, b3y:0.72, b3size:0.90, b3op:1.00, b4Color:'#c8d0c8', b4x:0.22, b4y:0.52, b4size:0.55, b4op:0.70, b5Color:'#f0ddc9', b5x:0.50, b5y:0.50, b5size:0.50, b5op:0.80, warpAmt:0.12 },
+      P: { attrK:8.0, fricK:1.2, repK:1600000, curlK:1800, restitution:0.50, proxMult:3.0, contourStr:0.40, coreR:135, coreColor:'#e87040', coreOpacity:0.92, coreBlur:18.0, coreColor2:'#e87040', coreOp2:0.00, coreGStop1:0.50, coreGStop2:1.0, limitR:200, limitOpacity:0.10, dotOpacity:0 },
+      M: { memR:145, nbPts:8, ampli:20, vitesse:0.35, twist:0.03, bulge:70, tentacleStr:31, tentacleDecay:0.55, color:'#D95030', opacity:0.45, blur:10.0, color2:'#a0cde6', op2:0.00, gStop1:0.40, gStop2:1.0 },
+      L3: { scale:1.30, color:'#E87050', opacity:0.28, blur:22.0, ellipse:0.04, color2:'#E87050', op2:0.11, gStop1:0.30, gStop2:1.0 },
+      L4: { scale:1.90, color:'#D95030', opacity:0.15, blur:40.0, ellipse:0.03, compress:0, color2:'#D95030', op2:0.00, gStop1:0.20, gStop2:1.0 },
+      L5: { scale:2.61, color:'#d4c840', opacity:0.07, blur:65.0, ellipse:0.02, compress:0, color2:'#d4c840', op2:0.00, gStop1:0.15, gStop2:1.0 },
+      switchSpeed: 0.7,
+    }
+  },
+  ,
+  {
+    name: 'REWORK16', color: '#E87050',
+    cfg: {
+      BG: { baseColor:'#C4BEC8', b1Color:'#DDA090', b1x:0.35, b1y:0.22, b1size:0.85, b1op:1, b2Color:'#CCB0A8', b2x:0.60, b2y:0.20, b2size:0.65, b2op:0.80, b3Color:'#B8BBC8', b3x:0.50, b3y:0.88, b3size:0.90, b3op:1, b4Color:'#C8C0C4', b4x:0.15, b4y:0.65, b4size:0.55, b4op:0.70, b5Color:'#D4BEB8', b5x:0.80, b5y:0.55, b5size:0.45, b5op:0.60, warpAmt:0.12 },
+      P: { attrK:6, fricK:1, repK:1100000, curlK:2200, restitution:0.5, proxMult:3.5, contourStr:0.55, coreR:90, coreColor:'#F4C4B8', coreOpacity:0.05, coreBlur:5.5, coreColor2:'#F4C4B8', coreOp2:0, coreGStop1:0, coreGStop2:0.28, limitR:219, limitOpacity:0, dotOpacity:0 },
+      M: { memR:115, nbPts:10, ampli:8, vitesse:0.4, twist:0.04, bulge:71, tentacleStr:5, tentacleDecay:0.5, color:'#D95030', opacity:1, blur:25, color2:'#D95030', op2:0, gStop1:0, gStop2:0.55 },
+      L3: { scale:1.35, color:'#E87050', opacity:0.55, blur:12.5, ellipse:0.05, color2:'#E87050', op2:0, gStop1:0.35, gStop2:1 },
+      L4: { scale:2.12, color:'#F09070', opacity:0.35, blur:16, ellipse:0.03, compress:0, color2:'#F09070', op2:0, gStop1:0.25, gStop2:0.58 },
+      L5: { scale:2.3, color:'#F0A888', opacity:0.20, blur:26, ellipse:0.02, compress:0, color2:'#F0A888', op2:0, gStop1:0.18, gStop2:1 },
+      switchSpeed: 0.8,
+    }
+  },
+/* SCENES_END */];
 
 (function buildScenes(){
   const grid = document.getElementById('scene-grid');
@@ -628,7 +663,7 @@ function randParam(spec,intensity){
 function applyRando(specs){
   const intensity=parseFloat(document.getElementById('rando-intensity').value);
   specs.forEach(s=>randParam(s,intensity));
-  broadcast(); // envoie aux autres pages via gap_lvl6_cfg
+  broadcast(); // envoie aux autres pages via gap_lvl8_cfg
 }
 
 document.querySelectorAll('[data-rando]').forEach(btn=>{
@@ -668,12 +703,62 @@ function renderPresets(){
   });
 }
 
-document.getElementById('btn-save-preset').addEventListener('click',()=>{
-  const input=document.getElementById('preset-name-input');
-  const name=input.value.trim(); if(!name) return;
-  // Sauvegarde le config courant (objets locaux = last known state)
-  localStorage.setItem(PRESET_PREFIX+name, JSON.stringify(getConfig()));
-  input.value=''; renderPresets();
+// ── File System : écriture directe dans setup.html ───────
+let _fh = null; // FileSystemFileHandle mémorisé pour la session
+
+async function connectFile() {
+  try {
+    const [h] = await window.showOpenFilePicker({
+      id: 'lvl8-setup',
+      types: [{ description: 'setup.html', accept: { 'text/html': ['.html'] } }],
+      multiple: false,
+    });
+    _fh = h;
+    const btn = document.getElementById('btn-connect');
+    btn.textContent = '✓ Connecté';
+    btn.classList.add('connected');
+    btn.onclick = null;
+    document.getElementById('sync-status').textContent = `Fichier: ${h.name}`;
+    setTimeout(() => document.getElementById('sync-status').textContent = '—', 3000);
+  } catch(e) {
+    if (e.name !== 'AbortError') console.error('Connect failed:', e);
+  }
+}
+
+async function persistPresetToFile(name, cfg) {
+  try {
+    if (!_fh) {
+      document.getElementById('sync-status').textContent = '⚠ Cliquer "Connecter" d\'abord';
+      setTimeout(() => document.getElementById('sync-status').textContent = '—', 3000);
+      return;
+    }
+    const file  = await _fh.getFile();
+    const text  = await file.text();
+    const color = cfg.M?.color || '#F4C4B8';
+    const entry = `  ,\n  {\n    name: '${name}', color: '${color}',\n    cfg: ${JSON.stringify(cfg)}\n  },\n`;
+    const marker = '/* SCENES_END */';
+    const idx = text.indexOf(marker);
+    if (idx === -1) { alert('Marqueur SCENES_END introuvable dans le fichier.'); return; }
+    const newText = text.slice(0, idx) + entry + text.slice(idx);
+    const w = await _fh.createWritable();
+    await w.write(newText);
+    await w.close();
+    document.getElementById('sync-status').textContent = `✓ "${name}" écrit dans le fichier`;
+    setTimeout(() => document.getElementById('sync-status').textContent = '—', 3000);
+  } catch(e) {
+    if (e.name !== 'AbortError') console.error('File write failed:', e);
+  }
+}
+
+document.getElementById('btn-save-preset').addEventListener('click', async () => {
+  const input = document.getElementById('preset-name-input');
+  const name  = input.value.trim(); if (!name) return;
+  const cfg   = getConfig();
+  // 1. localStorage (fallback rapide)
+  localStorage.setItem(PRESET_PREFIX + name, JSON.stringify(cfg));
+  // 2. Écriture directe dans setup.html
+  await persistPresetToFile(name, cfg);
+  input.value = ''; renderPresets();
 });
 document.getElementById('preset-name-input').addEventListener('keydown',e=>{
   if(e.key==='Enter') document.getElementById('btn-save-preset').click();

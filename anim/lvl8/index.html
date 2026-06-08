@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GAP — Anim lvl7</title>
+  <title>GAP — Anim lvl8</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     body { background: linear-gradient(to top, #ECE8E3 0%, #C4BEC8 50%, #D4BEB0 100%) fixed; overflow:hidden; font-family:monospace; }
@@ -28,88 +28,10 @@
       pointer-events:none;
     }
 
-    /* ── Wrappers de position — pilotés par JS ── */
-    .aura-wrap {
-      position      : fixed;
-      left: 0; top: 0;
-      pointer-events: none;
-      z-index       : 0;
-      will-change   : transform;
-    }
-    #aura-wrap-0 { transform: translate(var(--p0x, 50vw), var(--p0y, 50vh)); }
-    #aura-wrap-1 { transform: translate(var(--p1x, 50vw), var(--p1y, 50vh)); }
-
-    /* ── Couches visuelles — centrées sur le point ── */
-    .aura-spread, .aura-nucleus, .aura-core {
-      position      : absolute;
-      top: 0; left: 0;
-      border-radius : 70% 30% 55% 45% / 60% 40% 45% 55%;
-      pointer-events: none;
-    }
-
-    /* Spread — grande nappe */
-    .aura-spread {
-      width : 720px; height: 540px;
-      filter: blur(88px);
-      transform: translate(-50%, -50%) scaleX(1.3) scaleY(0.88);
-    }
-    /* Nucleus — couche intermédiaire */
-    .aura-nucleus {
-      width : 380px; height: 320px;
-      filter: blur(44px);
-      transform: translate(-50%, -50%) scaleX(1.1) scaleY(0.82);
-    }
-    /* Core — noyau dense */
-    .aura-core {
-      width : 200px; height: 175px;
-      filter: blur(16px);
-      transform: translate(-50%, -50%) scaleX(1.05) scaleY(0.9);
-    }
-
-    /* ── Couleurs aura 0 (terracotta) ── */
-    #aura-wrap-0 .aura-spread  { background: radial-gradient(circle, rgba(209,70,30,0.45) 0%, rgba(209,70,30,0) 100%); }
-    #aura-wrap-0 .aura-nucleus { background: radial-gradient(circle, rgba(217,80,48,0.72) 0%, rgba(240,120,70,0) 100%); }
-    #aura-wrap-0 .aura-core    { background: radial-gradient(circle, rgba(235,95,45,0.92) 0%, rgba(217,80,48,0.2) 100%); }
-
-    /* ── Couleurs aura 1 (blush pêche) ── */
-    #aura-wrap-1 .aura-spread  { background: radial-gradient(circle, rgba(240,160,110,0.38) 0%, rgba(240,160,110,0) 100%); }
-    #aura-wrap-1 .aura-nucleus { background: radial-gradient(circle, rgba(244,170,120,0.65) 0%, rgba(244,160,110,0) 100%); }
-    #aura-wrap-1 .aura-core    { background: radial-gradient(circle, rgba(248,185,140,0.88) 0%, rgba(244,170,120,0.2) 100%); }
-
-    /* ── Rotations de base + spin lent (propriété CSS indépendante) ── */
-    #aura-wrap-0 .aura-spread  { rotate: 15deg;  animation: spin-cw  22s linear infinite, breathe-a 6.1s ease-in-out infinite; }
-    #aura-wrap-0 .aura-nucleus { rotate: -10deg; animation: spin-ccw 17s linear infinite, breathe-b 5.4s ease-in-out infinite; }
-    #aura-wrap-0 .aura-core    { rotate: 5deg;   animation: spin-cw  28s linear infinite, breathe-a 4.8s ease-in-out infinite 0.8s; }
-
-    #aura-wrap-1 .aura-spread  { rotate: -20deg; animation: spin-ccw 26s linear infinite, breathe-b 7.3s ease-in-out infinite; }
-    #aura-wrap-1 .aura-nucleus { rotate: 12deg;  animation: spin-cw  19s linear infinite, breathe-a 6.6s ease-in-out infinite 1.2s; }
-    #aura-wrap-1 .aura-core    { rotate: -8deg;  animation: spin-ccw 23s linear infinite, breathe-b 5.9s ease-in-out infinite; }
-
-    @keyframes spin-cw  { to { rotate: 360deg; } }
-    @keyframes spin-ccw { to { rotate: -360deg; } }
-
-    @keyframes breathe-a {
-      0%,100% { scale: 1;    opacity: 1;    }
-      50%     { scale: 1.18; opacity: 0.72; }
-    }
-    @keyframes breathe-b {
-      0%,100% { scale: 1.08; opacity: 0.78; }
-      50%     { scale: 0.88; opacity: 1;    }
-    }
   </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-<div id="aura-wrap-0" class="aura-wrap">
-  <div class="aura-spread"></div>
-  <div class="aura-nucleus"></div>
-  <div class="aura-core"></div>
-</div>
-<div id="aura-wrap-1" class="aura-wrap">
-  <div class="aura-spread"></div>
-  <div class="aura-nucleus"></div>
-  <div class="aura-core"></div>
-</div>
 <div id="btn-bar">
   <button class="btn-win" id="btn-params">⚙ Paramètres</button>
   <button class="btn-win" id="btn-setup">⚙ Setup</button>
@@ -120,13 +42,13 @@
 /* ── GAP — Anim debug lvl4 — animation seule
    Params  → params.html (window.open)
    Setup   → setup.html  (window.open)
-   Sync via localStorage  key=gap_lvl7_cfg / gap_lvl7_dbg
+   Sync via localStorage  key=gap_lvl8_cfg / gap_lvl8_dbg
    ─────────────────────────────────────────── */
 
 const canvas = document.getElementById('c');
 const ctx    = canvas.getContext('2d');
-const CFG_KEY = 'gap_lvl7_cfg';
-const DBG_KEY = 'gap_lvl7_dbg';
+const CFG_KEY = 'gap_lvl8_cfg';
+const DBG_KEY = 'gap_lvl8_dbg';
 
 function hexToRgba(hex, alpha, darken=1) {
   const r=Math.round(parseInt(hex.slice(1,3),16)*darken);
@@ -414,7 +336,7 @@ function applyConfig(cfg){
   const presetName=params.get('preset');
   if(presetName){
     try{
-      const s=localStorage.getItem('gap_lvl7_preset__'+presetName);
+      const s=localStorage.getItem('gap_lvl8_preset__'+presetName);
       if(s){ applyConfig(JSON.parse(s)); return; }
     }catch(e){}
   }
@@ -453,9 +375,6 @@ function loop(ts){
   const dt=lastTs===null?0.016:Math.min((ts-lastTs)/1000,0.05);
   lastTs=ts; elapsed+=dt;
   physics(dt); collide(); bounceWalls(); draw(elapsed);
-  // Mise à jour positions wrappers auras CSS
-  document.getElementById('aura-wrap-0').style.transform=`translate(${particles[0].x}px,${particles[0].y}px)`;
-  document.getElementById('aura-wrap-1').style.transform=`translate(${particles[1].x}px,${particles[1].y}px)`;
   const [a,b]=particles,dx=b.x-a.x,dy=b.y-a.y;
   pushDebug(Math.sqrt(dx*dx+dy*dy),dominance[0],dominance[1]);
   requestAnimationFrame(loop);

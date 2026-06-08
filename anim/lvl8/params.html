@@ -358,6 +358,8 @@
     <div class="row"><label>taille</label><input type="range" id="sCssScale" min="50" max="600" step="5" value="260"><span class="val" id="vCssScale">260px</span></div>
     <div class="row"><label>flou CSS</label><input type="range" id="sCssBlur" min="0" max="80" step="1" value="28"><span class="val" id="vCssBlur">28px</span></div>
     <div class="row"><label>vitesse</label><input type="range" id="sCssSpeed" min="2" max="30" step="0.5" value="9"><span class="val" id="vCssSpeed">9.0s</span></div>
+    <div class="row"><label>morph</label><input type="range" id="sCssMorphAmpli" min="0" max="1" step="0.01" value="1"><span class="val" id="vCssMorphAmpli">1.00</span></div>
+    <div class="row"><label>pulse</label><input type="range" id="sCssPulseAmpli" min="0" max="0.5" step="0.01" value="0.12"><span class="val" id="vCssPulseAmpli">0.12</span></div>
     <div class="row"><label>blend</label>
       <select id="sCssBlend" style="flex:1;background:#1a1917;color:#f0ece4;border:1px solid rgba(255,255,255,0.12);border-radius:0.2em;font-family:monospace;font-size:0.82em;padding:0.15em 0.3em;cursor:pointer;">
         <option value="overlay">overlay</option>
@@ -410,7 +412,7 @@ const BG = {
   warpAmt:0.05,
 };
 let _switchSpeed = 1.2;
-const CSS = { opacity:0.45, scale:260, blur:28, color:'#E87050', speed:9, blendMode:'overlay' };
+const CSS = { opacity:0.45, scale:260, blur:28, color:'#E87050', speed:9, blendMode:'normal', morphAmpli:1, pulseAmpli:0.12 };
 
 const sliderMap = {
   sScale5:    { obj:L5, key:'scale' },
@@ -476,10 +478,12 @@ const sliderMap = {
   sBgB4op:    { obj:BG, key:'b4op' },
   sBgB5sz:    { obj:BG, key:'b5size' },
   sBgB5op:    { obj:BG, key:'b5op' },
-  sCssOp:     { obj:CSS, key:'opacity' },
-  sCssScale:  { obj:CSS, key:'scale' },
-  sCssBlur:   { obj:CSS, key:'blur' },
-  sCssSpeed:  { obj:CSS, key:'speed' },
+  sCssOp:          { obj:CSS, key:'opacity' },
+  sCssScale:       { obj:CSS, key:'scale' },
+  sCssBlur:        { obj:CSS, key:'blur' },
+  sCssSpeed:       { obj:CSS, key:'speed' },
+  sCssMorphAmpli:  { obj:CSS, key:'morphAmpli' },
+  sCssPulseAmpli:  { obj:CSS, key:'pulseAmpli' },
 };
 const colorMap = {
   cCol5:   { obj:L5, key:'color' },  cCol5b: { obj:L5, key:'color2' },
@@ -527,8 +531,9 @@ const fmts = {
   sBgB3sz:  v=>v.toFixed(2),   sBgB3op:  v=>v.toFixed(2),
   sBgB4sz:  v=>v.toFixed(2),   sBgB4op:  v=>v.toFixed(2),
   sBgB5sz:   v=>v.toFixed(2),  sBgB5op:  v=>v.toFixed(2),
-  sCssOp:    v=>v.toFixed(2),  sCssScale:v=>Math.round(v)+'px',
-  sCssBlur:  v=>Math.round(v)+'px', sCssSpeed:v=>v.toFixed(1)+'s',
+  sCssOp:         v=>v.toFixed(2),       sCssScale:       v=>Math.round(v)+'px',
+  sCssBlur:       v=>Math.round(v)+'px', sCssSpeed:       v=>v.toFixed(1)+'s',
+  sCssMorphAmpli: v=>v.toFixed(2),       sCssPulseAmpli:  v=>v.toFixed(2),
 };
 
 function getConfig(){

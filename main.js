@@ -216,4 +216,26 @@ _build() {
 const ctrl = new AController();
 ctrl.init();
 
-document.addEventListener('click', () => ctrl.toggleAll());
+/* ── Mobile nav toggle ───────────────────────────────────── */
+const navToggle = document.querySelector('.nav-toggle');
+const mainNav   = document.querySelector('.main-nav');
+
+if (navToggle && mainNav) {
+  navToggle.addEventListener('click', e => {
+    e.stopPropagation(); // ne pas déclencher ctrl.toggleAll
+    const isOpen = mainNav.classList.toggle('open');
+    navToggle.setAttribute('aria-expanded', String(isOpen));
+    navToggle.textContent = isOpen ? '✕' : '☰';
+  });
+}
+
+document.addEventListener('click', e => {
+  // Ferme le menu si ouvert et clic hors nav
+  if (mainNav?.classList.contains('open') && !mainNav.contains(e.target)) {
+    mainNav.classList.remove('open');
+    navToggle?.setAttribute('aria-expanded', 'false');
+    if (navToggle) navToggle.textContent = '☰';
+    return;
+  }
+  ctrl.toggleAll();
+});

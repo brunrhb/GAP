@@ -67,6 +67,10 @@ header, main, footer {
   line-height: 1;
 }
 
+.brand-icon {
+  display: none;
+}
+
 .main-nav {
   display: flex;
   align-items: center;
@@ -131,6 +135,21 @@ header, main, footer {
 
 /* Responsive */
 @media (max-width: 800px) {
+  .brand {
+    font-size: 0.9rem;
+  }
+  .brand-text {
+    display: none;
+  }
+  .brand-icon {
+    display: block;
+    height: 28px;
+    width: auto;
+  }
+  .lang-switch button {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+  }
   .nav-toggle {
     display: inline-block;
     font-size: 1.4rem;
@@ -149,17 +168,19 @@ header, main, footer {
   }
   .main-nav.open .nav-list {
     display: flex;
-    padding: 0.5rem 0 1.25rem;
+    padding: 0.5rem 0 1.25rem 0;
   }
   .nav-list a {
-    font-size: clamp(1.75rem, 9vw, 2.8rem);
-    font-variation-settings: "ital" 0, "wght" 500, "wdth" 100;
+    display: block;
+    font-size: clamp(1.3rem, 6.8vw, 2.1rem);
+    font-variation-settings: "ital" 0, "wght" 320, "wdth" 100;
     text-transform: uppercase;
     color: var(--ink);
     line-height: 1.05;
     padding: 0.2rem 0;
     border-bottom: none;
     letter-spacing: 0.01em;
+    text-align: right;
   }
   .nav-list a:hover,
   .nav-list a[aria-current="page"] {

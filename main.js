@@ -229,6 +229,14 @@ if (navToggle && mainNav) {
   });
 }
 
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 800 && mainNav?.classList.contains('open')) {
+    mainNav.classList.remove('open');
+    navToggle?.setAttribute('aria-expanded', 'false');
+    if (navToggle) navToggle.textContent = '☰';
+  }
+});
+
 document.addEventListener('click', e => {
   // Ferme le menu si ouvert et clic hors nav
   if (mainNav?.classList.contains('open') && !mainNav.contains(e.target)) {

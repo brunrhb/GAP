@@ -26,6 +26,15 @@
 
 html, body { height: 100%; }
 
+/* ── Tint overlay home ── */
+.home-tint {
+  position: fixed;
+  inset: 0;
+  background: rgba(240, 185, 150, 0.40);
+  pointer-events: none;
+  z-index: 0;
+}
+
 /* ── Animation background ── */
 #anim-bg {
   position: fixed;

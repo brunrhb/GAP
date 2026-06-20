@@ -16,6 +16,32 @@
       animation:var(--kf-name, blob-morph-00) var(--dur, 2s) ease-in-out infinite;
     }
     canvas#c { display:block; position:fixed; inset:0; z-index:1; }
+    .grain {
+      position: fixed;
+      inset: -150px;
+      width: calc(100% + 300px);
+      height: calc(100% + 300px);
+      pointer-events: none;
+      z-index: 2;
+      opacity: 0.12;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 256px 256px;
+      animation: grain-move 0.14s steps(1) infinite;
+    }
+    @keyframes grain-move {
+      0%   { transform: translate(  0px,   0px); }
+      11%  { transform: translate( -9px,  13px); }
+      22%  { transform: translate( 11px,  -7px); }
+      33%  { transform: translate(-13px,   5px); }
+      44%  { transform: translate(  7px, -11px); }
+      55%  { transform: translate( -5px,   9px); }
+      66%  { transform: translate( 13px,  -5px); }
+      77%  { transform: translate( -7px, -11px); }
+      88%  { transform: translate(  9px,   7px); }
+      100% { transform: translate(  0px,   0px); }
+    }
   </style>
 </head>
 <body>
@@ -23,6 +49,7 @@
 <div class="css-blob" id="blob-0"></div>
 <div class="css-blob" id="blob-1" style="animation-delay:-1s"></div>
 <canvas id="c"></canvas>
+<div class="grain"></div>
 
 <script>
 /* ── GAP — Home animation — Cellules, zéro localStorage ── */
@@ -34,7 +61,7 @@ const bgCtx    = bgCanvas.getContext('2d');
 
 window._switchSpeed = 1.8;
 
-const GLOBAL_SCALE  = 3;
+const GLOBAL_SCALE  = 2.7;
 const GLOBAL_SCALES = [GLOBAL_SCALE, GLOBAL_SCALE / 1.618];
 
 function hexToRgba(hex, alpha, darken=1) {
@@ -63,7 +90,7 @@ const P = {
   proxMult:5, contourStr:0.4,
   coreR:90, coreColor:'#c9c800', coreOpacity:1, coreBlur:29,
   coreColor2:'#d9502f', coreOp2:0, coreGStop1:0, coreGStop2:0.5,
-  limitR:185, limitOpacity:0, dotOpacity:0,
+  limitR:102, limitOpacity:0, dotOpacity:0,
 };
 const M = {
   memR:67, nbPts:10, ampli:13, vitesse:1.35, twist:0.04,
@@ -75,13 +102,13 @@ const L3 = { scale:1.35, color:'#E87050', opacity:0.4,  blur:6,  ellipse:0.05, c
 const L4 = { scale:1.47, color:'#f09070', opacity:1,    blur:45, ellipse:0.29, compress:0.12, color2:'#F09070', op2:0, gStop1:0.25, gStop2:1 };
 const L5 = { scale:1.33, color:'#F0A888', opacity:1,    blur:22, ellipse:0.02, compress:0,    color2:'#F0A888', op2:0, gStop1:0.18, gStop2:1 };
 const BG = {
-  baseColor:'#ece8e3',
-  b1Color:'#dce7f0', b1x:0.18, b1y:0.18, b1size:0.65, b1op:1,
-  b2Color:'#d6d3e2', b2x:0.82, b2y:0.22, b2size:0.6,  b2op:1,
-  b3Color:'#f0ddc9', b3x:0.5,  b3y:0.75, b3size:0.7,  b3op:1,
-  b4Color:'#dce7f0', b4x:0.72, b4y:0.65, b4size:0.5,  b4op:0.85,
-  b5Color:'#f0ddc9', b5x:0.18, b5y:0.78, b5size:0.45, b5op:0.8,
-  warpAmt:0.08,
+  baseColor:'#e8e5ef',
+  b1Color:'#c4ddf0', b1x:0.18, b1y:0.18, b1size:0.65, b1op:1,
+  b2Color:'#9080b8', b2x:0.82, b2y:0.22, b2size:0.6,  b2op:1,
+  b3Color:'#7862a4', b3x:0.5,  b3y:0.75, b3size:0.7,  b3op:1,
+  b4Color:'#e0a898', b4x:0.72, b4y:0.65, b4size:0.5,  b4op:0.85,
+  b5Color:'#9080b8', b5x:0.18, b5y:0.78, b5size:0.45, b5op:0.8,
+  warpAmt:0.14,
 };
 const CSS = {
   opacity:1, scale:495, blur:31, color:'#f0a787', speed:2,
@@ -168,7 +195,7 @@ function resize(){
   W=canvas.width=bgCanvas.width=window.innerWidth;
   H=canvas.height=bgCanvas.height=window.innerHeight;
   U=Math.min(Math.max(Math.min(W/1280,H/900),0.5),1.5);
-  if(!particles[0].x){ particles[0].x=W/2-200*U; particles[0].y=H/2; particles[1].x=W/2+200*U; particles[1].y=H/2; }
+  if(!particles[0].x){ particles[0].x=W/2-110*U; particles[0].y=H/2; particles[1].x=W/2+110*U; particles[1].y=H/2; }
   drawBackground();
 }
 window.addEventListener('resize',resize); resize();

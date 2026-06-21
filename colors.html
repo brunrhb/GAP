@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GAP — Palette couleurs</title>
+  <link rel="stylesheet" href="https://use.typekit.net/scu0dna.css">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #f0ece4;
+      color: #0f0e0c;
+      font-family: "obviously-variable", sans-serif;
+      font-variation-settings: "ital" 0, "wght" 400, "wdth" 100;
+      padding: 60px 48px 120px;
+    }
+
+    h1 {
+      font-size: 13px;
+      font-variation-settings: "ital" 0, "wght" 320, "wdth" 100;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.4;
+      margin-bottom: 64px;
+    }
+
+    .section {
+      margin-bottom: 72px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-variation-settings: "ital" 0, "wght" 320, "wdth" 100;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      opacity: 0.35;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .swatches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .swatch {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 120px;
+    }
+
+    .swatch.wide { width: 200px; }
+    .swatch.xl   { width: 280px; }
+
+    .color-block {
+      width: 100%;
+      height: 80px;
+      border-radius: 4px;
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .color-block.tall { height: 120px; }
+
+    .swatch-name {
+      font-size: 10px;
+      font-variation-settings: "ital" 0, "wght" 500, "wdth" 100;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      opacity: 0.5;
+    }
+
+    .swatch-hex {
+      font-size: 12px;
+      font-variation-settings: "ital" 0, "wght" 400, "wdth" 100;
+      font-variant-numeric: tabular-nums;
+      opacity: 0.75;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Aperçu fond complet ── */
+    .bg-preview {
+      width: 100%;
+      height: 220px;
+      border-radius: 6px;
+      border: 1px solid rgba(0,0,0,0.06);
+      margin-bottom: 6px;
+    }
+
+    .bg-card {
+      width: 280px;
+    }
+
+    .bg-label {
+      font-size: 11px;
+      font-variation-settings: "ital" 0, "wght" 500, "wdth" 100;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.5;
+      margin-bottom: 4px;
+    }
+
+    /* ── Aura preview ── */
+    .aura-preview {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .divider {
+      height: 1px;
+      background: rgba(0,0,0,0.06);
+      margin: 48px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>The Gap Group BXL — Palette couleurs</h1>
+
+  <!-- ── SYSTÈME ── -->
+  <div class="section">
+    <div class="section-label">Système</div>
+    <div class="swatches">
+      <div class="swatch">
+        <div class="color-block" style="background:#f0ece4;"></div>
+        <div class="swatch-name">--paper</div>
+        <div class="swatch-hex">#f0ece4</div>
+      </div>
+      <div class="swatch">
+        <div class="color-block" style="background:#0f0e0c;"></div>
+        <div class="swatch-name">--ink</div>
+        <div class="swatch-hex">#0f0e0c</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── AURAS ── -->
+  <div class="section">
+    <div class="section-label">Auras — gamme partagée</div>
+    <div class="swatches">
+
+      <div class="swatch">
+        <div class="color-block" style="background:#c9c800;"></div>
+        <div class="swatch-name">Core · or</div>
+        <div class="swatch-hex">#c9c800</div>
+      </div>
+
+      <div class="swatch">
+        <div class="color-block" style="background:#d9502f;"></div>
+        <div class="swatch-name">Core · orange</div>
+        <div class="swatch-hex">#d9502f</div>
+      </div>
+
+      <div class="swatch">
+        <div class="color-block" style="background:#F4C4B8;"></div>
+        <div class="swatch-name">Core · lvl8</div>
+        <div class="swatch-hex">#F4C4B8</div>
+      </div>
+
+      <div class="swatch" style="width:8px; flex-shrink:0;"></div><!-- séparateur -->
+
+      <div class="swatch">
+        <div class="color-block" style="background:#D95030;"></div>
+        <div class="swatch-name">M · membrane</div>
+        <div class="swatch-hex">#D95030</div>
+      </div>
+
+      <div class="swatch">
+        <div class="color-block" style="background:#E87050;"></div>
+        <div class="swatch-name">L3</div>
+        <div class="swatch-hex">#E87050</div>
+      </div>
+
+      <div class="swatch">
+        <div class="color-block" style="background:#F09070;"></div>
+        <div class="swatch-name">L4</div>
+        <div class="swatch-hex">#F09070</div>
+      </div>
+
+      <div class="swatch">
+        <div class="color-block" style="background:#F0A888;"></div>
+        <div class="swatch-name">L5</div>
+        <div class="swatch-hex">#F0A888</div>
+      </div>
+
+      <div class="swatch" style="width:8px; flex-shrink:0;"></div>
+
+      <div class="swatch">
+        <div class="color-block" style="background:#f0a787;"></div>
+        <div class="swatch-name">CSS blob · home</div>
+        <div class="swatch-hex">#f0a787</div>
+      </div>
+
+      <div class="swatch">
+        <div class="color-block" style="background:#F2C4A0;"></div>
+        <div class="swatch-name">CSS blob · lvl8</div>
+        <div class="swatch-hex">#F2C4A0</div>
+      </div>
+
+    </div>
+
+    <!-- Ramp visuelle -->
+    <div style="margin-top:20px;">
+      <div class="color-block" style="
+        height: 32px;
+        width: 100%;
+        max-width: 680px;
+        background: linear-gradient(to right, #D95030, #E87050, #F09070, #F0A888, #F2C4A0, #F4C4B8);
+        border-radius: 3px;
+      "></div>
+      <div style="font-size:10px; opacity:0.35; margin-top:6px; letter-spacing:0.06em; text-transform:uppercase;">Ramp M → L5</div>
+    </div>
+  </div>
+
+  <!-- ── FONDS ── -->
+  <div class="section">
+    <div class="section-label">Fonds — aperçus</div>
+    <div class="swatches" style="gap:20px; align-items:flex-start;">
+
+      <!-- VIOLET SATURÉ (home actuel) -->
+      <div class="bg-card">
+        <div class="bg-label">Home · violet saturé</div>
+        <div class="bg-preview" style="background:
+          radial-gradient(ellipse 65% 65% at 18% 18%, #c4ddf0 0%, transparent 100%),
+          radial-gradient(ellipse 60% 60% at 82% 22%, #9080b8 0%, transparent 100%),
+          radial-gradient(ellipse 70% 70% at 50% 75%, #7862a4 0%, transparent 100%),
+          radial-gradient(ellipse 50% 50% at 72% 65%, #e0a898 0%, transparent 100%),
+          radial-gradient(ellipse 45% 45% at 18% 78%, #9080b8 0%, transparent 100%),
+          #e8e5ef;
+        "></div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;">
+          <div class="swatch" style="width:72px;">
+            <div class="color-block" style="height:36px; background:#e8e5ef;"></div>
+            <div class="swatch-hex" style="font-size:10px;">#e8e5ef · base</div>
+          </div>
+          <div class="swatch" style="width:72px;">
+            <div class="color-block" style="height:36px; background:#c4ddf0;"></div>
+            <div class="swatch-hex" style="font-size:10px;">#c4ddf0 · b1</div>
+          </div>
+          <div class="swatch" style="width:72px;">
+            <div class="color-block" style="height:36px; background:#9080b8;"></div>
+            <div class="swatch-hex" style="font-size:10px;">#9080b8 · b2/b5</div>
+          </div>
+          <div class="swatch" style="width:72px;">
+            <div class="color-block" style="height:36px; background:#7862a4;"></div>
+            <div class="swatch-hex" style="font-size:10px;">#7862a4 · b3</div>
+          </div>
+          <div class="swatch" style="width:72px;">
+            <div class="color-block" style="height:36px; background:#e0a898;"></div>
+            <div class="swatch-hex" style="font-size:10px;">#e0a898 · b4</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CRÈME/PÊCHE (lvl8) -->
+      <div class="bg-card">
+        <div class="bg-label">Lvl8 · crème pêche</div>
+        <div class="bg-preview" style="background:
+          radial-gradient(ellipse 65% 65% at 18% 18%, #dce7f0 0%, transparent 100%),
+          radial-gradient(ellipse 60% 60% at 82% 22%, #d6d3e2 0%, transparent 100%),
+          radial-gradient(ellipse 70% 70% at 50% 75%, #f0ddc9 0%, transparent 100%),
+          radial-gradient(ellipse 50% 50% at 72% 65%, #dce7f0 0%, transparent 100%),
+          radial-gradient(ellipse 45% 45% at 18% 78%, #f0ddc9 0%, transparent 100%),
+          #ece8e3;
+        "></div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;">
+          <div class="swatch" style="width:72px;">
+            <div class="color-block" style="height:36px; background:#ece8e3;"></div>
+            <div class="swatch-hex" style="font-size:10px;">#ece8e3 · base</div>
+          </div>
+          <div class="swatch" style="width:72px;">
+            <div class="color-block" style="height:36px; background:#dce7f0;"></div>
+            <div class="swatch-hex" style="font-size:10px;">#dce7f0 · b1/b4</div>
+          </div>
+          <div class="swatch" style="width:72px;">
+            <div class="color-block" style="height:36px; background:#d6d3e2;"></div>
+            <div class="swatch-hex" style="font-size:10px;">#d6d3e2 · b2</div>
+          </div>
+          <div class="swatch" style="width:72px;">
+            <div class="color-block" style="height:36px; background:#f0ddc9;"></div>
+            <div class="swatch-hex" style="font-size:10px;">#f0ddc9 · b3/b5</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRIS SOMBRE (6a65761) -->
+      <div class="bg-card">
+        <div class="bg-label">Gris sombre · terreux</div>
+        <div class="bg-preview" style="background:
+          radial-gradient(ellipse 85% 85% at 35% 22%, #DDA090 0%, transparent 100%),
+          radial-gradient(ellipse 65% 65% at 60% 20%, #CCB0A8 0%, transparent 100%),
+          radial-gradient(ellipse 90% 90% at 50% 88%, #B8BBC8 0%, transparent 100%),
+          radial-gradient(ellipse 55% 55% at 15% 65%, #C8C0C4 0%, transparent 100%),
+          radial-gradient(ellipse 45% 45% at 80% 55%, #D4BEB8 0%, transparent 100%),
+          #C4BEC8;
+        "></div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;">
+          <div class="swatch" style="width:72px;">
+            <div class="color-block" style="height:36px; background:#C4BEC8;"></div>
+            <div class="swatch-hex" style="font-size:10px;">#C4BEC8 · base</div>
+          </div>
+          <div class="swatch" style="width:72px;">
+            <div class="color-block" style="height:36px; background:#DDA090;"></div>
+            <div class="swatch-hex" style="font-size:10px;">#DDA090 · b1</div>
+          </div>
+          <div class="swatch" style="width:72px;">
+            <div class="color-block" style="height:36px; background:#CCB0A8;"></div>
+            <div class="swatch-hex" style="font-size:10px;">#CCB0A8 · b2</div>
+          </div>
+          <div class="swatch" style="width:72px;">
+            <div class="color-block" style="height:36px; background:#B8BBC8;"></div>
+            <div class="swatch-hex" style="font-size:10px;">#B8BBC8 · b3</div>
+          </div>
+          <div class="swatch" style="width:72px;">
+            <div class="color-block" style="height:36px; background:#C8C0C4;"></div>
+            <div class="swatch-hex" style="font-size:10px;">#C8C0C4 · b4</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGES INTÉRIEURES -->
+      <div class="bg-card">
+        <div class="bg-label">Pages intérieures</div>
+        <div class="bg-preview" style="background:
+          radial-gradient(ellipse 160% 100% at 35% 12%,  rgba(221,144,120,0.95) 0%, transparent 62%),
+          radial-gradient(ellipse 110%  75% at 75%  6%,  rgba(204,176,168,0.75) 0%, transparent 58%),
+          radial-gradient(ellipse  90%  65% at 52% 16%,  rgba(244,196,184,0.65) 0%, transparent 52%),
+          radial-gradient(ellipse 120%  60% at 80% 70%,  rgba(196,190,200,0.18) 0%, transparent 70%),
+          radial-gradient(ellipse 100%  50% at 15% 85%,  rgba(184,187,200,0.14) 0%, transparent 65%),
+          #f0ece4;
+        "></div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;">
+          <div class="swatch" style="width:72px;">
+            <div class="color-block" style="height:36px; background:#f0ece4;"></div>
+            <div class="swatch-hex" style="font-size:10px;">#f0ece4 · --paper</div>
+          </div>
+          <div class="swatch" style="width:72px;">
+            <div class="color-block" style="height:36px; background:rgba(221,144,120,1);"></div>
+            <div class="swatch-hex" style="font-size:10px;">rgb(221,144,120)</div>
+          </div>
+          <div class="swatch" style="width:72px;">
+            <div class="color-block" style="height:36px; background:rgba(204,176,168,1);"></div>
+            <div class="swatch-hex" style="font-size:10px;">rgb(204,176,168)</div>
+          </div>
+          <div class="swatch" style="width:72px;">
+            <div class="color-block" style="height:36px; background:rgba(196,190,200,1);"></div>
+            <div class="swatch-hex" style="font-size:10px;">rgb(196,190,200)</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── TINT OVERLAY ── -->
+  <div class="section">
+    <div class="section-label">Tint overlay · home</div>
+    <div class="swatches">
+      <div class="swatch wide">
+        <div class="color-block" style="background: linear-gradient(135deg, rgba(240,185,150,0.4) 0%, rgba(240,185,150,0.4) 100%), repeating-linear-gradient(45deg, #ccc 0px, #ccc 1px, white 0px, white 50%); background-size: 100%, 8px 8px;"></div>
+        <div class="swatch-name">Pêche overlay · 40%</div>
+        <div class="swatch-hex">rgba(240, 185, 150, 0.40)</div>
+      </div>
+      <div class="swatch">
+        <div class="color-block" style="background:#F0B996;"></div>
+        <div class="swatch-name">Pêche · solid</div>
+        <div class="swatch-hex">#F0B996</div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

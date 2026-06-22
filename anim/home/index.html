@@ -15,7 +15,7 @@
       border-radius:60% 40% 30% 70% / 60% 30% 70% 40%;
       animation:var(--kf-name, blob-morph-00) var(--dur, 2s) ease-in-out infinite;
     }
-    canvas#c { display:block; position:fixed; inset:0; z-index:1; }
+    canvas#c { display:block; position:fixed; inset:0; z-index:1; opacity:0.75; }
     .grain {
       position: fixed;
       inset: -150px;
@@ -111,7 +111,7 @@ const BG = {
   warpAmt:0.14,
 };
 const CSS = {
-  opacity:1, scale:495, blur:31, color:'#f0a787', speed:2,
+  opacity:0.75, scale:495, blur:31, color:'#f0a787', speed:2,
   blendMode:'normal', morphAmpli:1, pulseAmpli:0.5, radialFill:false,
   brTLh:60, brTRh:33, brBRh:79, brBLh:11,
   brTLv:90, brTRv:-77, brBRv:71, brBLv:-44,

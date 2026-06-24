@@ -261,6 +261,11 @@ function sizeNavItems() {
   if (!headerEl || !mainEl) return;
   const gap  = mainEl.getBoundingClientRect().top
              - headerEl.getBoundingClientRect().bottom;
+  // Gap trop petit (home) : laisser le CSS gérer la taille
+  if (gap < 60) {
+    document.querySelectorAll('.nav-list a').forEach(a => { a.style.fontSize = ''; });
+    return;
+  }
   const n    = document.querySelectorAll('.nav-list li:not(:has(a[aria-current="page"]))').length;
   const itemH = (gap - 16) / Math.max(n, 1);
   const fs    = Math.min(Math.max(itemH * 0.65, 13), 32);

@@ -155,9 +155,15 @@ header, main, footer {
     height: 28px;
     width: auto;
   }
+  .lang-switch {
+    position: relative;
+    z-index: 20;
+  }
   .lang-switch button {
     font-size: 0.75rem;
     padding: 0.4rem 0.8rem;
+    touch-action: manipulation;
+    pointer-events: auto;
   }
   .nav-toggle {
     display: inline-block;
@@ -191,10 +197,13 @@ header, main, footer {
     letter-spacing: 0.01em;
     text-align: right;
   }
-  .nav-list a:hover,
-  .nav-list a[aria-current="page"] {
+  .nav-list a:hover {
     border-bottom: none;
     opacity: 0.55;
+  }
+  /* Cache la page courante dans le menu mobile */
+  .nav-list li:has(a[aria-current="page"]) {
+    display: none;
   }
 }
 
@@ -346,3 +355,9 @@ footer {
 .footer-inner span {
   opacity: 0.45;
 }
+
+/* ── Visibilité des langues (synced avec pages.css) ── */
+.lang-fr, .lang-en, .lang-nl { display: none; }
+html.show-fr .lang-fr { display: revert; }
+html.show-en .lang-en { display: revert; }
+html.show-nl .lang-nl { display: revert; }

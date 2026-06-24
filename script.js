@@ -22,7 +22,7 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     // Initialize language (saved preference, else default FR)
-    let initial = 'fr';
+    let initial = 'en';
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved && validLangs.includes(saved)) initial = saved;

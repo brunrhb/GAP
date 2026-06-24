@@ -235,7 +235,7 @@ ctrl.init();
 
   // Restore saved preference on load
   const saved = localStorage.getItem(STORAGE_KEY);
-  setLang(saved && validLangs.includes(saved) ? saved : 'fr');
+  setLang(saved && validLangs.includes(saved) ? saved : 'en');
 
   document.querySelectorAll('[data-lang-btn]').forEach(btn => {
     btn.addEventListener('click', e => {

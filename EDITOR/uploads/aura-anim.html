@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GAP — Auras</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html,body { background:transparent; overflow:hidden; width:100%; height:100%; }
+    .css-blob { position:fixed; top:0; left:0; pointer-events:none; z-index:0; will-change:transform; }
+    .css-blob::after {
+      content:''; display:block; width:100%; height:100%;
+      background:radial-gradient(circle at 50% 50%, var(--blob-color,#f0a787) 0%, var(--blob-color,#f0a787) var(--r-mid,0%), transparent var(--r-end,70%));
+      border-radius:60% 40% 30% 70% / 60% 30% 70% 40%;
+      animation:var(--kf-name, blob-morph-00) var(--dur, 2s) ease-in-out infinite;
+      animation-play-state: var(--play, running);
+    }
+    canvas#c { display:block; position:fixed; inset:0; z-index:1; opacity:0.75; }
+    .grain {
+      position: fixed; inset: -150px;
+      width: calc(100% + 300px); height: calc(100% + 300px);
+      pointer-events: none; z-index: 2; opacity: 0.12; mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-repeat: repeat; background-size: 256px 256px;
+      animation: grain-move 0.14s steps(1) infinite;
+    }
+    @keyframes grain-move {
+      0%{transform:translate(0,0);} 11%{transform:translate(-9px,13px);} 22%{transform:translate(11px,-7px);}
+      33%{transform:translate(-13px,5px);} 44%{transform:translate(7px,-11px);} 55%{transform:translate(-5px,9px);}
+      66%{transform:translate(13px,-5px);} 77%{transform:translate(-7px,-11px);} 88%{transform:translate(9px,7px);} 100%{transform:translate(0,0);}
+    }
+  </style>
+</head>
+<body>
+<div class="css-blob" id="blob-0"></div>
+<div class="css-blob" id="blob-1" style="animation-delay:-1s"></div>
+<canvas id="c"></canvas>
+<div class="grain"></div>
+
+<script>
+/* ── GAP — Auras "Cellules" (anim/home, validé) — version embarquée
+   Mesh background retiré (la couleur unie de l'éditeur sert de fond).
+   Cursor forwardé depuis la page parente via postMessage {type:'cursor'}.
+   ─────────────────────────────────────────── */
+
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+
+window._switchSpeed = 1.8;
+const GLOBAL_SCALE  = 2.2;
+const GLOBAL_SCALES = [GLOBAL_SCALE, GLOBAL_SCALE / 1.618];
+
+function hexToRgba(hex, alpha, darken=1) {
+  const r=Math.round(parseInt(hex.slice(1,3),16)*darken);
+  const g=Math.round(parseInt(hex.slice(3,5),16)*darken);
+  const b=Math.round(parseInt(hex.slice(5,7),16)*darken);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+function makeAuraFill(layer, ptsOrR, cx, cy, dark){
+  const s1=layer.gStop1??0, s2=Math.max((layer.gStop1??0)+0.001, layer.gStop2??1);
+  const c1=hexToRgba(layer.color, layer.opacity, dark);
+  const c2=hexToRgba(layer.color2||layer.color, layer.op2??layer.opacity, dark);
+  if(s1===0 && s2>=1 && (layer.op2??layer.opacity)===layer.opacity && (layer.color2||layer.color)===layer.color) return c1;
+  const r=typeof ptsOrR==='number' ? ptsOrR : (Math.max(...ptsOrR.map(pt=>Math.hypot(pt.x-cx,pt.y-cy)))||1);
+  const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+  if(s1>0) g.addColorStop(0,c1);
+  g.addColorStop(s1,c1);
+  g.addColorStop(s2,c2);
+  if(s2<1) g.addColorStop(1,c2);
+  return g;
+}
+
+const P = {
+  attrK:6, fricK:3.5, repK:750000, curlK:1800, restitution:0.2,
+  proxMult:5, contourStr:0.4,
+  coreR:90, coreColor:'#c9c800', coreOpacity:1, coreBlur:29,
+  coreColor2:'#d9502f', coreOp2:0, coreGStop1:0, coreGStop2:0.5,
+  limitR:102, limitOpacity:0, dotOpacity:0,
+};
+const M = {
+  memR:67, nbPts:10, ampli:13, vitesse:1.35, twist:0.04,
+  bulge:38, tentacleStr:35, tentacleDecay:0.1,
+  color:'#D95030', opacity:1, blur:12.5,
+  color2:'#D95030', op2:1, gStop1:0, gStop2:0.55,
+};
+const L3 = { scale:1.35, color:'#E87050', opacity:0.4,  blur:6,  ellipse:0.05, color2:'#E87050', op2:0.29, gStop1:0.35, gStop2:1 };
+const L4 = { scale:1.47, color:'#f09070', opacity:1,    blur:45, ellipse:0.29, compress:0.12, color2:'#F09070', op2:0, gStop1:0.25, gStop2:1 };
+const L5 = { scale:1.33, color:'#F0A888', opacity:1,    blur:22, ellipse:0.02, compress:0,    color2:'#F0A888', op2:0, gStop1:0.18, gStop2:1 };
+const CSS = {
+  opacity:0.75, scale:495, blur:31, color:'#f0a787', speed:2,
+  blendMode:'normal', morphAmpli:1, pulseAmpli:0.5, radialFill:false,
+  brTLh:60, brTRh:33, brBRh:79, brBLh:11,
+  brTLv:90, brTRv:-77, brBRv:71, brBLv:-44,
+  scaleX:156, scaleY:146, rotateSpeed:360,
+};
+
+const _blobs=[document.getElementById('blob-0'),document.getElementById('blob-1')];
+const _blobAngles=[0,0];
+let _kfIdx=0;
+
+function updateBlobKeyframes(){
+  const ma=CSS.morphAmpli??1, pa=CSS.pulseAmpli??0.5;
+  const bh=[CSS.brTLh, CSS.brTRh, CSS.brBRh, CSS.brBLh];
+  const bv=[CSS.brTLv, CSS.brTRv, CSS.brBRv, CSS.brBLv];
+  const bh1=bh.map(v=>100-v);
+  const bv1=bv.map(v=>100-v);
+  _kfIdx=1-_kfIdx;
+  const frames=[
+    {pct:'0%',   dh:[0,0,0,0],       dv:[0,0,0,0],       s:1},
+    {pct:'25%',  dh:[-10,10,-5,5],   dv:[-5,5,10,-10],   s:1+pa},
+    {pct:'50%',  dh:[10,-10,5,-5],   dv:[5,-5,-10,10],   s:1},
+    {pct:'75%',  dh:[-5,5,-10,10],   dv:[10,-10,5,-5],   s:1-pa*0.5},
+    {pct:'100%', dh:[0,0,0,0],       dv:[0,0,0,0],       s:1},
+  ];
+  function buildKf(name, basH, basV){
+    let kf=`@keyframes ${name} {\n`;
+    frames.forEach(({pct,dh,dv,s})=>{
+      const hr=dh.map((d,i)=>Math.round(basH[i]+d*ma)+'%').join(' ');
+      const vr=dv.map((d,i)=>Math.round(basV[i]+d*ma)+'%').join(' ');
+      kf+=`  ${pct} { border-radius:${hr} / ${vr}; transform:scale(${s.toFixed(3)}); }\n`;
+    });
+    return kf+'}';
+  }
+  const n0=`blob-morph-0${_kfIdx}`, n1=`blob-morph-1${_kfIdx}`;
+  let st=document.getElementById('blob-keyframes');
+  if(!st){st=document.createElement('style');st.id='blob-keyframes';document.head.appendChild(st);}
+  st.textContent=buildKf(n0,bh,bv)+'\n'+buildKf(n1,bh1,bv1);
+  _blobs[0].style.setProperty('--kf-name', n0);
+  _blobs[1].style.setProperty('--kf-name', n1);
+}
+
+function applyBlobStyles(){
+  updateBlobKeyframes();
+  _blobs.forEach((el,i)=>{
+    el.style.width        = CSS.scale+'px';
+    el.style.height       = CSS.scale+'px';
+    el.style.opacity      = CSS.opacity;
+    el.style.filter       = CSS.blur>0?`blur(${CSS.blur}px)`:'none';
+    el.style.mixBlendMode = CSS.blendMode;
+    el.style.setProperty('--blob-color', CSS.color);
+    el.style.setProperty('--dur', (CSS.speed*(i===0?1:1.44)).toFixed(1)+'s');
+    el.style.setProperty('--r-mid', CSS.radialFill ? '60%' : '0%');
+    el.style.setProperty('--r-end', CSS.radialFill ? '100%' : '70%');
+  });
+}
+
+function updateBlobs(dt){
+  const spd=CSS.rotateSpeed??0;
+  particles.forEach((p,i)=>{
+    _blobAngles[i]+= spd * (i===0?1:-1) * dt;
+    const vx = W/2 + (p.x - W/2) * GLOBAL_SCALES[i];
+    const vy = H/2 + (p.y - H/2) * GLOBAL_SCALES[i];
+    _blobs[i].style.transform=`translate(${vx}px,${vy}px) translate(-50%,-50%) rotate(${_blobAngles[i].toFixed(2)}deg) scaleX(${(CSS.scaleX??100)/100}) scaleY(${(CSS.scaleY??100)/100})`;
+  });
+}
+
+const CURL_BEHIND=3.0, CURL_FRONT=0.25, ATTR_FAR_CLOSE=0.05, ATTR_FAR_FAR=4.0;
+const dominance=[0.0,1.0];
+
+function buildPhases(n){
+  const phi=1.6180339887;
+  return Array.from({length:n},(_,i)=>i*phi*Math.PI*2);
+}
+let phases0=buildPhases(M.nbPts), phases1=buildPhases(M.nbPts);
+let W=0, H=0, U=1, cursor=null, smoothCursor=null, lastTs=null, elapsed=0;
+const particles=[{x:0,y:0,vx:0,vy:0},{x:0,y:0,vx:0,vy:0}];
+
+function resize(){
+  W=canvas.width=window.innerWidth;
+  H=canvas.height=window.innerHeight;
+  U=Math.min(Math.max(Math.min(W/1280,H/900),0.5),1.5);
+  if(!particles[0].x){ particles[0].x=W/2-110*U; particles[0].y=H/2; particles[1].x=W/2+110*U; particles[1].y=H/2; }
+}
+window.addEventListener('resize',resize); resize();
+
+window.addEventListener('mousemove',e=>{ cursor={x:e.clientX,y:e.clientY}; smoothCursor=cursor; });
+document.addEventListener('mouseleave',()=>{cursor=null;});
+window.addEventListener('blur',()=>{cursor=null;});
+window.addEventListener('message',e=>{
+  if(e.data&&e.data.type==='cursor'){
+    if(e.data.x===null){ cursor=null; }
+    else { cursor={x:e.data.x,y:e.data.y}; smoothCursor=cursor; }
+  } else if(e.data&&e.data.type==='stage'){
+    setStage(e.data.value|0);
+  }
+});
+// 0 = full anim · 1 = movement frozen, pulse continues · 2 = everything frozen
+let _stage=0;
+function setStage(s){
+  _stage=s;
+  const frozen = s>=2;
+  // grain animation is on the element itself
+  document.querySelectorAll('.grain').forEach(el=>{
+    el.style.animationPlayState = frozen ? 'paused' : 'running';
+  });
+  // blob morph lives on ::after — pause via inherited custom property
+  document.querySelectorAll('.css-blob').forEach(el=>{
+    el.style.setProperty('--play', frozen ? 'paused' : 'running');
+  });
+}
+function getCursor(){return smoothCursor??{x:W/2,y:H/2};}
+
+function physics(dt){
+  if(!cursor && smoothCursor){
+    const k=Math.min(1.5*dt,1);
+    smoothCursor={x:smoothCursor.x+(W/2-smoothCursor.x)*k, y:smoothCursor.y+(H/2-smoothCursor.y)*k};
+  }
+  const c=getCursor(),[a,b]=particles;
+  const dx=b.x-a.x,dy=b.y-a.y,dist=Math.max(Math.sqrt(dx*dx+dy*dy),1);
+  const nx=dx/dist,ny=dy/dist,repMag=P.repK/(dist*dist),curlMag=P.curlK/dist,tx=-ny,ty=nx;
+  const dA=Math.sqrt((c.x-a.x)**2+(c.y-a.y)**2),dB=Math.sqrt((c.x-b.x)**2+(c.y-b.y)**2);
+  const farIdx=dA>dB?0:1,targetDom=[0.0,0.0];
+  targetDom[farIdx]=1.0;
+  const speed=window._switchSpeed??1.8;
+  for(let i=0;i<2;i++) dominance[i]+=(targetDom[i]-dominance[i])*Math.min(speed*dt,1);
+  const threshold=P.limitR*U*P.proxMult,proximity=Math.min(dist/threshold,1);
+  for(let i=0;i<2;i++){
+    const p=particles[i],sign=i===0?-1:1,dom=dominance[i];
+    const challAttr=ATTR_FAR_CLOSE+proximity*(ATTR_FAR_FAR-ATTR_FAR_CLOSE);
+    const attrFactor=1.0+dom*(challAttr-1.0),curlFactor=CURL_FRONT+dom*(CURL_BEHIND-CURL_FRONT);
+    let fax=(c.x-p.x)*P.attrK*attrFactor,fay=(c.y-p.y)*P.attrK*attrFactor;
+    const cw=dom*(1-proximity)*P.contourStr;
+    if(cw>0.001){
+      const o=particles[1-i],tox=o.x-p.x,toy=o.y-p.y,tod=Math.max(Math.sqrt(tox*tox+toy*toy),1);
+      const t1x=-toy/tod,t1y=tox/tod,t2x=toy/tod,t2y=-tox/tod;
+      const pcx=c.x-p.x,pcy=c.y-p.y,d1=t1x*pcx+t1y*pcy,d2=t2x*pcx+t2y*pcy;
+      const btx=d1>=d2?t1x:t2x,bty=d1>=d2?t1y:t2y,mag=Math.sqrt(fax*fax+fay*fay);
+      fax=fax*(1-cw)+btx*mag*cw; fay=fay*(1-cw)+bty*mag*cw;
+    }
+    p.vx+=(fax+sign*nx*repMag+sign*tx*curlMag*curlFactor-p.vx*P.fricK)*dt;
+    p.vy+=(fay+sign*ny*repMag+sign*ty*curlMag*curlFactor-p.vy*P.fricK)*dt;
+    p.x+=p.vx*dt; p.y+=p.vy*dt;
+  }
+}
+
+function collide(){
+  const [a,b]=particles,dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy),minD=P.limitR*U*2;
+  if(dist<minD&&dist>0.01){
+    const nx=dx/dist,ny=dy/dist,ov=(minD-dist)*0.5;
+    a.x-=nx*ov;a.y-=ny*ov;b.x+=nx*ov;b.y+=ny*ov;
+    const dvn=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+    if(dvn<0){const imp=-(1+P.restitution)*dvn*0.5;a.vx-=imp*nx;a.vy-=imp*ny;b.vx+=imp*nx;b.vy+=imp*ny;}
+  }
+}
+
+function bounceWalls(){
+  const ox=W*0.1, oy=H*0.1;
+  for(const p of particles){
+    if(p.x<-ox)      { p.x=-ox;  if(p.vx<0) p.vx=-p.vx*P.restitution; }
+    else if(p.x>W+ox){ p.x=W+ox; if(p.vx>0) p.vx=-p.vx*P.restitution; }
+    if(p.y<-oy)      { p.y=-oy;  if(p.vy<0) p.vy=-p.vy*P.restitution; }
+    else if(p.y>H+oy){ p.y=H+oy; if(p.vy>0) p.vy=-p.vy*P.restitution; }
+  }
+}
+
+function membranePoints(p,other,phases,t){
+  const n=M.nbPts,toOtherAngle=Math.atan2(other.y-p.y,other.x-p.x);
+  let leaderJ=0,leaderDiff=Infinity;
+  for(let j=0;j<n;j++){
+    const ba=(j/n)*Math.PI*2;
+    let diff=Math.abs(((ba-toOtherAngle)%(Math.PI*2)+Math.PI*2)%(Math.PI*2));
+    if(diff>Math.PI)diff=Math.PI*2-diff;
+    if(diff<leaderDiff){leaderDiff=diff;leaderJ=j;}
+  }
+  const tp=0.55+0.45*Math.sin(t*M.vitesse*0.55+1.2),pts=[];
+  for(let j=0;j<n;j++){
+    const ba=(j/n)*Math.PI*2,ph=phases[j%phases.length];
+    const noise=(M.ampli*Math.sin(t*M.vitesse+ph)+M.ampli*0.4*Math.sin(t*M.vitesse*1.618+ph*2.414))*U;
+    const bulgeR=M.bulge*U*Math.max(0,Math.cos(ba-toOtherAngle));
+    const cd=Math.min(Math.abs(j-leaderJ),n-Math.abs(j-leaderJ));
+    const inf=Math.pow(M.tentacleDecay,cd);
+    const tentR=M.tentacleStr*U*inf*tp;
+    const nbN=cd>0?M.tentacleStr*U*0.18*inf*Math.sin(t*M.vitesse*1.3+ph+cd):0;
+    const r=M.memR*U+noise+bulgeR+tentR+nbN,angle=ba+M.twist*Math.sin(t*M.vitesse*0.7+ph);
+    pts.push({x:p.x+Math.cos(angle)*r,y:p.y+Math.sin(angle)*r});
+  }
+  return pts;
+}
+
+function auraPoints(basePts, center, scale, ellipseStr, compressStr, axisAngle){
+  const cos=Math.cos(axisAngle),sin=Math.sin(axisAngle);
+  const sa=(1+ellipseStr)/(1+compressStr);
+  const sp=Math.sqrt((1+compressStr)/(1+ellipseStr));
+  return basePts.map(pt=>{
+    const dx=(pt.x-center.x)*scale,dy=(pt.y-center.y)*scale;
+    const along=dx*cos+dy*sin,perp=-dx*sin+dy*cos;
+    return{x:center.x+along*sa*cos-perp*sp*sin,y:center.y+along*sa*sin+perp*sp*cos};
+  });
+}
+
+function drawSmoothClosed(pts){
+  const n=pts.length;if(n<3)return;
+  ctx.beginPath();
+  ctx.moveTo((pts[n-1].x+pts[0].x)/2,(pts[n-1].y+pts[0].y)/2);
+  for(let i=0;i<n;i++){const p=pts[i],nx=pts[(i+1)%n];ctx.quadraticCurveTo(p.x,p.y,(p.x+nx.x)/2,(p.y+nx.y)/2);}
+  ctx.closePath();
+}
+
+function draw(t){
+  ctx.clearRect(0,0,W,H);
+  const phaseList=[phases0,phases1];
+
+  const geom=particles.map((p,i)=>{
+    const other=particles[1-i];
+    const pts=membranePoints(p,other,phaseList[i],t);
+    const axisAngle=Math.atan2(other.y-p.y,other.x-p.x);
+    const a3=auraPoints(pts, p, L3.scale, L3.ellipse, 0,           axisAngle);
+    const a4=auraPoints(a3,  p, L4.scale, L4.ellipse, L4.compress, axisAngle);
+    const a5=auraPoints(a4,  p, L5.scale, L5.ellipse, L5.compress, axisAngle);
+    return {p,pts,a3,a4,a5,dark:1,gs:GLOBAL_SCALES[i]};
+  });
+
+  const sc=(gs)=>{ctx.save();ctx.translate(W/2,H/2);ctx.scale(gs,gs);ctx.translate(-W/2,-H/2);};
+  const rs=()=>ctx.restore();
+
+  ctx.filter=L5.blur>0?`blur(${L5.blur}px)`:'none';
+  geom.forEach(({p,a5,dark,gs})=>{sc(gs);drawSmoothClosed(a5);ctx.fillStyle=makeAuraFill(L5,a5,p.x,p.y,dark);ctx.fill();rs();});
+
+  ctx.filter=L4.blur>0?`blur(${L4.blur}px)`:'none';
+  geom.forEach(({p,a4,dark,gs})=>{sc(gs);drawSmoothClosed(a4);ctx.fillStyle=makeAuraFill(L4,a4,p.x,p.y,dark);ctx.fill();rs();});
+
+  ctx.filter=L3.blur>0?`blur(${L3.blur}px)`:'none';
+  geom.forEach(({p,a3,dark,gs})=>{sc(gs);drawSmoothClosed(a3);ctx.fillStyle=makeAuraFill(L3,a3,p.x,p.y,dark);ctx.fill();rs();});
+
+  ctx.filter=M.blur>0?`blur(${M.blur}px)`:'none';
+  geom.forEach(({p,pts,dark,gs})=>{sc(gs);drawSmoothClosed(pts);ctx.fillStyle=makeAuraFill(M,pts,p.x,p.y,dark);ctx.fill();rs();});
+  ctx.filter='none';
+
+  ctx.filter=P.coreBlur>0?`blur(${P.coreBlur}px)`:'none';
+  geom.forEach(({p,dark,gs})=>{
+    sc(gs);
+    ctx.beginPath();ctx.arc(p.x,p.y,P.coreR*U,0,Math.PI*2);
+    const coreLayer={color:P.coreColor,opacity:P.coreOpacity,color2:P.coreColor2,op2:P.coreOp2,gStop1:P.coreGStop1,gStop2:P.coreGStop2};
+    ctx.fillStyle=makeAuraFill(coreLayer,P.coreR*U,p.x,p.y,dark);ctx.fill();
+    rs();
+  });
+  ctx.filter='none';
+}
+
+function loop(ts){
+  const dt=lastTs===null?0.016:Math.min((ts-lastTs)/1000,0.05);
+  lastTs=ts;
+  if(_stage===0){ physics(dt); collide(); bounceWalls(); }   // movement
+  if(_stage<2){ elapsed+=dt; draw(elapsed); updateBlobs(dt); } // pulse / morph
+  requestAnimationFrame(loop);
+}
+
+applyBlobStyles();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

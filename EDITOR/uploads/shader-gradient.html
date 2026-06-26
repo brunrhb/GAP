@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GAP — Shader Gradient</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+    #root { width: 100%; height: 100%; }
+    /* hide any stray ShaderGradient UI just in case */
+    #root canvas { display: block; width: 100% !important; height: 100% !important; }
+    .grain {
+      position: fixed; inset: -150px;
+      width: calc(100% + 300px); height: calc(100% + 300px);
+      pointer-events: none; z-index: 5; opacity: 0.06; mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-repeat: repeat; background-size: 256px 256px;
+      animation: grain-move 0.14s steps(1) infinite;
+    }
+    @keyframes grain-move {
+      0%{transform:translate(0,0);} 25%{transform:translate(-8px,6px);} 50%{transform:translate(7px,-9px);} 75%{transform:translate(-6px,-5px);} 100%{transform:translate(0,0);}
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<div class="grain" id="grain"></div>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.3.1",
+    "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime",
+    "react-dom": "https://esm.sh/react-dom@18.3.1",
+    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+    "three": "https://esm.sh/three@0.160.0",
+    "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.15.19?external=react,react-dom,three",
+    "@shadergradient/react": "https://esm.sh/@shadergradient/react@2.0.0?external=react,react-dom,three,@react-three/fiber"
+  }
+}
+</script>
+<script type="module">
+  /* GAP — ShaderGradient mesh background (anim mix).
+     Loaded as an iframe; colors/params come from the URL query.
+     Stack pulled from esm.sh (three + r3f + @shadergradient/react). */
+  import React from 'react';
+  import { createRoot } from 'react-dom/client';
+  import { ShaderGradientCanvas, ShaderGradient } from '@shadergradient/react';
+
+  const p = new URLSearchParams(location.search);
+  const g = (k, d) => (p.has(k) ? p.get(k) : d);
+  const n = (k, d) => (p.has(k) ? parseFloat(p.get(k)) : d);
+
+  const props = {
+    animate: 'on',
+    type: g('type', 'waterPlane'),
+    wireframe: false,
+    shader: 'defaults',
+    uTime: n('uTime', 8),
+    uSpeed: n('uSpeed', 0.3),
+    uStrength: n('uStrength', 1.5),
+    uDensity: n('uDensity', 1.5),
+    uFrequency: 0,
+    uAmplitude: 0,
+    positionX: 0, positionY: 0, positionZ: 0,
+    rotationX: n('rotationX', 50), rotationY: 0, rotationZ: n('rotationZ', -60),
+    color1: g('color1', '#242880'),
+    color2: g('color2', '#8d7dca'),
+    color3: g('color3', '#212121'),
+    reflection: 0.1,
+    cAzimuthAngle: 180, cPolarAngle: 80, cDistance: n('cDistance', 2.8), cameraZoom: 9.1,
+    lightType: '3d', brightness: 1, envPreset: 'city', grain: 'off',
+    toggleAxis: false, zoomOut: false, hoverState: '', enableTransition: false,
+  };
+
+  // controllable film grain (ShaderGradient grain is binary on/off)
+  (function(){ var ga = n('grainAmt', 0.06); var el = document.getElementById('grain'); if (el) el.style.opacity = ga; })();
+
+  function App() {
+    return React.createElement(
+      ShaderGradientCanvas,
+      { style: { width: '100%', height: '100%' }, fov: n('fov', 45), pixelDensity: 1, pointerEvents: 'none' },
+      React.createElement(ShaderGradient, props)
+    );
+  }
+
+  try {
+    createRoot(document.getElementById('root')).render(React.createElement(App));
+  } catch (e) {
+    document.body.innerHTML = '<div style="color:#888;font:12px monospace;padding:8px">ShaderGradient: ' + (e && e.message) + '</div>';
+  }
+</script>
+</body>
+</html>

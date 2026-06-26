@@ -253,25 +253,8 @@ document.querySelectorAll('.nav-list a').forEach(a => {
   if (href === _currentFile) a.setAttribute('aria-current', 'page');
 });
 
-// Calcule la font-size des items pour éviter l'overlap avec le contenu
-function sizeNavItems() {
-  if (window.innerWidth > 800) return;
-  const headerEl = document.querySelector('.site-header');
-  const mainEl   = document.querySelector('main');
-  if (!headerEl || !mainEl) return;
-  const gap  = mainEl.getBoundingClientRect().top
-             - headerEl.getBoundingClientRect().bottom;
-  // Gap trop petit (home) : laisser le CSS gérer la taille
-  if (gap < 60) {
-    document.querySelectorAll('.nav-list a').forEach(a => { a.style.fontSize = ''; });
-    return;
-  }
-  const n    = document.querySelectorAll('.nav-list li:not(:has(a[aria-current="page"]))').length;
-  const itemH = (gap - 16) / Math.max(n, 1);
-  const fs    = Math.min(Math.max(itemH * 0.65, 13), 32);
-  document.querySelectorAll('.nav-list a')
-    .forEach(a => { a.style.fontSize = fs + 'px'; });
-}
+// Le menu plein écran est dimensionné par le CSS (clamp) — plus d'ajustement inline.
+function sizeNavItems() { /* no-op : taille gérée par style.css */ }
 
 /* ── Mobile nav toggle ───────────────────────────────────── */
 const navToggle = document.querySelector('.nav-toggle');

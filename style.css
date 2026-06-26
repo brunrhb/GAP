@@ -173,37 +173,41 @@ header, main, footer {
   }
   .nav-list {
     display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    flex-direction: column;
-    gap: 0;
-    padding: 0;
   }
+
+  /* ── Menu plein écran centré ── */
   .main-nav.open .nav-list {
     display: flex;
-    padding: 0.5rem 0 1.25rem 0;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.8rem, 3.5vh, 1.8rem);
+    padding: 0 1.5rem;
+    pointer-events: none;
   }
-  .nav-list a {
+  .main-nav.open .nav-list a {
+    pointer-events: auto;
     display: block;
-    font-size: clamp(1.3rem, 6.8vw, 2.1rem);
-    font-variation-settings: "ital" 0, "wght" 320, "wdth" 100;
+    max-width: 100%;
+    font-size: clamp(1.4rem, 7vw, 2.3rem);
+    font-variation-settings: "ital" 0, "wght" 380, "wdth" 100;
     text-transform: uppercase;
     color: var(--ink);
     line-height: 1.05;
-    padding: 0.2rem 0;
+    padding: 0.1rem 0;
     border-bottom: none;
-    letter-spacing: 0.01em;
-    text-align: right;
+    letter-spacing: 0;
+    text-align: center;
+    overflow-wrap: break-word;
+    transition: opacity 0.2s ease;
   }
-  .nav-list a:hover {
+  .nav-list a:hover,
+  .nav-list a[aria-current="page"] {
     border-bottom: none;
     opacity: 0.55;
-  }
-  /* Cache la page courante dans le menu mobile */
-  .nav-list li:has(a[aria-current="page"]) {
-    display: none;
   }
 }
 
@@ -305,6 +309,17 @@ main {
   opacity  : 0.9;
 }
 
+/* ── Deux boutons à poids égal, côte à côte ── */
+.cta-buttons {
+  display    : flex;
+  flex-wrap  : wrap;
+  align-self : flex-start;
+  gap        : calc(16 * var(--u));
+}
+.cta-buttons .btn {
+  align-self: auto;
+}
+
 /* ── Partenaires : rangée, hauteurs modulées ── */
 .partners {
   display    : flex;
@@ -350,6 +365,27 @@ footer {
 .footer-inner a:hover {
   opacity: 0.9;
   text-decoration: none;
+}
+
+/* ── Contact + Instagram ── */
+.footer-contact {
+  display: flex;
+  align-items: center;
+  gap: 0.9em;
+}
+.ig-link {
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.55;
+  transition: opacity 0.2s ease;
+}
+.ig-link:hover { opacity: 0.95; }
+.ig-link svg {
+  display: block;
+  width: 1.45em;
+  height: 1.45em;
 }
 
 .footer-inner span {

@@ -216,6 +216,46 @@ _build() {
 const ctrl = new AController();
 ctrl.init();
 
+/* ── Lang switch ─────────────────────────────────────────── */
+(function () {
+  const STORAGE_KEY = 'tgg-lang';
+  const validLangs  = ['fr', 'en', 'nl'];
+
+  function setLang(lang) {
+    if (!validLangs.includes(lang)) lang = 'fr';
+    const html = document.documentElement;
+    validLangs.forEach(l => html.classList.remove('show-' + l));
+    html.classList.add('show-' + lang);
+    html.setAttribute('lang', lang);
+    try { localStorage.setItem(STORAGE_KEY, lang); } catch (err) {}
+    document.querySelectorAll('[data-lang-btn]').forEach(b => {
+      b.classList.toggle('active', b.dataset.langBtn === lang);
+    });
+  }
+
+  // Restore saved preference on load
+  const saved = localStorage.getItem(STORAGE_KEY);
+  setLang(saved && validLangs.includes(saved) ? saved : 'en');
+
+  document.querySelectorAll('[data-lang-btn]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      setLang(btn.dataset.langBtn);
+    });
+  });
+})();
+
+/* ── Nav : page courante + taille adaptée ─────────────────── */
+// Marque le lien de la page courante
+const _currentFile = location.pathname.split('/').pop() || 'index.html';
+document.querySelectorAll('.nav-list a').forEach(a => {
+  const href = a.getAttribute('href')?.split('/').pop() || 'index.html';
+  if (href === _currentFile) a.setAttribute('aria-current', 'page');
+});
+
+// Le menu plein écran est dimensionné par le CSS (clamp) — plus d'ajustement inline.
+function sizeNavItems() { /* no-op : taille gérée par style.css */ }
+
 /* ── Mobile nav toggle ───────────────────────────────────── */
 const navToggle = document.querySelector('.nav-toggle');
 const mainNav   = document.querySelector('.main-nav');
@@ -226,6 +266,7 @@ if (navToggle && mainNav) {
     const isOpen = mainNav.classList.toggle('open');
     navToggle.setAttribute('aria-expanded', String(isOpen));
     navToggle.textContent = isOpen ? '✕' : '☰';
+    if (isOpen) sizeNavItems();
   });
 }
 
@@ -235,6 +276,7 @@ window.addEventListener('resize', () => {
     navToggle?.setAttribute('aria-expanded', 'false');
     if (navToggle) navToggle.textContent = '☰';
   }
+  sizeNavItems();
 });
 
 document.addEventListener('click', e => {

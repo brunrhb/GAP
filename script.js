@@ -22,7 +22,7 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     // Initialize language (saved preference, else default FR)
-    let initial = 'fr';
+    let initial = 'en';
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved && validLangs.includes(saved)) initial = saved;
@@ -41,6 +41,7 @@
       toggle.addEventListener('click', () => {
         const open = nav.classList.toggle('open');
         toggle.setAttribute('aria-expanded', String(open));
+        toggle.textContent = open ? '✕' : '☰';
       });
     }
   });

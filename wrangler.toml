@@ -1,0 +1,26 @@
+# ============================================================================
+# GAP — Cloudflare Workers config (static site + shared-preset API on D1)
+# ----------------------------------------------------------------------------
+# 1. Create a D1 database (Cloudflare dashboard → Storage & Databases → D1 →
+#    Create database, name it "gap_presets") and copy its Database ID.
+# 2. Paste that ID below in place of PUT_YOUR_D1_DATABASE_ID_HERE.
+# 3. In the D1 "Console" tab, create the table (SQL is in worker.js header).
+# 4. Commit this file + worker.js to the repo root and push.
+#
+# `name` MUST match your existing Worker name on Cloudflare ("thegapgroupbxl").
+# ============================================================================
+
+name = "thegapgroupbxl"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+
+# Serve the whole repo as static assets, exposed to the Worker as env.ASSETS
+[assets]
+directory = "."
+binding = "ASSETS"
+
+# Shared preset library storage (one row per preset)
+[[d1_databases]]
+binding = "DB"
+database_name = "gap_presets"
+database_id = "4ea39848-6b99-4a9d-a7c3-3c676f4a25c2"

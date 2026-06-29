@@ -1,0 +1,16 @@
+# Files/folders Cloudflare must NOT serve as static assets.
+# Fixes the "Asset too large" build error caused by the .git history.
+.git
+.git/**
+.history
+.history/**
+.vscode
+.vscode/**
+.DS_Store
+**/.DS_Store
+node_modules
+node_modules/**
+wrangler.toml
+worker.js
+.assetsignore
+.gitignore

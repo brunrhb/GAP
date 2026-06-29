@@ -204,10 +204,18 @@ header, main, footer {
     overflow-wrap: break-word;
     transition: opacity 0.2s ease;
   }
-  .nav-list a:hover,
-  .nav-list a[aria-current="page"] {
+  .main-nav.open .nav-list a:hover {
     border-bottom: none;
     opacity: 0.55;
+  }
+  /* Sur une des 3 pages, on ne propose que l'accès aux deux autres */
+  .nav-list li:has(a[aria-current="page"]) {
+    display: none;
+  }
+  /* Le contenu de la page disparaît quand le menu est ouvert */
+  body:has(.main-nav.open) main,
+  body:has(.main-nav.open) footer {
+    visibility: hidden;
   }
 }
 

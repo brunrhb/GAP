@@ -42,6 +42,16 @@
       88%  { transform: translate(  9px,   7px); }
       100% { transform: translate(  0px,   0px); }
     }
+    /* Palier 4 : grain figé */
+    .grain.fige { animation-play-state: paused; }
+    /* « Réduire les animations » activé dans le système : tout est figé */
+    @media (prefers-reduced-motion: reduce) {
+      .grain, .css-blob::after { animation: none !important; }
+    }
+    /* ?debug : images/s et palier en cours */
+    #debug { position:fixed; right:12px; bottom:72px; z-index:10; padding:6px 9px; border-radius:4px;
+             font:12px/1.4 ui-monospace,Menlo,monospace; color:#fff; background:rgba(15,14,12,.72);
+             pointer-events:none; white-space:pre; }
   </style>
 </head>
 <body>
@@ -64,10 +74,58 @@ window._switchSpeed = 1.8;
 const GLOBAL_SCALE  = 2.2;
 const GLOBAL_SCALES = [GLOBAL_SCALE, GLOBAL_SCALE / 1.618];
 
-// Résolution de rendu des canvas (1 = pleine, 0.5 = moitié → ~4× moins de pixels à flouter).
-// L'image est floue de toute façon : le navigateur l'étire sans perte visible.
-// Si le rendu paraît trop mou, monter à 0.66 ou 0.75.
-const SCALE = 0.5;
+// ── Paliers de qualité : garde-fous de performance ─────────
+// L'animation mesure sa fluidité réelle et descend d'un palier tant qu'elle rame.
+// Elle ne remonte pas pendant la visite (pas de va-et-vient).
+// Ordre : d'abord ce qui ne se voit pas (la résolution), ensuite seulement le reste.
+// scale = résolution de calcul du canvas des cellules (1 = pleine). L'image est floue et le
+// navigateur l'étire : de 1 à 0.25, écart mesuré < 0,4/255 par pixel avec la version d'origine.
+const PALIERS = [
+  { scale: 0.5,  demiCadence: false, grainFige: false },  // 0 : qualité de référence
+  { scale: 0.35, demiCadence: false, grainFige: false },  // 1 : résolution réduite (invisible)
+  { scale: 0.25, demiCadence: false, grainFige: false },  // 2 : résolution minimale (invisible)
+  { scale: 0.25, demiCadence: true,  grainFige: false },  // 3 : cellules redessinées 30 fois/s
+  { scale: 0.25, demiCadence: true,  grainFige: true  },  // 4 : grain figé
+];
+const GARDE = {
+  fpsCible: 45,     // sous ce seuil pendant toute une mesure → palier suivant
+  fenetre:  1500,   // durée d'une mesure (ms)
+  attente:  1500,   // pause après le chargement ou un changement de palier (ms)
+};
+const BG_SCALE = 0.5;   // fond : dessiné seulement au redimensionnement, résolution fixe
+
+// Réglages de test, lus dans l'adresse de cette page ou de la page qui l'affiche :
+//   ?debug    → affiche les images/s et le palier en cours
+//   ?palier=2 → force un palier (plus d'adaptation automatique)
+const PARAMS = (() => {
+  const p = new URLSearchParams(location.search);
+  try { if (window.parent !== window) new URLSearchParams(window.parent.location.search).forEach((v, k) => p.set(k, v)); } catch (e) {}
+  return p;
+})();
+const DEBUG = PARAMS.has('debug');
+const PALIER_FORCE = (() => {
+  const v = parseInt(PARAMS.get('palier'), 10);
+  return Number.isFinite(v) ? Math.max(0, Math.min(PALIERS.length - 1, v)) : null;
+})();
+
+// Accessibilité : « réduire les animations » activé dans le système → image fixe
+const MOUVEMENT_REDUIT = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+// Safari (et tous les navigateurs sur iPhone) ne savent pas flouter dans un canvas (ctx.filter).
+// Dans ce cas on floute tout le canvas en CSS : rendu très proche, calculé par la carte graphique.
+const FLOU_CANVAS = (() => {
+  try {
+    const c = document.createElement('canvas').getContext('2d');
+    if (!('filter' in c)) return false;
+    c.filter = 'blur(2px)';
+    return c.filter === 'blur(2px)';
+  } catch (e) { return false; }
+})();
+const FLOU_CSS_SECOURS = 16;   // px, valeur validée à l'œil
+if (!FLOU_CANVAS) canvas.style.filter = `blur(${FLOU_CSS_SECOURS}px)`;
+
+let palier = PALIER_FORCE ?? 0;
+let SCALE  = PALIERS[palier].scale;
 
 function hexToRgba(hex, alpha, darken=1) {
   const r=Math.round(parseInt(hex.slice(1,3),16)*darken);
@@ -198,12 +256,16 @@ const particles=[{x:0,y:0,vx:0,vy:0},{x:0,y:0,vx:0,vy:0}];
 
 function resize(){
   W=window.innerWidth; H=window.innerHeight;   // W/H restent en px CSS : physique et dessin inchangés
-  canvas.width =bgCanvas.width =Math.round(W*SCALE);
-  canvas.height=bgCanvas.height=Math.round(H*SCALE);
-  bgCtx.setTransform(SCALE,0,0,SCALE,0,0);
+  canvas.width   =Math.max(1,Math.round(W*SCALE));
+  canvas.height  =Math.max(1,Math.round(H*SCALE));
+  bgCanvas.width =Math.max(1,Math.round(W*BG_SCALE));
+  bgCanvas.height=Math.max(1,Math.round(H*BG_SCALE));
+  // échelle exacte tampon/écran : évite une bande claire au bord quand la largeur est impaire
+  bgCtx.setTransform(bgCanvas.width/Math.max(W,1),0,0,bgCanvas.height/Math.max(H,1),0,0);
   U=Math.min(Math.max(Math.min(W/1280,H/900),0.5),1.5);
   if(!particles[0].x){ particles[0].x=W/2-110*U; particles[0].y=H/2; particles[1].x=W/2+110*U; particles[1].y=H/2; }
   drawBackground();
+  if(MOUVEMENT_REDUIT) draw(elapsed);   // image fixe : on la redessine après un redimensionnement
 }
 window.addEventListener('resize',resize); resize();
 
@@ -335,7 +397,9 @@ function drawBackground(){
 }
 
 function draw(t){
-  ctx.setTransform(SCALE,0,0,SCALE,0,0); ctx.clearRect(0,0,W,H);
+  if(!W||!H) return;
+  const k=canvas.width/W;   // échelle exacte tampon/écran
+  ctx.setTransform(k,0,0,canvas.height/H,0,0); ctx.clearRect(0,0,W,H);
   const [a,b]=particles,phaseList=[phases0,phases1];
 
   const geom=particles.map((p,i)=>{
@@ -351,20 +415,20 @@ function draw(t){
   const sc=(gs)=>{ctx.save();ctx.translate(W/2,H/2);ctx.scale(gs,gs);ctx.translate(-W/2,-H/2);};
   const rs=()=>ctx.restore();
 
-  ctx.filter=L5.blur>0?`blur(${L5.blur*SCALE}px)`:'none';
+  ctx.filter=L5.blur>0?`blur(${L5.blur*k}px)`:'none';
   geom.forEach(({p,a5,dark,gs})=>{sc(gs);drawSmoothClosed(a5);ctx.fillStyle=makeAuraFill(L5,a5,p.x,p.y,dark);ctx.fill();rs();});
 
-  ctx.filter=L4.blur>0?`blur(${L4.blur*SCALE}px)`:'none';
+  ctx.filter=L4.blur>0?`blur(${L4.blur*k}px)`:'none';
   geom.forEach(({p,a4,dark,gs})=>{sc(gs);drawSmoothClosed(a4);ctx.fillStyle=makeAuraFill(L4,a4,p.x,p.y,dark);ctx.fill();rs();});
 
-  ctx.filter=L3.blur>0?`blur(${L3.blur*SCALE}px)`:'none';
+  ctx.filter=L3.blur>0?`blur(${L3.blur*k}px)`:'none';
   geom.forEach(({p,a3,dark,gs})=>{sc(gs);drawSmoothClosed(a3);ctx.fillStyle=makeAuraFill(L3,a3,p.x,p.y,dark);ctx.fill();rs();});
 
-  ctx.filter=M.blur>0?`blur(${M.blur*SCALE}px)`:'none';
+  ctx.filter=M.blur>0?`blur(${M.blur*k}px)`:'none';
   geom.forEach(({p,pts,dark,gs})=>{sc(gs);drawSmoothClosed(pts);ctx.fillStyle=makeAuraFill(M,pts,p.x,p.y,dark);ctx.fill();rs();});
   ctx.filter='none';
 
-  ctx.filter=P.coreBlur>0?`blur(${P.coreBlur*SCALE}px)`:'none';
+  ctx.filter=P.coreBlur>0?`blur(${P.coreBlur*k}px)`:'none';
   geom.forEach(({p,dark,gs})=>{
     sc(gs);
     ctx.beginPath();ctx.arc(p.x,p.y,P.coreR*U,0,Math.PI*2);
@@ -375,16 +439,66 @@ function draw(t){
   ctx.filter='none';
 }
 
+// ── Garde-fous : mesure de la fluidité, changement de palier ──
+const grainEl = document.querySelector('.grain');
+let mesureT0 = null, mesureN = 0, attenteJusqua = null, image = 0;
+let fpsMesure = null, intervalleLisse = null, debugEl = null, debugT = 0;
+
+function appliquerPalier(n, raison){
+  palier = n;
+  const p = PALIERS[n];
+  if (p.scale !== SCALE) { SCALE = p.scale; resize(); }
+  grainEl.classList.toggle('fige', p.grainFige);
+  if (raison) console.info(`[GAP anim] palier ${n} — ${raison}`);
+}
+
+function surveiller(ts, ecart){
+  if (attenteJusqua === null) attenteJusqua = ts + GARDE.attente;   // première image
+  // un gros trou (onglet caché, ordinateur en veille…) fausserait la mesure : on repart de zéro
+  if (ecart > 250) { mesureT0 = null; attenteJusqua = ts + GARDE.attente; return; }
+  if (PALIER_FORCE !== null || palier === PALIERS.length - 1 || ts < attenteJusqua) return;
+  if (mesureT0 === null) { mesureT0 = ts; mesureN = 0; return; }
+  mesureN++;
+  const duree = ts - mesureT0;
+  if (duree < GARDE.fenetre) return;
+  fpsMesure = mesureN * 1000 / duree;
+  mesureT0 = null;
+  if (fpsMesure < GARDE.fpsCible) {
+    // très loin du compte : on saute deux paliers d'un coup
+    const saut = fpsMesure < GARDE.fpsCible * 0.6 ? 2 : 1;
+    appliquerPalier(Math.min(PALIERS.length - 1, palier + saut), `${fpsMesure.toFixed(0)} i/s mesurées`);
+    attenteJusqua = ts + GARDE.attente;
+  }
+}
+
+function afficherDebug(ts, ecart){
+  if (ecart > 0 && ecart < 250) intervalleLisse = intervalleLisse === null ? ecart : intervalleLisse * 0.9 + ecart * 0.1;
+  if (ts - debugT < 250) return;
+  debugT = ts;
+  if (!debugEl) { debugEl = document.createElement('div'); debugEl.id = 'debug'; document.body.appendChild(debugEl); }
+  const fps = intervalleLisse ? (1000 / intervalleLisse).toFixed(0) : '…';
+  debugEl.textContent =
+    `palier ${palier}${PALIER_FORCE !== null ? ' (forcé)' : ''} · résolution ${SCALE}` +
+    `${PALIERS[palier].demiCadence ? ' · cellules 1 image sur 2' : ''}${PALIERS[palier].grainFige ? ' · grain figé' : ''}\n` +
+    `${fps} i/s${FLOU_CANVAS ? '' : ' · flou CSS (secours Safari)'}${MOUVEMENT_REDUIT ? ' · mouvement réduit' : ''}`;
+}
+
 // ── Loop ─────────────────────────────────────────────────
 function loop(ts){
-  const dt=lastTs===null?0.016:Math.min((ts-lastTs)/1000,0.05);
+  const ecart=lastTs===null?0:ts-lastTs;
+  const dt=lastTs===null?0.016:Math.min(ecart/1000,0.05);
   lastTs=ts; elapsed+=dt;
-  physics(dt); collide(); bounceWalls(); draw(elapsed);
+  physics(dt); collide(); bounceWalls();
+  // palier 3 et plus : cellules redessinées une image sur deux (la physique tourne à chaque image)
+  if(!PALIERS[palier].demiCadence || (image++ & 1)===0) draw(elapsed);
   updateBlobs(dt);
-  requestAnimationFrame(loop);
+  surveiller(ts, ecart);
+  if(DEBUG) afficherDebug(ts, ecart);
+  if(!MOUVEMENT_REDUIT) requestAnimationFrame(loop);   // mouvement réduit : une seule image
 }
 
 applyBlobStyles();
+appliquerPalier(palier);
 requestAnimationFrame(loop);
 </script>
 </body>

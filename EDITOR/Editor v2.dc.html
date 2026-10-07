@@ -670,21 +670,30 @@ class Component extends DCLogic {
     String(fvs || "").replace(/["']?(\w{4})["']?\s+(-?[\d.]+)/g, (_, k, v) => { o[k] = parseFloat(v); return ""; });
     return o;
   }
+  // the export face must give the same width as the editor's font in the DOM (export view)
+  // AND on a canvas (html2canvas) — otherwise (some browser that does not pin the axes)
+  // we do not use it at all
   _exportFaceMatches(key) {
     try {
       const fnt = this.FONTS[key];
       const txt = "PAIRING IS CARING éditer élargir";
-      const span = document.createElement("span");
-      span.textContent = txt;
-      span.style.cssText = "position:absolute;left:-99999px;top:0;white-space:nowrap;font-size:100px;" +
-        "font-family:" + fnt.fontFamily + ";font-weight:" + fnt.fontWeight + ";font-variation-settings:" + fnt.fontVariationSettings + ";";
-      document.body.appendChild(span);
-      const domW = span.getBoundingClientRect().width;
-      span.remove();
+      const domWidth = (family, fvs) => {
+        const span = document.createElement("span");
+        span.textContent = txt;
+        span.style.cssText = "position:absolute;left:-99999px;top:0;white-space:nowrap;font-size:100px;" +
+          "font-family:" + family + ";font-weight:" + fnt.fontWeight + ";font-variation-settings:" + fvs + ";";
+        document.body.appendChild(span);
+        const w = span.getBoundingClientRect().width;
+        span.remove();
+        return w;
+      };
+      const domW = domWidth(fnt.fontFamily, fnt.fontVariationSettings);
+      const domX = domWidth('"gapx-' + key + '", ' + fnt.fontFamily, "normal");
       const ctx = document.createElement("canvas").getContext("2d");
       ctx.font = fnt.fontWeight + ' 100px "gapx-' + key + '"';
       const cw = ctx.measureText(txt).width;
-      return domW > 0 && Math.abs(cw - domW) / domW < 0.005;
+      const near = (a, b) => Math.abs(a - b) / b < 0.005;
+      return domW > 0 && near(cw, domW) && near(domX, domW);
     } catch (e) { return false; }
   }
   _ensureExportFaces = () => {

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://use.typekit.net/scu0dna.css">
+<style>
+  @keyframes gapfloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+</style>
+</helmet>
+
+<x-import component-from-global-scope="deck-stage" from="./deck-stage.js" width="1920" height="1080" hint-size="100%,100%">
+
+  <!-- 1 — TITLE -->
+  <section data-label="Intro" data-speaker-notes="Outil interne GAP pour composer des visuels social/print à partir de l'identité (A pont, polices, fonds animés). Ce guide montre l'essentiel en quelques écrans." style="position:absolute; inset:0; background:#e8e5ef; display:flex; flex-direction:column; justify-content:center; padding:0 150px; font-family:Arial, sans-serif; overflow:hidden;">
+    <div style="position:absolute; top:-180px; right:-120px; width:680px; height:680px; border-radius:50%; background:radial-gradient(circle at 38% 38%, #F4C4B8 0%, rgba(240,144,112,0.55) 40%, transparent 70%); animation:gapfloat 7s ease-in-out infinite;"></div>
+    <div style="position:absolute; bottom:-220px; left:-140px; width:560px; height:560px; border-radius:50%; background:radial-gradient(circle at 50% 50%, #9080b8 0%, rgba(144,128,184,0.45) 45%, transparent 72%); animation:gapfloat 9s ease-in-out infinite;"></div>
+    <div style="position:relative; font-size:22px; letter-spacing:0.42em; text-transform:uppercase; color:#9080b8; font-weight:700; margin-bottom:30px;">Éditeur · Mode d'emploi</div>
+    <div style="position:relative; font-family:'obviously-variable', sans-serif; font-variation-settings:'wght' 800, 'wdth' 121; font-size:200px; line-height:0.82; color:#1a1a2e; letter-spacing:-0.01em;">GAP</div>
+    <div style="position:relative; font-size:30px; color:rgba(26,26,46,0.62); margin-top:38px; max-width:880px; line-height:1.45;">Composer des visuels à l'identité GAP — texte, A pont, fonds animés — et les exporter pour le social.</div>
+  </section>
+
+  <!-- 2 — INTERFACE -->
+  <section data-label="Interface" data-speaker-notes="Trois zones : la barre du haut (ajouter paragraphe, format, modèles, exporter), le canevas central avec l'artboard du format choisi, et le panneau de droite à 3 onglets (Type, Back, Layer)." style="position:absolute; inset:0; background:#f0ece4; display:flex; flex-direction:column; justify-content:center; padding:0 130px; font-family:Arial, sans-serif;">
+    <div style="font-size:20px; letter-spacing:0.34em; text-transform:uppercase; color:#E87050; font-weight:700; margin-bottom:18px;">01 — L'interface</div>
+    <div style="font-family:'obviously-variable', sans-serif; font-variation-settings:'wght' 760, 'wdth' 121; font-size:96px; line-height:0.92; color:#1a1a1a; margin-bottom:32px;">Trois zones</div>
+    <!-- toolbar replica -->
+    <div style="display:flex; align-items:center; gap:11px; background:rgba(255,255,255,0.72); border:1px solid rgba(0,0,0,0.08); border-radius:11px; padding:14px 18px; margin-bottom:38px; box-shadow:0 8px 26px -16px rgba(0,0,0,0.25);">
+      <span style="display:inline-flex; align-items:center; gap:7px; padding:0 16px; height:42px; border:1px solid rgba(0,0,0,0.15); background:#fff; border-radius:6px; font-size:20px; color:#1a1a1a;"><span style="font-size:22px;">+</span> Paragraph</span>
+      <span style="display:inline-flex; align-items:center; padding:0 16px; height:42px; border:1px solid rgba(0,0,0,0.15); background:#fff; border-radius:6px; font-size:20px; color:#1a1a1a;">IG Post · 4:5 ▾</span>
+      <span style="display:inline-flex; align-items:center; gap:7px; padding:0 14px; height:42px; border:1px solid rgba(0,0,0,0.15); background:#fff; border-radius:6px; font-size:20px; color:#1a1a1a;">⬚ Safe zone</span>
+      <span style="flex:1;"></span>
+      <span style="display:inline-flex; align-items:center; gap:7px; padding:0 14px; height:42px; border:1px solid rgba(0,0,0,0.15); background:#fff; border-radius:6px; font-size:20px; color:#1a1a1a;">▤ Modèles</span>
+      <span style="display:inline-flex; align-items:center; padding:0 14px; height:42px; border:1px solid rgba(0,0,0,0.15); background:#fff; border-radius:6px; font-size:20px; color:#1a1a1a;">+ Modèle</span>
+      <span style="display:inline-flex; align-items:center; gap:7px; padding:0 18px; height:42px; background:#1a1a1a; border-radius:6px; font-size:20px; color:#fff;">▣ Exporter</span>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:34px;">
+      <div style="background:#fff; border-radius:14px; padding:38px 34px; box-shadow:0 10px 30px -14px rgba(0,0,0,0.18);">
+        <div style="font-size:46px; font-weight:800; color:#E87050; margin-bottom:14px;">A</div>
+        <div style="font-size:27px; font-weight:700; color:#1a1a1a; margin-bottom:10px;">La barre</div>
+        <div style="font-size:21px; color:rgba(0,0,0,0.55); line-height:1.5;">Ajouter un paragraphe, choisir le format, gérer les modèles, exporter.</div>
+      </div>
+      <div style="background:#fff; border-radius:14px; padding:38px 34px; box-shadow:0 10px 30px -14px rgba(0,0,0,0.18);">
+        <div style="font-size:46px; font-weight:800; color:#9080b8; margin-bottom:14px;">▦</div>
+        <div style="font-size:27px; font-weight:700; color:#1a1a1a; margin-bottom:10px;">Le canevas</div>
+        <div style="font-size:21px; color:rgba(0,0,0,0.55); line-height:1.5;">L'artboard au bon format. Glisse les paragraphes, édite le texte en direct.</div>
+      </div>
+      <div style="background:#fff; border-radius:14px; padding:38px 34px; box-shadow:0 10px 30px -14px rgba(0,0,0,0.18);">
+        <div style="font-size:46px; font-weight:800; color:#2D7CF0; margin-bottom:14px;">⊟</div>
+        <div style="font-size:27px; font-weight:700; color:#1a1a1a; margin-bottom:10px;">Le panneau</div>
+        <div style="font-size:21px; color:rgba(0,0,0,0.55); line-height:1.5;">Trois onglets : <b>Type</b>, <b>Back</b>, <b>Layer</b>. Largeur réglable (S/M/L).</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 — TYPE -->
+  <section data-label="Type" data-speaker-notes="Onglet Type : on choisit un style. Display = Main 1 / Main 2 (la police identité, Obviously). Corps = Gras / Regular / Fin (Arial/Helvetica). Puis une taille G/M/P. On sélectionne un paragraphe et on clique le style." style="position:absolute; inset:0; background:#f0ece4; display:flex; flex-direction:column; justify-content:center; padding:0 130px; font-family:Arial, sans-serif;">
+    <div style="font-size:20px; letter-spacing:0.34em; text-transform:uppercase; color:#E87050; font-weight:700; margin-bottom:18px;">02 — Onglet Type</div>
+    <div style="font-family:'obviously-variable', sans-serif; font-variation-settings:'wght' 760, 'wdth' 121; font-size:96px; line-height:0.92; color:#1a1a1a; margin-bottom:54px;">Styliser le texte</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:46px; align-items:start;">
+      <div>
+        <div style="font-size:24px; font-weight:700; color:#1a1a1a; margin-bottom:18px;">Display — l'identité</div>
+        <div style="font-family:'obviously-variable', sans-serif; font-variation-settings:'wght' 803, 'wdth' 121; font-size:64px; line-height:0.95; color:#1a1a1a; transform:scaleY(0.9); transform-origin:left;">MAIN 1</div>
+        <div style="font-family:'obviously-variable', sans-serif; font-variation-settings:'wght' 699, 'wdth' 121; font-size:64px; line-height:0.95; color:#1a1a1a; transform:scaleY(0.9); transform-origin:left;">MAIN 2</div>
+        <div style="font-size:20px; color:rgba(0,0,0,0.5); margin-top:14px; line-height:1.5;">La police GAP (Obviously). Seul le style compte — la couleur et la taille se règlent à part.</div>
+      </div>
+      <div>
+        <div style="font-size:24px; font-weight:700; color:#1a1a1a; margin-bottom:18px;">Corps & tailles</div>
+        <div style="font-weight:700; font-size:34px; color:#1a1a1a;">Corps Gras</div>
+        <div style="font-weight:400; font-size:34px; color:#1a1a1a;">Corps Regular</div>
+        <div style="font-weight:300; font-size:34px; color:#1a1a1a; font-family:'Helvetica Neue',Arial;">Corps Fin</div>
+        <div style="display:flex; gap:10px; margin-top:24px;">
+          <span style="padding:9px 18px; border:1px solid rgba(0,0,0,0.15); border-radius:7px; font-size:20px; font-weight:600;">G</span>
+          <span style="padding:9px 18px; border:1px solid rgba(0,0,0,0.15); border-radius:7px; font-size:20px; font-weight:600;">M</span>
+          <span style="padding:9px 18px; border:1px solid rgba(0,0,0,0.15); border-radius:7px; font-size:20px; font-weight:600;">P</span>
+          <span style="font-size:20px; color:rgba(0,0,0,0.45); align-self:center; margin-left:6px;">3 grandes · 3 moyennes · 3 petites</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 — A PONT -->
+  <section data-label="A pont" data-speaker-notes="L'élément signature : le A pont. On l'insère dans un paragraphe Main 1/Main 2 (le bloc noir en haut de l'onglet Type). On l'étire à la poignée, son excédent reste dans le cadre. On clique dessus pour ouvrir l'animer : va-et-vient lent, bloqué à la place dispo." style="position:absolute; inset:0; background:#1a1a2e; display:flex; flex-direction:column; justify-content:center; padding:0 130px; font-family:Arial, sans-serif; overflow:hidden;">
+    <div style="position:absolute; top:120px; right:90px; width:760px; height:150px; opacity:0.16;">
+      <svg viewBox="0 0 537 37" preserveAspectRatio="none" width="100%" height="100%"><path d="M9.79,0 L0.21,36.96 L20.55,36.96 L21.24,30.52 L513.61,30.52 L514.18,36.96 L536.55,36.96 L532.57,23.50 L526.50,0 Z M512.30,21.70 L509.51,8.82 L25.30,8.82 L22.52,21.70 Z" fill="#F4C4B8" fill-rule="evenodd"/></svg>
+    </div>
+    <div style="position:relative; font-size:20px; letter-spacing:0.34em; text-transform:uppercase; color:#F4C4B8; font-weight:700; margin-bottom:18px;">03 — L'A pont</div>
+    <div style="position:relative; font-family:'obviously-variable', sans-serif; font-variation-settings:'wght' 780, 'wdth' 121; font-size:96px; line-height:0.92; color:#fff; margin-bottom:50px;">L'élément signature</div>
+    <div style="position:relative; display:grid; grid-template-columns:1fr 1fr 1fr; gap:30px; max-width:1400px;">
+      <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:32px;">
+        <div style="font-size:22px; font-weight:700; color:#F4C4B8; margin-bottom:10px;">1 · Insérer</div>
+        <div style="font-size:21px; color:rgba(255,255,255,0.72); line-height:1.5;">Dans un paragraphe Main 1/2, clique le bloc A en haut de Type. Il s'ajoute au curseur.</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:32px;">
+        <div style="font-size:22px; font-weight:700; color:#F4C4B8; margin-bottom:10px;">2 · Étirer</div>
+        <div style="font-size:21px; color:rgba(255,255,255,0.72); line-height:1.5;">Tire la poignée. La barre remplit la ligne et s'arrête net — jamais hors champ.</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:32px;">
+        <div style="font-size:22px; font-weight:700; color:#F4C4B8; margin-bottom:10px;">3 · Animer</div>
+        <div style="font-size:21px; color:rgba(255,255,255,0.72); line-height:1.5;">Clique l'A → panneau flottant. Position initiale/max + temps. Va-et-vient lent, sans à-coups.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 — BACK -->
+  <section data-label="Back" data-speaker-notes="Onglet Back, le fond. Tiroir Dessous : Couleur unie (palette froide + pâles tièdes), Anim mix (fonds mesh-gradient animés, presets GAP, configurables). En dehors du tiroir : les Deux auras qui suivent le curseur. Espace fige le mouvement puis le pulse." style="position:absolute; inset:0; background:#f0ece4; display:flex; flex-direction:column; justify-content:center; padding:0 130px; font-family:Arial, sans-serif;">
+    <div style="font-size:20px; letter-spacing:0.34em; text-transform:uppercase; color:#9080b8; font-weight:700; margin-bottom:18px;">04 — Onglet Back</div>
+    <div style="font-family:'obviously-variable', sans-serif; font-variation-settings:'wght' 760, 'wdth' 121; font-size:96px; line-height:0.92; color:#1a1a1a; margin-bottom:54px;">Le fond</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:30px;">
+      <div style="border-radius:14px; padding:34px; background:linear-gradient(135deg,#cdd9e8,#9080b8); color:#fff;">
+        <div style="font-size:25px; font-weight:700; margin-bottom:10px;">Couleur unie</div>
+        <div style="font-size:20px; line-height:1.5; opacity:0.92;">Palette froide + pâles tièdes. Noir/blanc + opacité.</div>
+      </div>
+      <div style="border-radius:14px; padding:34px; background:radial-gradient(circle at 30% 30%,#e8e5ef,#c4ddf0 45%,#9080b8); color:#1a1a2e;">
+        <div style="font-size:25px; font-weight:700; margin-bottom:10px;">Anim mix</div>
+        <div style="font-size:20px; line-height:1.5; opacity:0.8;">Fonds mesh-gradient animés. Presets GAP, configurables, grain doux.</div>
+      </div>
+      <div style="border-radius:14px; padding:34px; background:#1a1a2e; color:#fff; position:relative; overflow:hidden;">
+        <div style="position:absolute; inset:0; background:radial-gradient(circle at 35% 40%,#F4C4B8 0%,transparent 45%),radial-gradient(circle at 68% 65%,#E87050 0%,transparent 42%); opacity:0.8;"></div>
+        <div style="position:relative; font-size:25px; font-weight:700; margin-bottom:10px;">Deux auras</div>
+        <div style="position:relative; font-size:20px; line-height:1.5; opacity:0.85;">Suivent le curseur. <b>Espace</b> : fige le mouvement, puis le pulse.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 — LAYER -->
+  <section data-label="Layer" data-speaker-notes="Onglet Layer : la pile des paragraphes (le plus haut = devant). Glisse pour réordonner, flèches pour un cran, Premier/Arrière-plan. Chaque calque : dupliquer et supprimer." style="position:absolute; inset:0; background:#f0ece4; display:flex; align-items:center; padding:0 130px; font-family:Arial, sans-serif;">
+    <div style="flex:1;">
+      <div style="font-size:20px; letter-spacing:0.34em; text-transform:uppercase; color:#2D7CF0; font-weight:700; margin-bottom:18px;">05 — Onglet Layer</div>
+      <div style="font-family:'obviously-variable', sans-serif; font-variation-settings:'wght' 760, 'wdth' 121; font-size:96px; line-height:0.92; color:#1a1a1a; margin-bottom:34px;">Les calques</div>
+      <div style="font-size:25px; color:rgba(0,0,0,0.6); line-height:1.6; max-width:640px;">La pile de tes paragraphes — le plus haut est <b>devant</b>. Glisse pour réordonner, ou Premier / Arrière-plan. Chaque ligne : <b>dupliquer</b> et <b>supprimer</b>.</div>
+    </div>
+    <div style="width:430px; background:#fff; border-radius:14px; padding:20px; box-shadow:0 14px 40px -16px rgba(0,0,0,0.22);">
+      <div style="font-size:14px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(0,0,0,0.4); margin-bottom:14px;">Layer</div>
+      <div style="display:grid; gap:10px;">
+        <div style="display:flex; align-items:center; gap:12px; padding:14px; border:1.5px solid #2D7CF0; border-radius:8px; background:rgba(45,124,240,0.06);"><span style="color:rgba(0,0,0,0.3)">⠿</span><span style="flex:1; font-size:21px;">Titre</span><span style="color:rgba(0,0,0,0.4)">▲▼ ⧉ ✕</span></div>
+        <div style="display:flex; align-items:center; gap:12px; padding:14px; border:1px solid rgba(0,0,0,0.1); border-radius:8px;"><span style="color:rgba(0,0,0,0.3)">⠿</span><span style="flex:1; font-size:21px;">Sous-titre</span><span style="color:rgba(0,0,0,0.4)">▲▼ ⧉ ✕</span></div>
+        <div style="display:flex; align-items:center; gap:12px; padding:14px; border:1px solid rgba(0,0,0,0.1); border-radius:8px;"><span style="color:rgba(0,0,0,0.3)">⠿</span><span style="flex:1; font-size:21px;">Légende</span><span style="color:rgba(0,0,0,0.4)">▲▼ ⧉ ✕</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 — FORMATS -->
+  <section data-label="Formats" data-speaker-notes="En haut, le sélecteur de format : IG post 4:5, carré, story 9:16, LinkedIn, affiches… Chaque format affiche une safe zone discrète pour ne rien faire rogner par les UI des plateformes." style="position:absolute; inset:0; background:#e8e5ef; display:flex; flex-direction:column; justify-content:center; padding:0 130px; font-family:Arial, sans-serif;">
+    <div style="font-size:20px; letter-spacing:0.34em; text-transform:uppercase; color:#E87050; font-weight:700; margin-bottom:18px;">06 — Formats</div>
+    <div style="font-family:'obviously-variable', sans-serif; font-variation-settings:'wght' 760, 'wdth' 121; font-size:96px; line-height:0.92; color:#1a1a1a; margin-bottom:54px;">Le bon cadre</div>
+    <div style="display:flex; gap:34px; align-items:flex-end;">
+      <div style="text-align:center;"><div style="width:200px; height:250px; background:#fff; border-radius:8px; box-shadow:0 10px 28px -14px rgba(0,0,0,0.25); position:relative;"><div style="position:absolute; inset:18px; border:1px dashed rgba(45,124,240,0.4); border-radius:4px;"></div></div><div style="margin-top:14px; font-size:20px; color:rgba(0,0,0,0.6);">IG Post 4:5</div></div>
+      <div style="text-align:center;"><div style="width:200px; height:200px; background:#fff; border-radius:8px; box-shadow:0 10px 28px -14px rgba(0,0,0,0.25); position:relative;"><div style="position:absolute; inset:18px; border:1px dashed rgba(45,124,240,0.4); border-radius:4px;"></div></div><div style="margin-top:14px; font-size:20px; color:rgba(0,0,0,0.6);">Carré 1:1</div></div>
+      <div style="text-align:center;"><div style="width:150px; height:266px; background:#fff; border-radius:8px; box-shadow:0 10px 28px -14px rgba(0,0,0,0.25); position:relative;"><div style="position:absolute; left:12px; right:12px; top:30px; bottom:46px; border:1px dashed rgba(45,124,240,0.4); border-radius:4px;"></div></div><div style="margin-top:14px; font-size:20px; color:rgba(0,0,0,0.6);">Story 9:16</div></div>
+      <div style="text-align:center;"><div style="width:300px; height:158px; background:#fff; border-radius:8px; box-shadow:0 10px 28px -14px rgba(0,0,0,0.25); position:relative;"><div style="position:absolute; inset:16px; border:1px dashed rgba(45,124,240,0.4); border-radius:4px;"></div></div><div style="margin-top:14px; font-size:20px; color:rgba(0,0,0,0.6);">LinkedIn · Affiches</div></div>
+    </div>
+    <div style="font-size:23px; color:rgba(0,0,0,0.55); margin-top:46px; max-width:900px; line-height:1.5;">La <b>safe zone</b> en pointillé reste discrète — garde le texte important à l'intérieur, rien ne sera rogné.</div>
+  </section>
+
+  <!-- 8 — EXPORT -->
+  <section data-label="Export" data-speaker-notes="Bouton Exporter : ouvre la vue propre qui montre le résultat final animé. Pour une image : capture d'écran (rendu navigateur exact) ou Nouvel onglet / PNG. Pour le social animé : Vidéo 10 s, encodée en MP4 H.264 directement publiable." style="position:absolute; inset:0; background:#1a1a2e; display:flex; flex-direction:column; justify-content:center; padding:0 130px; font-family:Arial, sans-serif;">
+    <div style="font-size:20px; letter-spacing:0.34em; text-transform:uppercase; color:#F4C4B8; font-weight:700; margin-bottom:18px;">07 — Exporter</div>
+    <div style="font-family:'obviously-variable', sans-serif; font-variation-settings:'wght' 780, 'wdth' 121; font-size:96px; line-height:0.92; color:#fff; margin-bottom:30px;">Sortir le visuel</div>
+    <!-- export bar replica -->
+    <div style="display:inline-flex; align-items:center; gap:11px; background:rgba(20,20,20,0.7); border:1px solid rgba(255,255,255,0.14); border-radius:11px; padding:13px 16px; margin-bottom:40px;">
+      <span style="display:inline-flex; align-items:center; gap:7px; padding:0 16px; height:40px; border:1px solid rgba(255,255,255,0.3); border-radius:6px; font-size:19px; color:#fff;">‹ Retour</span>
+      <span style="color:rgba(255,255,255,0.55); font-size:18px; padding:0 8px;">1080 × 1350 px · ⌘⇧4</span>
+      <span style="flex:1;"></span>
+      <span style="display:inline-flex; align-items:center; gap:7px; padding:0 14px; height:40px; border:1px solid rgba(255,255,255,0.3); border-radius:6px; font-size:19px; color:#fff;">⧉ Nouvel onglet</span>
+      <span style="display:inline-flex; align-items:center; padding:0 14px; height:40px; border:1px solid rgba(255,255,255,0.3); border-radius:6px; font-size:19px; color:#fff;">↓ PNG</span>
+      <span style="display:inline-flex; align-items:center; gap:7px; padding:0 16px; height:40px; background:#E8A87C; border-radius:6px; font-size:19px; color:#1a1a1a; font-weight:600;">🎬 Vidéo 10 s</span>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:36px; max-width:1300px;">
+      <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:40px;">
+        <div style="font-size:46px; margin-bottom:14px;">🖼️</div>
+        <div style="font-size:30px; font-weight:700; color:#fff; margin-bottom:12px;">Image fixe</div>
+        <div style="font-size:22px; color:rgba(255,255,255,0.72); line-height:1.55;">La vue Exporter montre le rendu final. Capture d'écran pour un rendu exact, ou PNG / Nouvel onglet.</div>
+      </div>
+      <div style="background:linear-gradient(135deg,rgba(232,112,80,0.22),rgba(144,128,184,0.22)); border:1px solid rgba(255,255,255,0.16); border-radius:16px; padding:40px;">
+        <div style="font-size:46px; margin-bottom:14px;">🎬</div>
+        <div style="font-size:30px; font-weight:700; color:#fff; margin-bottom:12px;">Vidéo 10 s</div>
+        <div style="font-size:22px; color:rgba(255,255,255,0.82); line-height:1.55;">Tous les layers animés, encodés en <b>MP4 / H.264</b> — directement publiable sur Insta, TikTok, LinkedIn.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 — MODÈLES -->
+  <section data-label="Modèles" data-speaker-notes="Les modèles : + Modèle enregistre tout l'état (texte, styles, A pont, fond, auras, format). Modèles liste ceux de l'équipe — un clic recharge. Aujourd'hui en local ; une fois en ligne c'est une bibliothèque partagée, chacun voit ceux des autres sans échanger de fichier." style="position:absolute; inset:0; background:#f0ece4; display:flex; flex-direction:column; justify-content:center; padding:0 130px; font-family:Arial, sans-serif;">
+    <div style="font-size:20px; letter-spacing:0.34em; text-transform:uppercase; color:#9080b8; font-weight:700; margin-bottom:18px;">08 — Modèles</div>
+    <div style="font-family:'obviously-variable', sans-serif; font-variation-settings:'wght' 760, 'wdth' 121; font-size:96px; line-height:0.92; color:#1a1a1a; margin-bottom:54px;">Réutiliser en équipe</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center;">
+      <div style="display:grid; gap:22px;">
+        <div style="display:flex; gap:18px; align-items:flex-start;"><div style="width:46px; height:46px; border-radius:10px; background:#1a1a1a; color:#fff; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0;">+</div><div><div style="font-size:25px; font-weight:700; color:#1a1a1a;">+ Modèle</div><div style="font-size:21px; color:rgba(0,0,0,0.55); line-height:1.5;">Enregistre tout l'état sous un nom.</div></div></div>
+        <div style="display:flex; gap:18px; align-items:flex-start;"><div style="width:46px; height:46px; border-radius:10px; background:#fff; border:1px solid rgba(0,0,0,0.15); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;">▤</div><div><div style="font-size:25px; font-weight:700; color:#1a1a1a;">Modèles</div><div style="font-size:21px; color:rgba(0,0,0,0.55); line-height:1.5;">La liste de l'équipe — un clic recharge.</div></div></div>
+      </div>
+      <div style="background:#fff; border-radius:14px; padding:30px; box-shadow:0 14px 40px -16px rgba(0,0,0,0.2);">
+        <div style="font-size:14px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(0,0,0,0.4); margin-bottom:16px;">Sans friction, une fois en ligne</div>
+        <div style="font-size:23px; color:#1a1a1a; line-height:1.6;">Chacun se connecte et voit les modèles de toute l'équipe. On en crée un → tout le monde l'a.<br><span style="color:rgba(0,0,0,0.45); font-size:20px;">Aucun fichier à échanger, aucune manip.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 — RÉCAP -->
+  <section data-label="Récap" data-speaker-notes="Récap des raccourcis et du flux : choisir un format, composer le texte avec les styles, poser un fond, ajuster les calques, exporter en image ou vidéo, enregistrer en modèle. Espace fige les auras." style="position:absolute; inset:0; background:#e8e5ef; display:flex; flex-direction:column; justify-content:center; padding:0 150px; font-family:Arial, sans-serif; overflow:hidden;">
+    <div style="position:absolute; bottom:-200px; right:-120px; width:620px; height:620px; border-radius:50%; background:radial-gradient(circle at 40% 40%, #F4C4B8 0%, rgba(144,128,184,0.4) 55%, transparent 75%); animation:gapfloat 8s ease-in-out infinite;"></div>
+    <div style="position:relative; font-size:20px; letter-spacing:0.34em; text-transform:uppercase; color:#E87050; font-weight:700; margin-bottom:24px;">En bref</div>
+    <div style="position:relative; font-family:'obviously-variable', sans-serif; font-variation-settings:'wght' 800, 'wdth' 121; font-size:120px; line-height:0.9; color:#1a1a2e; margin-bottom:44px;">Le flux</div>
+    <div style="position:relative; display:flex; flex-wrap:wrap; gap:14px; max-width:1180px;">
+      <span style="padding:14px 26px; background:#fff; border-radius:999px; font-size:24px; font-weight:600; color:#1a1a1a;">1 · Format</span>
+      <span style="padding:14px 26px; background:#fff; border-radius:999px; font-size:24px; font-weight:600; color:#1a1a1a;">2 · Texte & styles</span>
+      <span style="padding:14px 26px; background:#fff; border-radius:999px; font-size:24px; font-weight:600; color:#1a1a1a;">3 · Fond</span>
+      <span style="padding:14px 26px; background:#fff; border-radius:999px; font-size:24px; font-weight:600; color:#1a1a1a;">4 · Calques</span>
+      <span style="padding:14px 26px; background:#fff; border-radius:999px; font-size:24px; font-weight:600; color:#1a1a1a;">5 · Export</span>
+      <span style="padding:14px 26px; background:#1a1a2e; border-radius:999px; font-size:24px; font-weight:600; color:#fff;">6 · Modèle</span>
+    </div>
+    <div style="position:relative; margin-top:40px; font-size:23px; color:rgba(26,26,46,0.6);">Astuce : <b>Espace</b> fige les auras (mouvement, puis pulse).</div>
+  </section>
+
+</x-import>
+
+</x-dc>
+</body>
+</html>

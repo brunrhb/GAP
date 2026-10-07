@@ -563,6 +563,25 @@ class Component extends DCLogic {
 
   _escHtml(s) { return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
+  // Scale inline A-pont SVGs by k so the native-size clean/export render keeps them
+  // proportional to the text (fixes the "wrong weight" the native-size render introduced).
+  _scaleBridgesInHtml(html, k) {
+    if (!k || k === 1 || !html || html.indexOf("v2-inline-bridge") < 0) return html;
+    const tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    tmp.querySelectorAll(".v2-inline-bridge").forEach((b) => {
+      const sz = parseFloat(b.dataset.size);
+      if (sz) b.dataset.size = String(sz * k);
+      const svg = b.querySelector("svg");
+      if (svg) {
+        const w = parseFloat(svg.getAttribute("width")), h = parseFloat(svg.getAttribute("height"));
+        if (w) svg.setAttribute("width", String(w * k));
+        if (h) svg.setAttribute("height", String(h * k));
+      }
+    });
+    return tmp.innerHTML;
+  }
+
   // build a chrome-free, native-resolution clone of the artboard for screenshotting
   renderCleanOverlay() {
     if (!this.state.cleanView) return null;
@@ -594,13 +613,13 @@ class Component extends DCLogic {
     // frames at on-screen scale, relative to page origin, no chrome
     const frameNodes = this.state.frames.map((f, _fi) => {
       const fnt = this.FONTS[f.font] || this.FONTS.none;
-      const rx = f.x - pageLayout.x;
-      const ry = f.y - pageLayout.y;
+      const rx = (f.x - pageLayout.x) * K;   // native px — clean artboard is rendered at native size (no root transform)
+      const ry = (f.y - pageLayout.y) * K;
       const liveEl = this._editableRefs[f.id];
-      const html = (liveEl && liveEl.innerHTML) || f.html || this._escHtml(f.text);
+      const html = this._scaleBridgesInHtml((liveEl && liveEl.innerHTML) || f.html || this._escHtml(f.text), K);
       return React.createElement("div", {
         key: "clean-" + f.id,
-        style: { position: "absolute", left: rx + "px", top: ry + "px", width: f.w + "px", zIndex: _fi + 1 },
+        style: { position: "absolute", left: rx + "px", top: ry + "px", width: (f.w * K) + "px", zIndex: _fi + 1 },
       },
         React.createElement("div", {
           dangerouslySetInnerHTML: { __html: html },
@@ -608,7 +627,7 @@ class Component extends DCLogic {
             fontFamily: fnt.fontFamily,
             fontVariationSettings: fnt.fontVariationSettings,
             fontWeight: fnt.fontWeight || 400,
-            fontSize: (f.fontSize || 16) + "px",
+            fontSize: ((f.fontSize || 16) * K) + "px",
             color: f.color || "#000000",
             opacity: (f.opacity !== undefined ? f.opacity : 100) / 100,
             transform: fnt.transform,
@@ -636,15 +655,19 @@ class Component extends DCLogic {
       ref: (el) => { this._cleanArtboard = el; },
       style: {
         position: "absolute", top: 0, left: 0,
-        width: pageLayout.w + "px", height: pageLayout.h + "px",
+        width: nativeW + "px", height: nativeH + "px",
         background: this.state.bgColor || "#ffffff", overflow: "hidden",
-        transform: "scale(" + K + ")", transformOrigin: "top left",
       }
     }, bgNode, cleanShader, cleanAura, ...frameNodes);
 
+    const _recFit = this.state.screenRecording
+      ? Math.max(0.1, Math.min((window.innerWidth - 80) / nativeW, (window.innerHeight - 120) / nativeH, 1))
+      : 1;
     const sizer = React.createElement("div", {
       style: { position: "relative", width: nativeW + "px", height: nativeH + "px", flexShrink: 0,
-               boxShadow: "0 4px 24px rgba(0,0,0,0.25)" }
+               boxShadow: "0 4px 24px rgba(0,0,0,0.25)",
+               transform: _recFit !== 1 ? "scale(" + _recFit + ")" : "none",
+               transformOrigin: "top center" }
     }, artboard);
 
     const fmt = this.FORMATS.find(f => f.id === format);
@@ -712,6 +735,16 @@ class Component extends DCLogic {
         }
       }, this.state.recording ? ("Enregistrement… " + this.state.recordPct + "%") : "Vidéo 10 s"),
       React.createElement("button", {
+        onClick: this.toggleScreenRecord,
+        title: "Enregistrer l'écran — capture la page LIVE (A-pont animé, shader, aura, vraie typo). Dans le sélecteur, choisis « Cet onglet ».",
+        style: {
+          padding: "0 12px", height: "28px", border: "1px solid rgba(255,255,255,0.3)",
+          background: this.state.screenRecording ? "rgba(232,92,92,0.30)" : "transparent",
+          color: "#fff", fontSize: "11px",
+          fontFamily: "inherit", cursor: "pointer", borderRadius: "3px", whiteSpace: "nowrap",
+        }
+      }, this.state.screenRecording ? "⏹ Stop l'enreg." : "⏺ Rec écran"),
+      React.createElement("button", {
         onClick: this.closeCleanView,
         style: {
           padding: "0 14px", height: "28px", border: "none",
@@ -735,6 +768,50 @@ class Component extends DCLogic {
       }, sizer)
     );
   }
+
+  toggleScreenRecord = async () => {
+    // Screen recording captures the LIVE page (A-pont animation, WebGL shader, aura, real
+    // variable font) — everything html2canvas / drawImage cannot. No fidelity loss.
+    if (this._screenRec && this._screenRec.state === "recording") { this._screenRec.stop(); return; }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+      alert("Ton navigateur ne supporte pas l'enregistrement d'écran (getDisplayMedia).");
+      return;
+    }
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: false, preferCurrentTab: true });
+    } catch (e) { return; } // user cancelled the picker
+    // Fit the whole poster into view, then crop the self-capture to the artboard element
+    // (Region Capture) so the recorded file is JUST the poster — no window chrome / margins.
+    this.setState({ screenRecording: true });
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const track = stream.getVideoTracks()[0];
+    let cropped = false;
+    try {
+      if (window.CropTarget && track && track.cropTo && this._cleanArtboard) {
+        const ct = await window.CropTarget.fromElement(this._cleanArtboard);
+        await track.cropTo(ct);
+        cropped = true;
+      }
+    } catch (e) { cropped = false; }
+    const mime = this._pickVideoMime();
+    let rec;
+    try { rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 12000000 }); }
+    catch (e) { rec = new MediaRecorder(stream); }
+    this._screenRec = rec;
+    const chunks = [];
+    rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    rec.onstop = () => {
+      try { stream.getTracks().forEach((t) => t.stop()); } catch (e) {}
+      const ext = (mime.indexOf("mp4") >= 0) ? "mp4" : "webm";
+      this._downloadBlob(new Blob(chunks, { type: mime }), this._videoFileName(this.state.format, ext));
+      this._screenRec = null;
+      this.setState({ screenRecording: false });
+    };
+    if (track) track.addEventListener("ended", () => { if (rec.state === "recording") rec.stop(); });
+    rec.start();
+    if (!cropped) console.warn("Region Capture (cropTo) indisponible — capture plein onglet, à recadrer.");
+  };
 
   exportPng = () => {
     this._ensureH2C()
@@ -859,13 +936,58 @@ class Component extends DCLogic {
     toHide.forEach((el) => { el._pv = el.style.visibility; el.style.visibility = "hidden"; });
     const selEl = this._canvasEl && this._canvasEl.querySelector('[data-selected="true"]');
     if (selEl) { selEl._ps = selEl.getAttribute("data-selected"); selEl.setAttribute("data-selected", "false"); }
+    // Hide the editing chrome that lives ON the frames (dashed borders, outlines, "Type here…"
+    // placeholders) so the recorded text layer is clean — same result the PNG "clean" render gives.
+    const _oldNoChrome = document.getElementById("__vidNoChrome"); if (_oldNoChrome) _oldNoChrome.remove();
+    const _noChrome = document.createElement("style");
+    _noChrome.id = "__vidNoChrome";
+    _noChrome.textContent =
+      ".v2-frame,.v2-frame-content,.v2-editable{border-color:transparent !important;outline:none !important;box-shadow:none !important;}" +
+      ".v2-frame-content::before,.v2-frame-content::after,.v2-editable::before,.v2-editable::after{display:none !important;}";
+    document.head.appendChild(_noChrome);
+
+    // ── A-pont live layer ── reserve each ANIMATED bridge's slot (freeze it at its widest pe,
+    // hide it in the snapshot) and record its geometry, so we redraw it ANIMATED on every
+    // composite frame. Fast, one-click; the surrounding text stays put (no reflow, as agreed).
+    const _K = outW / pageLayout.w;
+    const _canvasRect = this._canvasEl.getBoundingClientRect();
+    const aBridges = [];
+    const _bridgesHidden = [];
+    this._exportFrozenBridges = new Set();
+    try {
+      const _anims = this.state.bridgeAnims || {};
+      Object.values(this._editableRefs || {}).forEach((ed) => {
+        if (!ed) return;
+        ed.querySelectorAll(".v2-inline-bridge").forEach((b) => {
+          const id = b.dataset.bridgeId, cfg = id && _anims[id];
+          if (!cfg || !cfg.animate) return;
+          this._exportFrozenBridges.add(id);
+          const size = parseFloat(b.dataset.size) || 90;
+          this.setBridgePeVisual(b, cfg.pe1);           // reserve the slot at the widest pe
+          const r = b.getBoundingClientRect();
+          aBridges.push({
+            nx: (r.left - _canvasRect.left - pageLayout.x) * _K,
+            ny: (r.top  - _canvasRect.top  - pageLayout.y) * _K,
+            sizeNative: size * _K,
+            pe0: cfg.pe0, pe1: cfg.pe1, dur: cfg.dur,
+            color: getComputedStyle(b).color || "#000",
+          });
+          b._pvis = b.style.visibility;
+          b.style.visibility = "hidden";
+          _bridgesHidden.push(b);
+        });
+      });
+    } catch (e) {}
 
     return window.html2canvas(this._canvasEl, {
       scale: captureScale, x: pageLayout.x, y: pageLayout.y, width: pageLayout.w, height: pageLayout.h,
       backgroundColor: null, useCORS: true, allowTaint: true, logging: false,
     }).then((textCanvas) => {
+      _noChrome.remove();
       toHide.forEach((el) => { el.style.visibility = el._pv || ""; });
       if (selEl && selEl._ps) selEl.setAttribute("data-selected", selEl._ps);
+      _bridgesHidden.forEach((b) => { b.style.visibility = b._pvis || ""; });
+      this._exportFrozenBridges = null;
 
       const auraCanvas   = (this._cleanAuraFrame   || this._auraFrame)   && ((this._cleanAuraFrame   || this._auraFrame).contentDocument)   && (this._cleanAuraFrame   || this._auraFrame).contentDocument.querySelector("#c");
       const shaderCanvas = (this._cleanShaderFrame || this._shaderFrame) && ((this._cleanShaderFrame || this._shaderFrame).contentDocument) && (this._cleanShaderFrame || this._shaderFrame).contentDocument.querySelector("#root canvas");
@@ -873,12 +995,59 @@ class Component extends DCLogic {
       const comp = document.createElement("canvas");
       comp.width = outW; comp.height = outH;
       const ctx = comp.getContext("2d");
+
+      // ── Programmed virtual cursor to drive the auras during the recording ──
+      // The aura PHYSICS is left strictly untouched: we only feed it a moving
+      // cursor through the postMessage protocol it already supports, so the two
+      // auras animate for the whole clip without any real mouse movement.
+      // The cursor sweeps back-and-forth along an inclined axis. Angle (deg) and
+      // number of sweeps are tweakable live via window.__auraExportAngleDeg /
+      // window.__auraExportSweeps (defaults below).
+      const _auraFrame = this._cleanAuraFrame || this._auraFrame;
+      try { _auraFrame && _auraFrame.contentWindow && _auraFrame.contentWindow.postMessage({ type: "stage", value: 0 }, "*"); } catch (e) {}
+      const _AURA_ANGLE  = (window.__auraExportAngleDeg != null ? window.__auraExportAngleDeg : 30) * Math.PI / 180;
+      const _AURA_SWEEPS = (window.__auraExportSweeps  != null ? window.__auraExportSweeps  : 1.5);
+      let _auraT0 = null;
+      const driveAura = (nowMs) => {
+        if (!_auraFrame || !_auraFrame.contentWindow) return;
+        if (_auraT0 === null) _auraT0 = nowMs;
+        const p  = Math.min(1, (nowMs - _auraT0) / 10000);          // clip progress 0..1
+        const aw = _auraFrame.contentWindow.innerWidth  || outW;
+        const ah = _auraFrame.contentWindow.innerHeight || outH;
+        const s  = Math.sin(p * _AURA_SWEEPS * 2 * Math.PI);        // -1..1 back-and-forth
+        const L  = 0.38 * Math.min(aw, ah);
+        const x  = aw / 2 + s * L * Math.cos(_AURA_ANGLE);
+        const y  = ah / 2 + s * L * Math.sin(_AURA_ANGLE);
+        try { _auraFrame.contentWindow.postMessage({ type: "cursor", x: x, y: y }, "*"); } catch (e) {}
+      };
+
       const draw = () => {
+        driveAura(performance.now());
         ctx.clearRect(0, 0, outW, outH);
-        if (bgColor) { ctx.fillStyle = bgColor; ctx.fillRect(0, 0, outW, outH); }
+        ctx.fillStyle = bgColor || "#ffffff"; ctx.fillRect(0, 0, outW, outH);
         try { if (shaderCanvas) ctx.drawImage(shaderCanvas, 0, 0, outW, outH); } catch (e) {}
         try { if (auraCanvas)   ctx.drawImage(auraCanvas,   0, 0, outW, outH); } catch (e) {}
         ctx.drawImage(textCanvas, 0, 0, outW, outH);
+        // live animated A-pont(s), redrawn into their reserved slots each frame
+        if (aBridges.length) {
+          const tSec = performance.now() / 1000;
+          for (const b of aBridges) {
+            const dur = Math.max(4, b.dur || 5);
+            const phase = (tSec % (2 * dur)) / dur;
+            const fr = phase < 1 ? phase : (2 - phase);
+            const pe = b.pe0 + (b.pe1 - b.pe0) * fr;
+            const vb = this.aViewBox(pe).split(" ").map(Number);
+            const dispW = this.aBridgePxW(pe, b.sizeNative);
+            const p2d = new Path2D(this.buildAPath(pe));
+            ctx.save();
+            ctx.translate(b.nx, b.ny);
+            ctx.scale(dispW / vb[2], b.sizeNative / 36.96);
+            ctx.translate(-vb[0], 0);
+            ctx.fillStyle = b.color;
+            ctx.fill(p2d, "evenodd");
+            ctx.restore();
+          }
+        }
       };
 
       if (window.VideoEncoder && window.VideoFrame) {
@@ -996,7 +1165,33 @@ class Component extends DCLogic {
       left:   z.l * scale, top:    z.t * scale,
       right:  z.r * scale, bottom: z.b * scale,
     }));
-    this.setState({ pageLayout: { x, y, w, h, scale, fmtW: fmt.w, fmtH: fmt.h }, safeZones });
+
+    // ── Keep text frames locked to the poster when it is re-scaled / re-centered ──
+    // Frames are stored in on-screen px relative to the canvas area, so whenever the
+    // poster box (x,y,w,h) changes — window resize, panel width, format change — we
+    // remap every frame from the OLD poster box onto the NEW one. Without this the
+    // blocks drift off the poster (position) and keep a fixed px size (scale).
+    const oldPL = this.state.pageLayout;
+    let framesPatch = null;
+    if (oldPL && oldPL.w > 0 && oldPL.h > 0 &&
+        (oldPL.x !== x || oldPL.y !== y || oldPL.w !== w || oldPL.h !== h)) {
+      const k = scale / oldPL.scale;              // uniform size ratio (fonts, widths, heights)
+      framesPatch = this.state.frames.map(f => {
+        const p = { ...f };
+        if (typeof f.x === "number")        p.x = x + ((f.x - oldPL.x) / oldPL.w) * w;
+        if (typeof f.y === "number")        p.y = y + ((f.y - oldPL.y) / oldPL.h) * h;
+        if (typeof f.w === "number")        p.w = f.w * k;
+        if (typeof f.h === "number")        p.h = f.h * k;
+        if (typeof f.fontSize === "number") p.fontSize = f.fontSize * k;
+        return p;
+      });
+    }
+
+    this.setState({
+      pageLayout: { x, y, w, h, scale, fmtW: fmt.w, fmtH: fmt.h },
+      safeZones,
+      ...(framesPatch ? { frames: framesPatch } : {}),
+    });
 
     // On first layout, drop the welcome paragraph inside the top-left safe zone of the page
     if (!this._didInitialPlace) {
@@ -1164,24 +1359,25 @@ class Component extends DCLogic {
   _tickBridgeAnims = () => {
     try {
       const anims = this.state.bridgeAnims || {};
-      const ids = Object.keys(anims).filter((id) => anims[id] && anims[id].animate);
+      const ids = Object.keys(anims).filter((id) => anims[id] && anims[id].animate && !(this._exportFrozenBridges && this._exportFrozenBridges.has(id)));
       if (ids.length) {
         const now = performance.now() / 1000;
-        const map = {};
-        Object.values(this._editableRefs || {}).forEach((el) => {
-          if (!el) return;
-          el.querySelectorAll(".v2-inline-bridge").forEach((b) => {
-            if (b.dataset.bridgeId) map[b.dataset.bridgeId] = b;
-          });
-        });
+        const byId = {};
+        const collect = (root) => { if (!root) return; root.querySelectorAll(".v2-inline-bridge").forEach((b) => {
+          const bid = b.dataset.bridgeId; if (!bid) return;
+          (byId[bid] || (byId[bid] = [])).push(b);
+        }); };
+        Object.values(this._editableRefs || {}).forEach(collect);
+        // also drive the clean-view copies → the A animates in the export view & screen recording
+        if (this.state.cleanView) collect(this._cleanArtboard);
         ids.forEach((id) => {
-          const cfg = anims[id], el = map[id];
-          if (!el) return;
+          const cfg = anims[id], els = byId[id];
+          if (!els || !els.length) return;
           const dur = Math.max(4, cfg.dur || 5);
           const phase = (now % (2 * dur)) / dur;     // 0..2
           const f = phase < 1 ? phase : (2 - phase); // linear triangle 0→1→0
           const pe = cfg.pe0 + (cfg.pe1 - cfg.pe0) * f;
-          this.setBridgePeVisual(el, pe);
+          els.forEach((el) => this.setBridgePeVisual(el, pe));
         });
       }
     } catch (err) { /* keep the loop alive */ }
@@ -2796,14 +2992,26 @@ class Component extends DCLogic {
             contentEditable: true,
             suppressContentEditableWarning: true,
             "data-placeholder": "Type here…",
-            ref: (el) => {
-              if (el && !this._editableRefs[f.id]) {
-                // set content only on first mount
-                el.innerHTML = f.html || (f.text || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-              }
-              if (el) this._editableRefs[f.id] = el;
-              else delete this._editableRefs[f.id];
-            },
+            ref: (this._editRefFns || (this._editRefFns = {}))[f.id] ||
+                 (this._editRefFns[f.id] = (el) => {
+                   // Stable per-frame ref (memoized): React keeps the same function identity
+                   // across re-renders, so it is NOT re-invoked on every keystroke. innerHTML is
+                   // therefore written ONCE on mount — the caret is never reset while typing.
+                   if (el) {
+                     this._editableRefs[f.id] = el;
+                     if (!(this._inited || (this._inited = new Set())).has(f.id)) {
+                       const fr = this.state.frames.find((x) => x.id === f.id);
+                       el.innerHTML = (fr && fr.html)
+                         || (fr && (fr.text || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"))
+                         || "";
+                       this._inited.add(f.id);
+                     }
+                   } else {
+                     // true unmount only (stable ref → not called on re-render) → allow re-init on remount
+                     delete this._editableRefs[f.id];
+                     if (this._inited) this._inited.delete(f.id);
+                   }
+                 }),
             onInput: (e) => this.updateFrame(f.id, { html: e.currentTarget.innerHTML }),
             onFocus: () => this.selectFrame(f.id),
             onKeyDown: (e) => this.onKeyDown(e, f.id),

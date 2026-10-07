@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://use.typekit.net/scu0dna.css">
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    background: #F4F2EE;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    color: #1F1F1D;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  /* dot-grid workspace background */
+  .ed-dots {
+    background-image: radial-gradient(circle, rgba(15,14,12,0.08) 1px, transparent 1px);
+    background-size: 14px 14px;
+  }
+  /* slate slider */
+  input[type="range"].ed-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, #1F1F1D var(--fill,50%), #E6E3DD var(--fill,50%));
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"].ed-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px; height: 14px;
+    background: #fff;
+    border: 1px solid #C7C2B8;
+    border-radius: 50%;
+    box-shadow: 0 1px 2px rgba(15,14,12,0.10);
+    cursor: grab;
+  }
+  input[type="range"].ed-slider::-moz-range-thumb {
+    width: 14px; height: 14px;
+    background: #fff;
+    border: 1px solid #C7C2B8;
+    border-radius: 50%;
+    cursor: grab;
+  }
+  /* hide native number spinner */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+  /* selection ring shimmer */
+  @keyframes ed-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
+  .ed-handle { animation: ed-pulse 1.6s ease-in-out infinite; }
+  /* tiny scrollbars inside the panel */
+  .ed-scroll::-webkit-scrollbar { width: 8px; }
+  .ed-scroll::-webkit-scrollbar-track { background: transparent; }
+  .ed-scroll::-webkit-scrollbar-thumb { background: rgba(15,14,12,0.10); border-radius: 4px; }
+  .ed-scroll::-webkit-scrollbar-thumb:hover { background: rgba(15,14,12,0.20); }
+  /* canvas drag cursor */
+  .ed-stop-handle { cursor: grab; }
+  .ed-stop-handle:active { cursor: grabbing; }
+  /* bridge drag handle */
+  .ed-a-handle { cursor: ew-resize; }
+
+  /* ───── MOBILE LAYOUT (≤ 720px) ───── */
+  @media (max-width: 720px) {
+    .ed-body-grid    { grid-template-columns: 1fr !important; }
+    .ed-left-rail    { display: none !important; }
+    .ed-header       { grid-template-columns: auto 1fr auto !important; padding: 0 12px !important; gap: 8px; height: 48px !important; }
+    .ed-header-center { display: none !important; }
+    .ed-header-secondary { display: none !important; }
+    .ed-header-brand-label { display: none !important; }
+    .ed-format-strip { padding: 8px 12px !important; overflow-x: auto !important; justify-content: flex-start !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .ed-format-strip::-webkit-scrollbar { display: none; }
+    .ed-format-strip > * { flex-shrink: 0 !important; }
+    .ed-canvas-area  { padding: 4px 12px 56px !important; }
+    .ed-bottom-strip { padding: 0 10px !important; }
+    .ed-bottom-strip .ed-fit-btn { display: none !important; }
+    .ed-panel {
+      position: fixed !important;
+      left: 0; right: 0; bottom: 0;
+      top: auto !important;
+      max-height: 70vh !important;
+      height: 70vh !important;
+      border-left: none !important;
+      border-top: 1px solid #E6E3DD !important;
+      border-top-left-radius: 14px !important;
+      border-top-right-radius: 14px !important;
+      box-shadow: 0 -12px 32px -8px rgba(15,14,12,0.18) !important;
+      z-index: 20 !important;
+      transform: translateY(calc(100% - 92px));
+      transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .ed-panel[data-sheet-open="true"] { transform: translateY(0) !important; }
+    .ed-sheet-grabber { display: flex !important; }
+    .ed-canvas-area { padding-bottom: 100px !important; }
+    .ed-bottom-strip { bottom: 92px !important; background: linear-gradient(to top, rgba(244,242,238,1), rgba(244,242,238,0)) !important; }
+  }
+  /* sheet grabber — hidden on desktop */
+  .ed-sheet-grabber { display: none; }
+</helmet>
+
+<div style="position: fixed; inset: 0; display: grid; grid-template-rows: 52px 1fr; background: #F4F2EE; color: #1F1F1D; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;">
+
+  <!-- ───── HEADER ───── -->
+  <header class="ed-header" style="display: grid; grid-template-columns: 320px 1fr 320px; align-items: center; padding: 0 18px; border-bottom: 1px solid #E6E3DD; background: #fff; height: 52px; position: relative; z-index: 5;">
+
+    <!-- brand mark (left) -->
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <svg viewBox="234.275 0 68.19 36.96" width="34" height="18" style="color: #0F0E0C; display: block;" aria-hidden="true">
+        <path fill-rule="evenodd" fill="currentColor" d="M243.855,0 L240.085,15.990 L236.355,29.910 L234.275,36.960 L254.615,36.960 L255.305,30.520 L279.525,30.520 L280.095,36.960 L302.465,36.960 L298.485,23.500 L292.415,0 Z M278.215,21.700 L275.425,8.820 L259.365,8.820 L256.585,21.700 Z"></path>
+      </svg>
+      <div class="ed-header-brand-label" style="width: 1px; height: 18px; background: #E6E3DD;"></div>
+      <span class="ed-header-brand-label" style="font-size: 12px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: #1F1F1D;">Editor</span>
+    </div>
+
+    <!-- file (center) -->
+    <div class="ed-header-center" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+      <span style="font-size: 13px; color: #1F1F1D; font-weight: 500;">{{ docName }}</span>
+      <span style="font-size: 12px; color: #8B8779;">·</span>
+      <span style="font-size: 12px; color: #8B8779;">{{ formatLabel }}</span>
+      <span style="font-size: 12px; color: #C7C2B8;">{{ canvasWidth }} × {{ canvasHeight }}</span>
+    </div>
+
+    <!-- actions (right) -->
+    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+      <button class="ed-header-secondary" onClick="{{ noop }}" style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none; background: transparent; color: #8B8779; cursor: pointer; border-radius: 4px;" title="Undo">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 5 L1 7 L3 9"></path>
+          <path d="M1 7 L9 7 A3 3 0 1 1 9 13"></path>
+        </svg>
+      </button>
+      <button class="ed-header-secondary" onClick="{{ noop }}" style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none; background: transparent; color: #8B8779; cursor: pointer; border-radius: 4px;" title="Redo">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M11 5 L13 7 L11 9"></path>
+          <path d="M13 7 L5 7 A3 3 0 1 0 5 13"></path>
+        </svg>
+      </button>
+      <div class="ed-header-secondary" style="width: 1px; height: 18px; background: #E6E3DD; margin: 0 4px;"></div>
+      <button class="ed-header-secondary" onClick="{{ noop }}" style="display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; height: 32px; border: 1px solid #E6E3DD; background: #fff; color: #1F1F1D; font-size: 12px; font-weight: 500; font-family: inherit; cursor: pointer; border-radius: 4px;">
+        Preview
+      </button>
+      <button onClick="{{ noop }}" style="display: inline-flex; align-items: center; gap: 6px; padding: 0 14px; height: 32px; border: none; background: #0F0E0C; color: #fff; font-size: 12px; font-weight: 500; font-family: inherit; cursor: pointer; border-radius: 4px;">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M5.5 1 V7"></path>
+          <path d="M3 4.5 L5.5 7 L8 4.5"></path>
+          <path d="M1 9 H10"></path>
+        </svg>
+        Export
+      </button>
+    </div>
+  </header>
+
+  <!-- ───── BODY ───── -->
+  <div class="ed-body-grid" style="display: grid; grid-template-columns: 56px 1fr 320px; min-height: 0; position: relative;">
+
+    <!-- ───── LEFT RAIL ───── -->
+    <aside class="ed-left-rail" style="background: #fff; border-right: 1px solid #E6E3DD; display: flex; flex-direction: column; align-items: center; padding: 12px 0; gap: 4px;">
+      <sc-for list="{{ railTools }}" as="tool" hint-placeholder-count="5">
+        <button onClick="{{ tool.onClick }}" title="{{ tool.label }}" style="width: 36px; height: 36px; border: none; background: {{ tool.bg }}; color: {{ tool.fg }}; cursor: pointer; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;">
+          <span style="font-size: 14px;">{{ tool.icon }}</span>
+        </button>
+      </sc-for>
+      <div style="flex: 1;"></div>
+      <button onClick="{{ noop }}" title="Help" style="width: 36px; height: 36px; border: none; background: transparent; color: #8B8779; cursor: pointer; border-radius: 6px;">?</button>
+    </aside>
+
+    <!-- ───── WORKSPACE ───── -->
+    <section ref="{{ workspaceRef }}" class="ed-dots" style="position: relative; background-color: #F4F2EE; overflow: hidden; min-width: 0; display: flex; flex-direction: column;">
+
+      <!-- top strip: format pills -->
+      <div class="ed-format-strip" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 18px; background: linear-gradient(to bottom, rgba(244,242,238,0.95), rgba(244,242,238,0)); position: relative; z-index: 2;">
+        <sc-for list="{{ formatPills }}" as="pill" hint-placeholder-count="5">
+          <button onClick="{{ pill.onClick }}" style="display: inline-flex; align-items: center; gap: 6px; padding: 0 11px; height: 28px; border: 1px solid {{ pill.border }}; background: {{ pill.bg }}; color: {{ pill.fg }}; font-size: 11px; font-weight: 500; font-family: inherit; cursor: pointer; border-radius: 14px; letter-spacing: 0.02em;">
+            <span style="display: inline-block; width: {{ pill.iconW }}; height: {{ pill.iconH }}; background: currentColor; border-radius: 1px; opacity: 0.7;"></span>
+            {{ pill.label }}
+          </button>
+        </sc-for>
+      </div>
+
+      <!-- canvas area -->
+      <div class="ed-canvas-area" style="flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 8px 24px 56px;">
+        {{ canvasMount }}
+      </div>
+
+      <!-- bottom strip: zoom + grid -->
+      <div class="ed-bottom-strip" style="position: absolute; left: 0; right: 0; bottom: 0; height: 36px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; background: linear-gradient(to top, rgba(244,242,238,0.95), rgba(244,242,238,0)); pointer-events: none;">
+        <div style="display: flex; align-items: center; gap: 8px; pointer-events: auto;">
+          <button onClick="{{ toggleGrid }}" style="display: inline-flex; align-items: center; gap: 6px; padding: 0 9px; height: 24px; border: 1px solid #E6E3DD; background: {{ gridBtnBg }}; color: {{ gridBtnFg }}; font-size: 10px; font-weight: 500; font-family: inherit; cursor: pointer; border-radius: 12px; letter-spacing: 0.04em;">
+            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1">
+              <path d="M0 3H9M0 6H9M3 0V9M6 0V9"></path>
+            </svg>
+            GRID
+          </button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 4px; pointer-events: auto;">
+          <button onClick="{{ zoomOut }}" style="width: 24px; height: 24px; border: 1px solid #E6E3DD; background: #fff; color: #1F1F1D; font-family: inherit; cursor: pointer; border-radius: 12px; font-size: 12px;">−</button>
+          <div style="min-width: 52px; text-align: center; font-size: 11px; color: #8B8779; font-variant-numeric: tabular-nums;">{{ scalePct }}%</div>
+          <button onClick="{{ zoomIn }}" style="width: 24px; height: 24px; border: 1px solid #E6E3DD; background: #fff; color: #1F1F1D; font-family: inherit; cursor: pointer; border-radius: 12px; font-size: 12px;">+</button>
+          <button class="ed-fit-btn" onClick="{{ zoomFit }}" style="margin-left: 6px; padding: 0 10px; height: 24px; border: 1px solid #E6E3DD; background: #fff; color: #1F1F1D; font-size: 10px; font-weight: 500; font-family: inherit; cursor: pointer; border-radius: 12px; letter-spacing: 0.04em;">FIT</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───── RIGHT PANEL ───── -->
+    <aside class="ed-panel" data-sheet-open="{{ sheetOpenAttr }}" style="background: #fff; border-left: 1px solid #E6E3DD; display: flex; flex-direction: column; min-height: 0;">
+      <!-- sheet grabber (mobile only) -->
+      <div class="ed-sheet-grabber" onClick="{{ toggleSheet }}" style="align-items: center; justify-content: center; padding: 8px 0 4px; cursor: pointer; flex-shrink: 0;">
+        <div style="width: 36px; height: 4px; background: #C7C2B8; border-radius: 2px;"></div>
+      </div>
+      <!-- tab strip -->
+      <div onClick="{{ openSheet }}" style="display: flex; border-bottom: 1px solid #E6E3DD; padding: 0 4px;">
+        <sc-for list="{{ panelTabs }}" as="tab" hint-placeholder-count="4">
+          <button onClick="{{ tab.onClick }}" style="flex: 1; padding: 14px 4px 12px; border: none; background: transparent; color: {{ tab.fg }}; font-size: 11px; font-weight: 500; font-family: inherit; cursor: pointer; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 2px solid {{ tab.border }}; margin-bottom: -1px;">
+            {{ tab.label }}
+          </button>
+        </sc-for>
+      </div>
+      <!-- tab body -->
+      <div class="ed-scroll" style="flex: 1; min-height: 0; overflow-y: auto;">
+        {{ panelBody }}
+      </div>
+    </aside>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;100%&quot;, &quot;height&quot;: &quot;100%&quot;}}">
+// ───── ROLE DEFINITIONS (from style.css + brief) ─────
+const ROLES = {
+  displayHeavy: { label: "Display Heavy", group: "display", ital: 0, wght: 803, wdth: 121, squishY: 0.88, upper: true,  lh: 0.92, sample: "DISPLAY HEAVY", note: "GAP, GROUP, wordmark" },
+  displayMid:   { label: "Display Mid",   group: "display", ital: 0, wght: 699, wdth: 121, squishY: 0.88, upper: true,  lh: 0.92, sample: "DISPLAY MID",   note: "PAIRING IS CARING" },
+  displayLight: { label: "Display Light", group: "display", ital: 0, wght: 500, wdth: 100, squishY: 0.88, upper: true,  lh: 0.92, sample: "DISPLAY LIGHT", note: "THE, BXL" },
+  call:         { label: "Call",          group: "voice",   ital: 0, wght: 480, wdth: 100, squishY: 1,    upper: false, lh: 1.3,  sample: "Call to action",sample2: "tagline / accroche", note: "tagline / accroche" },
+  button:       { label: "Button",        group: "voice",   ital: 0, wght: 650, wdth: 100, squishY: 1,    upper: false, lh: 1.2,  sample: "Become a mentor", note: "button" },
+  caption:      { label: "Caption",       group: "voice",   ital: 0, wght: 320, wdth: 100, squishY: 1,    upper: false, lh: 1.4,  sample: "footer · partners · meta", note: "footer / mentions" },
+  heading:      { label: "Heading",       group: "text",    ital: 0, wght: 650, wdth: 110, squishY: 1,    upper: false, lh: 1.15, sample: "Section heading", note: "page H2" },
+  subtitle:     { label: "Subtitle",      group: "text",    ital: 0, wght: 550, wdth: 105, squishY: 1,    upper: false, lh: 1.2,  sample: "Programme subtitle", note: "sous-titre" },
+  lede:         { label: "Lede",          group: "text",    ital: 0, wght: 500, wdth: 100, squishY: 1,    upper: false, lh: 1.4,  sample: "Lede — first paragraph", note: "chapeau" },
+  body:         { label: "Body",          group: "text",    ital: 0, wght: 400, wdth: 100, squishY: 1,    upper: false, lh: 1.55, sample: "Body text", note: "courant" },
+  bodyStrong:   { label: "Body Strong",   group: "text",    ital: 0, wght: 700, wdth: 100, squishY: 1,    upper: false, lh: 1.55, sample: "Body Strong",  note: "emphase" },
+};
+
+const ROLE_ORDER = ["displayHeavy","displayMid","displayLight","call","button","caption","heading","subtitle","lede","body","bodyStrong"];
+
+// ───── FORMATS ─────
+const FORMATS = {
+  "ig-portrait": { w: 1080, h: 1350, label: "IG Portrait",  ratio: "4:5",   iconW: "8px", iconH: "10px" },
+  "ig-square":   { w: 1080, h: 1080, label: "IG Square",    ratio: "1:1",   iconW: "9px", iconH: "9px"  },
+  "story":       { w: 1080, h: 1920, label: "Story",        ratio: "9:16",  iconW: "6px", iconH: "10px" },
+  "linkedin":    { w: 1200, h: 627,  label: "LinkedIn",     ratio: "1.91:1",iconW: "11px",iconH: "6px"  },
+  "a4":          { w: 1240, h: 1754, label: "A4 PDF",       ratio: "√2",    iconW: "7px", iconH: "10px" },
+};
+const FORMAT_ORDER = ["ig-portrait","ig-square","story","linkedin","a4"];
+
+// ───── BASE FONT SIZES per format (px in canvas space) ─────
+// Block font size = baseSize * role.sizeMul
+const FORMAT_BASE_SIZE = {
+  "ig-portrait": 78,
+  "ig-square":   68,
+  "story":       86,
+  "linkedin":    52,
+  "a4":          76,
+};
+
+// ───── PALETTES (cool base + warm aura per brief) ─────
+const PALETTE_PRESETS = [
+  { name: "Aura Warm",   stops: [
+    { color: "#DCE7F0", x: 50, y: 8 },
+    { color: "#D6D3E2", x: 30, y: 35 },
+    { color: "#F0DDC9", x: 70, y: 62 },
+    { color: "#F47B00", x: 60, y: 92 },
+  ]},
+  { name: "Soft Cool",   stops: [
+    { color: "#ECE8E3", x: 30, y: 20 },
+    { color: "#DCE7F0", x: 70, y: 40 },
+    { color: "#D6D3E2", x: 40, y: 75 },
+    { color: "#C4D4E8", x: 80, y: 90 },
+  ]},
+  { name: "Open Call",   stops: [
+    { color: "#C4D4E8", x: 40, y: 10 },
+    { color: "#F0DDC9", x: 60, y: 45 },
+    { color: "#F45800", x: 50, y: 85 },
+    { color: "#FFCBA4", x: 80, y: 65 },
+  ]},
+  { name: "Ink on Paper",stops: [
+    { color: "#F0ECE4", x: 30, y: 25 },
+    { color: "#ECE8E3", x: 70, y: 60 },
+    { color: "#D6D3E2", x: 40, y: 85 },
+    { color: "#F0DDC9", x: 75, y: 95 },
+  ]},
+];
+
+// ───── A-BRIDGE math (ported from main.js) ─────
+function buildAPath(pc) {
+  const r  = pc * 468.15;
+  const ri = pc * 467.70;
+  const xo = 234.065 * (1 - pc);
+  const f  = (v) => (xo + v).toFixed(3);
+  const g  = (v) => (xo + v + r).toFixed(3);
+  const gi = (v) => (xo + v + ri).toFixed(3);
+  return (
+    `M${f(9.79)},0 L${f(6.02)},15.99 L${f(2.29)},29.91 ` +
+    `L${f(0.21)},36.96 L${f(20.55)},36.96 L${f(21.24)},30.52 ` +
+    `L${g(45.46)},30.52 L${g(46.03)},36.96 L${g(68.40)},36.96 ` +
+    `L${g(64.42)},23.50 L${g(58.35)},0 Z ` +
+    `M${g(44.15)},21.70 L${gi(41.36)},8.82 ` +
+    `L${f(25.30)},8.82 L${f(22.52)},21.70 Z`
+  );
+}
+function aViewBox(pc) {
+  const r = pc * 468.15;
+  const xo = 234.065 * (1 - pc);
+  const xMin = xo + 0.21;
+  const xMax = xo + 68.40 + r;
+  return `${xMin.toFixed(3)} 0 ${(xMax - xMin).toFixed(3)} 36.96`;
+}
+// A natural width / height ratio (no bridge)
+const A_RATIO_NATURAL = 68.19 / 36.96;       // ≈ 1.845
+const A_RATIO_FULL_BRIDGE = 536.34 / 36.96;  // ≈ 14.51
+
+// ───── DEFAULT BLOCKS (mirrors A.png) ─────
+const DEFAULT_BLOCKS = [
+  { id: "b1", text: "oct.26",          role: "displayLight", col: 3, row: 3,  colSpan: 6, rowSpan: 2, align: "left", color: "#8E8B82", sizeMul: 1.55, bridges: {} },
+  { id: "b2", text: "Call for Mentors",role: "heading",      col: 3, row: 4,  colSpan: 9, rowSpan: 2, align: "left", color: "#0F0E0C", sizeMul: 0.85, bridges: {} },
+  { id: "b3", text: "— june.27",       role: "displayLight", col: 5, row: 5,  colSpan: 7, rowSpan: 2, align: "left", color: "#8E8B82", sizeMul: 1.55, bridges: {} },
+  { id: "b4", text: "PAIRING",         role: "displayMid",   col: 1, row: 10, colSpan: 12, rowSpan: 2, align: "left", color: "#FFFFFF", sizeMul: 1.85, bridges: { 1: 0.25 } },
+  { id: "b5", text: "IS CARING",       role: "displayMid",   col: 1, row: 12, colSpan: 12, rowSpan: 2, align: "left", color: "#FFFFFF", sizeMul: 1.85, bridges: { 4: 0.20 } },
+];
+
+// Grid: columns × rows used to snap blocks
+const GRID = { cols: 12, rows: 16 };
+
+class Component extends DCLogic {
+  state = {
+    format: "ig-portrait",
+    blocks: DEFAULT_BLOCKS.map(b => ({ ...b, bridges: { ...b.bridges } })),
+    selectedBlockId: "b4",
+    activeTab: "block",
+    bg: {
+      shape: "soft-bezier",   // soft-bezier | oval | linear
+      stops: PALETTE_PRESETS[0].stops.map(s => ({ ...s })),
+      warp: 0.55,
+      warpSize: 0.65,
+      noise: 0.20,
+      paletteIdx: 0,
+    },
+    showGrid: false,
+    scale: null,
+    zoomMode: "fit", // fit | manual
+    docName: "call-for-mentors-2026",
+    // a-bridge drag transient state
+    drag: null,
+    sheetOpen: false,
+  };
+
+  componentDidMount() {
+    this._ro = new ResizeObserver(() => this.fit());
+    if (this._workspaceEl) this._ro.observe(this._workspaceEl);
+    this._onWinResize = () => this.fit();
+    window.addEventListener("resize", this._onWinResize);
+    requestAnimationFrame(() => this.fit());
+    // Generate grain texture once via canvas (avoids CSS processors rewriting the SVG)
+    const size = 180;
+    const c = document.createElement("canvas");
+    c.width = size; c.height = size;
+    const ctx = c.getContext("2d");
+    const img = ctx.createImageData(size, size);
+    for (let i = 0; i < img.data.length; i += 4) {
+      const v = Math.random() * 255;
+      img.data[i]     = v;
+      img.data[i + 1] = v;
+      img.data[i + 2] = v;
+      img.data[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    this._noiseUrl = c.toDataURL("image/png");
+    this.forceUpdate();
+  }
+  componentWillUnmount() {
+    this._ro?.disconnect();
+    if (this._onWinResize) window.removeEventListener("resize", this._onWinResize);
+  }
+
+  fit() {
+    const ws = this._workspaceEl;
+    if (!ws) return;
+    const fmt = FORMATS[this.state.format];
+    const mobile = window.innerWidth <= 720;
+    const padH = mobile ? 24 : 80;     // horizontal breathing room
+    const padV = mobile ? 200 : 120;   // top strip + bottom strip + collapsed sheet on mobile
+    const w = ws.clientWidth - padH;
+    const h = ws.clientHeight - padV;
+    if (w <= 0 || h <= 0) return;
+    const s = Math.min(w / fmt.w, h / fmt.h, 1);
+    if (this.state.zoomMode === "fit") this.setState({ scale: s });
+  }
+
+  // ───── handlers ─────
+  selectBlock(id) { this.setState({ selectedBlockId: id, activeTab: "block", sheetOpen: true }); }
+  setActiveTab(tab) { this.setState({ activeTab: tab, sheetOpen: true }); }
+  toggleSheet() { this.setState((s) => ({ sheetOpen: !s.sheetOpen })); }
+  openSheet()   { this.setState({ sheetOpen: true }); }
+  setFormat(f) {
+    this.setState({ format: f, zoomMode: "fit" }, () => requestAnimationFrame(() => this.fit()));
+  }
+  zoomFit() { this.setState({ zoomMode: "fit" }, () => this.fit()); }
+  zoomIn()  { this.setState((s) => ({ zoomMode: "manual", scale: Math.min(2, s.scale * 1.15) })); }
+  zoomOut() { this.setState((s) => ({ zoomMode: "manual", scale: Math.max(0.1, s.scale / 1.15) })); }
+  toggleGrid() { this.setState((s) => ({ showGrid: !s.showGrid })); }
+
+  updateSelectedBlock(patch) {
+    const id = this.state.selectedBlockId;
+    this.setState((s) => ({
+      blocks: s.blocks.map((b) => (b.id === id ? { ...b, ...patch } : b)),
+    }));
+  }
+  setRole(roleKey) { this.updateSelectedBlock({ role: roleKey }); }
+  setBlockText(text) { this.updateSelectedBlock({ text }); }
+  setBlockColor(c) { this.updateSelectedBlock({ color: c }); }
+  setBlockAlign(a) { this.updateSelectedBlock({ align: a }); }
+  setBlockSizeMul(m) { this.updateSelectedBlock({ sizeMul: m }); }
+  setBlockColSpan(n) { this.updateSelectedBlock({ colSpan: Math.max(1, Math.min(GRID.cols, n)) }); }
+
+  toggleBridge(blockId, charIdx) {
+    this.setState((s) => ({
+      blocks: s.blocks.map((b) => {
+        if (b.id !== blockId) return b;
+        const bridges = { ...b.bridges };
+        if (bridges[charIdx] != null) delete bridges[charIdx];
+        else bridges[charIdx] = 0.5;
+        return { ...b, bridges };
+      }),
+    }));
+  }
+  setBridge(blockId, charIdx, pe) {
+    this.setState((s) => ({
+      blocks: s.blocks.map((b) => {
+        if (b.id !== blockId) return b;
+        const bridges = { ...b.bridges, [charIdx]: Math.max(0, Math.min(8, pe)) };
+        return { ...b, bridges };
+      }),
+    }));
+  }
+
+  setBgParam(key, val) { this.setState((s) => ({ bg: { ...s.bg, [key]: val } })); }
+  setBgShape(shape) { this.setBgParam("shape", shape); }
+  setStopColor(idx, color) {
+    this.setState((s) => {
+      const stops = s.bg.stops.map((st, i) => (i === idx ? { ...st, color } : st));
+      return { bg: { ...s.bg, stops } };
+    });
+  }
+  setStopPos(idx, x, y) {
+    this.setState((s) => {
+      const stops = s.bg.stops.map((st, i) => (i === idx ? { ...st, x, y } : st));
+      return { bg: { ...s.bg, stops } };
+    });
+  }
+  loadPalette(idx) {
+    const p = PALETTE_PRESETS[idx];
+    this.setState((s) => ({ bg: { ...s.bg, stops: p.stops.map(st => ({ ...st })), paletteIdx: idx } }));
+  }
+  addBlock() {
+    const id = "b" + (Date.now() % 100000);
+    this.setState((s) => ({
+      blocks: [...s.blocks, { id, text: "New text", role: "call", col: 3, row: 7, colSpan: 8, rowSpan: 2, align: "left", color: "#0F0E0C", sizeMul: 1, bridges: {} }],
+      selectedBlockId: id,
+    }));
+  }
+  deleteSelectedBlock() {
+    this.setState((s) => {
+      const blocks = s.blocks.filter((b) => b.id !== s.selectedBlockId);
+      return { blocks, selectedBlockId: blocks[0]?.id || null };
+    });
+  }
+  moveBlock(id, dCol, dRow) {
+    this.setState((s) => ({
+      blocks: s.blocks.map((b) => {
+        if (b.id !== id) return b;
+        return {
+          ...b,
+          col: Math.max(1, Math.min(GRID.cols - b.colSpan + 1, b.col + dCol)),
+          row: Math.max(1, Math.min(GRID.rows - b.rowSpan + 1, b.row + dRow)),
+        };
+      }),
+    }));
+  }
+
+  // ───── BACKGROUND CSS ─────
+  bgStyle(w, h) {
+    const { stops, warp, warpSize, shape } = this.state.bg;
+    const sizePctW = Math.round(60 + warpSize * 90);
+    const sizePctH = Math.round(60 + warpSize * 90);
+    const fade = Math.round(45 + warp * 35);
+    const layers = [...stops].reverse().map((s) => {
+      if (shape === "oval") return `radial-gradient(ellipse ${sizePctW}% ${Math.round(sizePctH * 0.6)}% at ${s.x}% ${s.y}%, ${s.color} 0%, transparent ${fade}%)`;
+      if (shape === "linear") return `linear-gradient(${Math.round(s.x * 3.6)}deg, ${s.color}00 0%, ${s.color}cc ${50}%, ${s.color}00 100%)`;
+      // Soft Bézier: ellipse with slight vertical squash, like the screenshot
+      return `radial-gradient(ellipse ${sizePctW}% ${Math.round(sizePctH * 0.85)}% at ${s.x}% ${s.y}%, ${s.color} 0%, transparent ${fade}%)`;
+    });
+    const base = stops[0]?.color || "#ECE8E3";
+    return { background: `${layers.join(", ")}, ${base}`, width: w + "px", height: h + "px", position: "absolute", inset: 0 };
+  }
+
+  // ───── render the canvas (text blocks + bg) ─────
+  renderCanvas() {
+    const fmt = FORMATS[this.state.format];
+    const { blocks, selectedBlockId, scale, showGrid, bg } = this.state;
+    const cellW = fmt.w / GRID.cols;
+    const cellH = fmt.h / GRID.rows;
+    const baseSize = FORMAT_BASE_SIZE[this.state.format];
+
+    // background container
+    const bgNode = React.createElement("div", { style: this.bgStyle(fmt.w, fmt.h), key: "bg" });
+
+    // noise overlay — uses canvas-generated PNG, immune to CSS rewriting
+    const noiseNode = this._noiseUrl ? React.createElement("div", {
+      key: "noise",
+      style: {
+        position: "absolute",
+        inset: 0,
+        opacity: bg.noise,
+        backgroundImage: `url(${this._noiseUrl})`,
+        backgroundSize: "180px 180px",
+        backgroundRepeat: "repeat",
+        mixBlendMode: "overlay",
+        pointerEvents: "none",
+      }
+    }) : null;
+
+    // grid overlay
+    const gridLines = [];
+    if (showGrid) {
+      for (let i = 1; i < GRID.cols; i++) {
+        gridLines.push(React.createElement("div", { key: "gc" + i, style: { position: "absolute", left: i * cellW + "px", top: 0, bottom: 0, width: "1px", background: "rgba(15,14,12,0.10)" } }));
+      }
+      for (let i = 1; i < GRID.rows; i++) {
+        gridLines.push(React.createElement("div", { key: "gr" + i, style: { position: "absolute", top: i * cellH + "px", left: 0, right: 0, height: "1px", background: "rgba(15,14,12,0.10)" } }));
+      }
+    }
+    const gridNode = React.createElement("div", { key: "grid", style: { position: "absolute", inset: 0, pointerEvents: "none" } }, gridLines);
+
+    // stop control points (when bg tab is active)
+    const stopsNode = this.state.activeTab === "background"
+      ? React.createElement("div", { key: "stops", style: { position: "absolute", inset: 0, pointerEvents: "none" } },
+          bg.stops.map((stop, i) =>
+            React.createElement("div", {
+              key: "stop" + i,
+              className: "ed-stop-handle",
+              onPointerDown: (e) => this.startStopDrag(e, i),
+              style: {
+                position: "absolute",
+                left: `calc(${stop.x}% - 14px)`,
+                top: `calc(${stop.y}% - 14px)`,
+                width: "28px",
+                height: "28px",
+                borderRadius: "50%",
+                border: "1.5px solid #fff",
+                background: stop.color,
+                boxShadow: "0 2px 8px rgba(15,14,12,0.25), inset 0 0 0 1px rgba(255,255,255,0.4)",
+                pointerEvents: "auto",
+              }
+            })
+          )
+        )
+      : null;
+
+    // blocks
+    const blockNodes = blocks.map((b) => {
+      const role = ROLES[b.role];
+      const x = (b.col - 1) * cellW;
+      const y = (b.row - 1) * cellH;
+      const w = b.colSpan * cellW;
+      const h = b.rowSpan * cellH;
+      const isSelected = b.id === selectedBlockId;
+      const fontSize = baseSize * (b.sizeMul || 1);
+      const text = role.upper ? b.text.toUpperCase() : b.text;
+      const allowBridges = role.group === "display";
+
+      // render chars
+      const chars = [];
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (ch === "A" && allowBridges) {
+          const pe = b.bridges[i];
+          if (pe != null) {
+            // bridged A: SVG
+            const path = buildAPath(pe);
+            const vb = aViewBox(pe);
+            const aWidth = (A_RATIO_NATURAL + pe * (A_RATIO_FULL_BRIDGE - A_RATIO_NATURAL)) * 0.7 * fontSize;
+            chars.push(React.createElement("span", {
+              key: i,
+              style: { display: "inline-flex", alignItems: "baseline", position: "relative", verticalAlign: "baseline" },
+              onClick: (e) => { e.stopPropagation(); this.toggleBridge(b.id, i); },
+            },
+              React.createElement("svg", {
+                viewBox: vb,
+                width: aWidth,
+                height: 0.7 * fontSize,
+                style: { display: "inline-block", verticalAlign: "baseline", overflow: "visible", color: b.color },
+                preserveAspectRatio: "none",
+              },
+                React.createElement("path", { d: path, fill: "currentColor", fillRule: "evenodd" })
+              ),
+              isSelected ? React.createElement("span", {
+                className: "ed-handle ed-a-handle",
+                onPointerDown: (e) => { e.stopPropagation(); this.startBridgeDrag(e, b.id, i, fontSize); },
+                onClick: (e) => e.stopPropagation(),
+                style: {
+                  position: "absolute",
+                  right: "-6px",
+                  top: "50%",
+                  width: "12px",
+                  height: "12px",
+                  marginTop: "-6px",
+                  background: "#F45800",
+                  border: "2px solid #fff",
+                  borderRadius: "50%",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
+                  zIndex: 5,
+                }
+              }) : null
+            ));
+          } else {
+            // unbridged A — clickable to toggle
+            chars.push(React.createElement("span", {
+              key: i,
+              onClick: (e) => { e.stopPropagation(); if (isSelected) this.toggleBridge(b.id, i); },
+              style: {
+                position: "relative",
+                cursor: isSelected ? "pointer" : "inherit",
+              },
+            }, ch, isSelected ? React.createElement("span", {
+              style: {
+                position: "absolute",
+                left: 0, right: 0, top: 0, bottom: 0,
+                border: "1.5px dashed rgba(244,88,0,0.5)",
+                borderRadius: "2px",
+                pointerEvents: "none",
+              }
+            }) : null));
+          }
+        } else {
+          chars.push(React.createElement("span", { key: i }, ch));
+        }
+      }
+
+      return React.createElement("div", {
+        key: b.id,
+        onClick: (e) => { e.stopPropagation(); this.selectBlock(b.id); },
+        style: {
+          position: "absolute",
+          left: x + "px",
+          top: y + "px",
+          width: w + "px",
+          minHeight: h + "px",
+          padding: "4px 0",
+          cursor: "pointer",
+          outline: isSelected ? "1.5px solid #F45800" : (showGrid ? "1px dashed rgba(15,14,12,0.15)" : "1px dashed transparent"),
+          outlineOffset: "0px",
+        }
+      },
+        React.createElement("div", {
+          style: {
+            fontFamily: '"obviously-variable", sans-serif',
+            fontOpticalSizing: "auto",
+            fontVariationSettings: `"ital" ${role.ital}, "wght" ${role.wght}, "wdth" ${role.wdth}`,
+            fontSize: fontSize + "px",
+            lineHeight: role.lh,
+            color: b.color,
+            textAlign: b.align,
+            textTransform: role.upper ? "uppercase" : "none",
+            transform: role.squishY !== 1 ? `scaleY(${role.squishY})` : "none",
+            transformOrigin: "bottom left",
+            whiteSpace: role.group === "display" ? "nowrap" : "normal",
+            overflow: "visible",
+            display: "block",
+          }
+        }, chars)
+      );
+    });
+
+    // canvas root — don't paint until scale is measured (avoids 50%→fit flash)
+    if (scale == null) return null;
+    const canvasWidthScaled = fmt.w * scale;
+    const canvasHeightScaled = fmt.h * scale;
+
+    return React.createElement("div", {
+      style: {
+        position: "relative",
+        width: canvasWidthScaled + "px",
+        height: canvasHeightScaled + "px",
+        boxShadow: "0 30px 80px -20px rgba(15,14,12,0.25), 0 4px 12px rgba(15,14,12,0.10)",
+        background: "#fff",
+        overflow: "hidden",
+      },
+      onClick: () => this.setState({ selectedBlockId: null }),
+    },
+      React.createElement("div", {
+        style: {
+          position: "absolute",
+          left: 0, top: 0,
+          width: fmt.w + "px",
+          height: fmt.h + "px",
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+        }
+      }, bgNode, noiseNode, gridNode, stopsNode, ...blockNodes)
+    );
+  }
+
+  // ───── drag handlers ─────
+  startStopDrag(e, idx) {
+    e.preventDefault();
+    e.stopPropagation();
+    const target = e.currentTarget.parentElement.parentElement; // canvas inner
+    const onMove = (ev) => {
+      const rect = target.getBoundingClientRect();
+      const x = Math.max(0, Math.min(100, ((ev.clientX - rect.left) / rect.width) * 100));
+      const y = Math.max(0, Math.min(100, ((ev.clientY - rect.top) / rect.height) * 100));
+      this.setStopPos(idx, Math.round(x), Math.round(y));
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+  startBridgeDrag(e, blockId, charIdx, fontSize) {
+    e.preventDefault();
+    e.stopPropagation();
+    const block = this.state.blocks.find(b => b.id === blockId);
+    const startPe = block.bridges[charIdx] || 0;
+    const startX = e.clientX;
+    const aWidthUnit = (A_RATIO_FULL_BRIDGE - A_RATIO_NATURAL) * 0.7 * fontSize; // px per unit of pExtend
+    const scale = this.state.scale;
+    const onMove = (ev) => {
+      const dx = ev.clientX - startX;
+      const dPe = dx / (aWidthUnit * scale);
+      this.setBridge(blockId, charIdx, Math.max(0.05, startPe + dPe));
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+
+  // ───── PANEL ─────
+  renderPanel() {
+    const tab = this.state.activeTab;
+    if (tab === "block") return this.renderBlockPanel();
+    if (tab === "background") return this.renderBgPanel();
+    if (tab === "layers") return this.renderLayersPanel();
+    if (tab === "export") return this.renderExportPanel();
+    return null;
+  }
+
+  renderBlockPanel() {
+    const block = this.state.blocks.find(b => b.id === this.state.selectedBlockId);
+    if (!block) {
+      return React.createElement("div", { style: { padding: "28px 20px", textAlign: "center", color: "#8B8779", fontSize: "12px", lineHeight: 1.6 } },
+        React.createElement("div", { style: { fontSize: "28px", marginBottom: "8px", opacity: 0.4 } }, "◌"),
+        "Select a text block on the canvas",
+        React.createElement("br"),
+        "to edit its role and content."
+      );
+    }
+    const role = ROLES[block.role];
+
+    return React.createElement("div", { style: { padding: "16px 18px 32px" } },
+
+      // — Text content
+      this.section("TEXT",
+        React.createElement("textarea", {
+          value: block.text,
+          onChange: (e) => this.setBlockText(e.target.value),
+          rows: 2,
+          style: {
+            width: "100%",
+            padding: "8px 10px",
+            border: "1px solid #E6E3DD",
+            borderRadius: "4px",
+            background: "#F8F6F2",
+            color: "#1F1F1D",
+            fontSize: "12px",
+            fontFamily: "inherit",
+            resize: "vertical",
+            outline: "none",
+          },
+        })
+      ),
+
+      // — Role chips (each in its own role)
+      this.section("ROLE", this.renderRoleChips(block.role)),
+
+      // — Color (white/ink toggle)
+      this.section("COLOR",
+        React.createElement("div", { style: { display: "flex", gap: "8px" } },
+          ["#FFFFFF","#0F0E0C","#F45800","#8E8B82"].map((c) =>
+            React.createElement("button", {
+              key: c,
+              onClick: () => this.setBlockColor(c),
+              style: {
+                flex: 1,
+                height: "36px",
+                background: c,
+                border: block.color === c ? "2px solid #F45800" : "1px solid #E6E3DD",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }
+            })
+          )
+        )
+      ),
+
+      // — Alignment + size
+      this.section("LAYOUT",
+        React.createElement("div", { style: { display: "grid", gap: "12px" } },
+          React.createElement("div", { style: { display: "flex", gap: "6px" } },
+            ["left","center","right"].map((a) =>
+              React.createElement("button", {
+                key: a,
+                onClick: () => this.setBlockAlign(a),
+                style: {
+                  flex: 1,
+                  height: "30px",
+                  border: "1px solid #E6E3DD",
+                  background: block.align === a ? "#0F0E0C" : "#fff",
+                  color: block.align === a ? "#fff" : "#1F1F1D",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "11px",
+                  fontFamily: "inherit",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                }
+              }, a)
+            )
+          ),
+          this.sliderRow("Size", block.sizeMul, 0.3, 4, 0.05, (v) => this.setBlockSizeMul(v), (v) => v.toFixed(2) + "×"),
+          this.sliderRow("Width", block.colSpan, 1, GRID.cols, 1, (v) => this.setBlockColSpan(v), (v) => v + " / " + GRID.cols + " cols")
+        )
+      ),
+
+      // — A-bridge info
+      role.group === "display" ? this.section("A-BRIDGES",
+        React.createElement("div", null,
+          React.createElement("div", { style: { fontSize: "11px", color: "#8B8779", lineHeight: 1.5, marginBottom: "10px" } },
+            "Click any ", React.createElement("strong", { style: { color: "#0F0E0C" } }, "A"), " in this block to toggle a bridge, then drag the orange handle to set length."
+          ),
+          Object.keys(block.bridges).length === 0
+            ? React.createElement("div", { style: { padding: "10px 12px", background: "#F8F6F2", borderRadius: "4px", fontSize: "11px", color: "#8B8779", fontStyle: "italic" } }, "No bridges yet.")
+            : React.createElement("div", { style: { display: "grid", gap: "8px" } },
+                Object.entries(block.bridges).map(([idx, pe]) =>
+                  React.createElement("div", { key: idx, style: { display: "flex", alignItems: "center", gap: "10px", padding: "8px 10px", background: "#F8F6F2", borderRadius: "4px" } },
+                    React.createElement("div", { style: { width: "22px", height: "22px", background: "#F45800", color: "#fff", borderRadius: "3px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700 } }, "A"),
+                    React.createElement("div", { style: { flex: 1, fontSize: "11px", color: "#1F1F1D" } }, "position " + idx),
+                    React.createElement("div", { style: { fontSize: "11px", color: "#8B8779", fontVariantNumeric: "tabular-nums" } }, "p = " + Number(pe).toFixed(2)),
+                    React.createElement("button", {
+                      onClick: () => this.toggleBridge(block.id, parseInt(idx)),
+                      style: { width: "22px", height: "22px", border: "none", background: "transparent", color: "#8B8779", cursor: "pointer", fontSize: "14px", lineHeight: 1 }
+                    }, "×")
+                  )
+                )
+              )
+        )
+      ) : null,
+
+      // — Role detail
+      this.section("ROLE DETAIL",
+        React.createElement("div", { style: { fontSize: "11px", color: "#8B8779", lineHeight: 1.7, fontVariantNumeric: "tabular-nums" } },
+          React.createElement("div", { style: { display: "flex", justifyContent: "space-between" } },
+            React.createElement("span", null, "weight"), React.createElement("span", { style: { color: "#1F1F1D" } }, role.wght)
+          ),
+          React.createElement("div", { style: { display: "flex", justifyContent: "space-between" } },
+            React.createElement("span", null, "width"), React.createElement("span", { style: { color: "#1F1F1D" } }, role.wdth)
+          ),
+          React.createElement("div", { style: { display: "flex", justifyContent: "space-between" } },
+            React.createElement("span", null, "italic"), React.createElement("span", { style: { color: "#1F1F1D" } }, role.ital)
+          ),
+          React.createElement("div", { style: { display: "flex", justifyContent: "space-between" } },
+            React.createElement("span", null, "scaleY"), React.createElement("span", { style: { color: "#1F1F1D" } }, role.squishY)
+          ),
+          React.createElement("div", { style: { display: "flex", justifyContent: "space-between" } },
+            React.createElement("span", null, "line-height"), React.createElement("span", { style: { color: "#1F1F1D" } }, role.lh)
+          ),
+          React.createElement("div", { style: { marginTop: "10px", paddingTop: "10px", borderTop: "1px solid #E6E3DD", color: "#8B8779", fontStyle: "italic" } }, role.note || "")
+        )
+      ),
+
+      // Delete
+      React.createElement("button", {
+        onClick: () => this.deleteSelectedBlock(),
+        style: {
+          width: "100%",
+          padding: "10px",
+          border: "1px solid #E6E3DD",
+          background: "#fff",
+          color: "#8B8779",
+          borderRadius: "4px",
+          cursor: "pointer",
+          fontSize: "11px",
+          fontFamily: "inherit",
+          letterSpacing: "0.04em",
+          textTransform: "uppercase",
+          marginTop: "8px",
+        }
+      }, "Delete block")
+    );
+  }
+
+  renderRoleChips(currentRole) {
+    const groups = [
+      { label: "Display", keys: ["displayHeavy","displayMid","displayLight"] },
+      { label: "Voice",   keys: ["call","button","caption"] },
+      { label: "Text",    keys: ["heading","subtitle","lede","body","bodyStrong"] },
+    ];
+
+    return React.createElement("div", { style: { display: "grid", gap: "16px" } },
+      ...groups.map((g) =>
+        React.createElement("div", { key: g.label, style: { display: "grid", gap: "6px" } },
+          React.createElement("div", { style: { fontSize: "10px", color: "#C7C2B8", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 500 } }, g.label),
+          React.createElement("div", { style: { display: "grid", gap: "4px" } },
+            ...g.keys.map((key) => {
+              const r = ROLES[key];
+              const active = currentRole === key;
+              const isDisplay = r.group === "display";
+              // chip dimensions
+              const chipFontSize = isDisplay ? "20px" : (key === "caption" ? "12px" : (key === "body" || key === "bodyStrong" ? "13px" : "15px"));
+              const labelText = isDisplay ? r.label.toUpperCase() : r.label;
+              return React.createElement("button", {
+                key: key,
+                onClick: () => this.setRole(key),
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "10px 12px",
+                  border: active ? "1.5px solid #F45800" : "1px solid #E6E3DD",
+                  background: active ? "#FEF7F2" : "#fff",
+                  color: "#0F0E0C",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  fontFamily: '"obviously-variable", "Inter", sans-serif',
+                  fontVariationSettings: `"ital" ${r.ital}, "wght" ${r.wght}, "wdth" ${r.wdth}`,
+                  fontSize: chipFontSize,
+                  lineHeight: 1.1,
+                  textTransform: r.upper ? "uppercase" : "none",
+                  letterSpacing: r.upper ? "0.01em" : "0",
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                }
+              },
+                React.createElement("span", {
+                  style: {
+                    display: "inline-block",
+                    transform: r.squishY !== 1 ? `scaleY(${r.squishY})` : "none",
+                    transformOrigin: "bottom left",
+                  }
+                }, labelText),
+                React.createElement("span", {
+                  style: {
+                    fontFamily: '"Inter", sans-serif',
+                    fontVariationSettings: "normal",
+                    fontSize: "10px",
+                    color: "#8B8779",
+                    fontWeight: 400,
+                    textTransform: "none",
+                    letterSpacing: "0.02em",
+                    marginLeft: "10px",
+                    flexShrink: 0,
+                  }
+                }, r.wght + " · " + r.wdth)
+              );
+            })
+          )
+        )
+      )
+    );
+  }
+
+  renderBgPanel() {
+    const { bg } = this.state;
+    return React.createElement("div", { style: { padding: "16px 18px 32px" } },
+
+      // Shape + size
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "auto 1fr", gap: "10px 14px", alignItems: "center", marginBottom: "20px" } },
+        React.createElement("span", { style: this.labelStyle() }, "Gradient"),
+        React.createElement("select", {
+          value: bg.shape,
+          onChange: (e) => this.setBgShape(e.target.value),
+          style: this.selectStyle(),
+        },
+          React.createElement("option", { value: "soft-bezier" }, "Soft Bézier"),
+          React.createElement("option", { value: "oval" }, "Oval"),
+          React.createElement("option", { value: "linear" }, "Linear")
+        ),
+        React.createElement("span", { style: this.labelStyle() }, "Warp Shape"),
+        React.createElement("select", {
+          value: "oval",
+          onChange: () => {},
+          style: this.selectStyle(),
+        },
+          React.createElement("option", { value: "oval" }, "Oval")
+        ),
+        React.createElement("span", { style: this.labelStyle() }, "W"),
+        React.createElement("div", { style: { display: "flex", gap: "10px", alignItems: "center", justifyContent: "space-between" } },
+          React.createElement("span", { style: { fontSize: "12px", color: "#1F1F1D", fontVariantNumeric: "tabular-nums" } }, FORMATS[this.state.format].w),
+          React.createElement("span", { style: { fontSize: "11px", color: "#8B8779" } }, "H"),
+          React.createElement("span", { style: { fontSize: "12px", color: "#1F1F1D", fontVariantNumeric: "tabular-nums" } }, FORMATS[this.state.format].h),
+        )
+      ),
+
+      // Sliders
+      React.createElement("div", { style: { display: "grid", gap: "14px", marginBottom: "20px" } },
+        this.sliderRow("Warp", bg.warp, 0, 1, 0.01, (v) => this.setBgParam("warp", v)),
+        this.sliderRow("Warp Size", bg.warpSize, 0, 1, 0.01, (v) => this.setBgParam("warpSize", v)),
+        this.sliderRow("Noise", bg.noise, 0, 0.6, 0.01, (v) => this.setBgParam("noise", v))
+      ),
+
+      // Colors
+      React.createElement("div", { style: { borderTop: "1px solid #E6E3DD", paddingTop: "16px" } },
+        React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" } },
+          React.createElement("span", { style: this.labelStyle() }, "Colors"),
+          React.createElement("div", { style: { display: "flex", gap: "6px" } },
+            React.createElement("button", { onClick: () => {}, style: this.iconBtnStyle(), title: "Save palette" },
+              React.createElement("svg", { width: 12, height: 12, viewBox: "0 0 12 12", fill: "none", stroke: "currentColor", strokeWidth: 1.4 },
+                React.createElement("rect", { x: 1.5, y: 1.5, width: 9, height: 9, rx: 1 }),
+                React.createElement("circle", { cx: 6, cy: 6, r: 1.5 }))
+            ),
+            React.createElement("button", { onClick: () => this.loadPalette((bg.paletteIdx + 1) % PALETTE_PRESETS.length), style: this.iconBtnStyle(), title: "Cycle palette" },
+              React.createElement("svg", { width: 12, height: 12, viewBox: "0 0 12 12", fill: "none", stroke: "currentColor", strokeWidth: 1.4 },
+                React.createElement("path", { d: "M2 6 A4 4 0 1 1 6 10" }),
+                React.createElement("path", { d: "M5 9 L6 10 L7 9" }))
+            ),
+            React.createElement("button", { onClick: () => {}, style: this.iconBtnStyle(), title: "Add color" }, "+")
+          )
+        ),
+        React.createElement("div", { style: { display: "grid", gap: "4px" } },
+          ...bg.stops.map((s, i) =>
+            React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: "10px", padding: "6px 8px", borderRadius: "4px" } },
+              React.createElement("div", {
+                style: {
+                  width: "20px", height: "20px",
+                  background: s.color,
+                  border: "1px solid #E6E3DD",
+                  borderRadius: "3px",
+                  flexShrink: 0,
+                }
+              }),
+              React.createElement("input", {
+                type: "text",
+                value: s.color.replace("#", "").toUpperCase(),
+                onChange: (e) => {
+                  const v = e.target.value.replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
+                  if (v.length === 6) this.setStopColor(i, "#" + v);
+                },
+                style: {
+                  flex: 1,
+                  border: "none",
+                  background: "transparent",
+                  color: "#1F1F1D",
+                  fontSize: "12px",
+                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                  fontVariantNumeric: "tabular-nums",
+                  letterSpacing: "0.04em",
+                  outline: "none",
+                  padding: "2px 4px",
+                }
+              }),
+              React.createElement("span", {
+                style: { fontSize: "10px", color: "#C7C2B8", fontVariantNumeric: "tabular-nums" }
+              }, s.x + "," + s.y)
+            )
+          )
+        )
+      ),
+
+      // Palette presets
+      React.createElement("div", { style: { borderTop: "1px solid #E6E3DD", paddingTop: "16px", marginTop: "16px" } },
+        React.createElement("div", { style: { ...this.labelStyle(), marginBottom: "10px" } }, "Presets"),
+        React.createElement("div", { style: { display: "grid", gap: "6px" } },
+          PALETTE_PRESETS.map((p, i) =>
+            React.createElement("button", {
+              key: i,
+              onClick: () => this.loadPalette(i),
+              style: {
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "8px 10px",
+                border: bg.paletteIdx === i ? "1.5px solid #F45800" : "1px solid #E6E3DD",
+                background: bg.paletteIdx === i ? "#FEF7F2" : "#fff",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                fontSize: "11px",
+                color: "#1F1F1D",
+                textAlign: "left",
+              }
+            },
+              React.createElement("div", { style: { display: "flex", gap: "2px" } },
+                p.stops.map((s, j) =>
+                  React.createElement("div", { key: j, style: { width: "14px", height: "20px", background: s.color, borderRadius: "1px" } })
+                )
+              ),
+              React.createElement("span", { style: { flex: 1 } }, p.name)
+            )
+          )
+        )
+      )
+    );
+  }
+
+  renderLayersPanel() {
+    return React.createElement("div", { style: { padding: "16px 18px 32px" } },
+      React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" } },
+        React.createElement("span", { style: this.labelStyle() }, "Blocks"),
+        React.createElement("button", {
+          onClick: () => this.addBlock(),
+          style: {
+            padding: "4px 10px",
+            border: "1px solid #E6E3DD",
+            background: "#fff",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontSize: "11px",
+            color: "#1F1F1D",
+            fontFamily: "inherit",
+          }
+        }, "+ Add block")
+      ),
+      React.createElement("div", { style: { display: "grid", gap: "4px" } },
+        ...this.state.blocks.slice().reverse().map((b) => {
+          const role = ROLES[b.role];
+          const active = b.id === this.state.selectedBlockId;
+          return React.createElement("button", {
+            key: b.id,
+            onClick: () => this.selectBlock(b.id),
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              padding: "10px 12px",
+              border: active ? "1.5px solid #F45800" : "1px solid #E6E3DD",
+              background: active ? "#FEF7F2" : "#fff",
+              borderRadius: "4px",
+              cursor: "pointer",
+              textAlign: "left",
+              fontFamily: "inherit",
+            }
+          },
+            React.createElement("div", {
+              style: {
+                width: "20px", height: "20px",
+                background: b.color === "#FFFFFF" ? "#fff" : b.color,
+                border: "1px solid #E6E3DD",
+                borderRadius: "3px",
+                flexShrink: 0,
+              }
+            }),
+            React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+              React.createElement("div", {
+                style: { fontSize: "12px", color: "#1F1F1D", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }
+              }, b.text),
+              React.createElement("div", { style: { fontSize: "10px", color: "#8B8779", marginTop: "2px" } }, role.label)
+            ),
+            Object.keys(b.bridges).length > 0
+              ? React.createElement("span", { style: { fontSize: "9px", color: "#fff", background: "#F45800", padding: "2px 5px", borderRadius: "8px", letterSpacing: "0.04em" } }, Object.keys(b.bridges).length + "A")
+              : null
+          );
+        })
+      )
+    );
+  }
+
+  renderExportPanel() {
+    const fmt = FORMATS[this.state.format];
+    const exports = [
+      { ext: "PNG", note: "Rasterised — Typekit metrics preserved", size: fmt.w + " × " + fmt.h + " px" },
+      { ext: "WebP", note: "Smaller, modern browsers", size: fmt.w + " × " + fmt.h + " px" },
+      { ext: "PDF", note: "Vector — variable font intact",  size: (fmt.w / 96).toFixed(2) + " × " + (fmt.h / 96).toFixed(2) + " in @ 96 dpi" },
+      { ext: "SVG", note: "A-bridges as paths, text as <text>", size: "vector" },
+    ];
+    return React.createElement("div", { style: { padding: "16px 18px 32px" } },
+      React.createElement("div", { style: { ...this.labelStyle(), marginBottom: "12px" } }, "Export"),
+      React.createElement("div", { style: { display: "grid", gap: "6px", marginBottom: "20px" } },
+        exports.map((ex) =>
+          React.createElement("button", {
+            key: ex.ext,
+            onClick: () => {},
+            style: {
+              display: "grid",
+              gridTemplateColumns: "44px 1fr auto",
+              alignItems: "center",
+              gap: "12px",
+              padding: "10px 12px",
+              border: "1px solid #E6E3DD",
+              background: "#fff",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              textAlign: "left",
+            }
+          },
+            React.createElement("div", {
+              style: {
+                fontSize: "10px",
+                fontWeight: 600,
+                color: "#0F0E0C",
+                background: "#F4F2EE",
+                borderRadius: "3px",
+                padding: "4px 0",
+                textAlign: "center",
+                letterSpacing: "0.04em",
+              }
+            }, ex.ext),
+            React.createElement("div", null,
+              React.createElement("div", { style: { fontSize: "12px", color: "#1F1F1D" } }, ex.note),
+              React.createElement("div", { style: { fontSize: "10px", color: "#8B8779", marginTop: "2px", fontVariantNumeric: "tabular-nums" } }, ex.size)
+            ),
+            React.createElement("svg", { width: 11, height: 11, viewBox: "0 0 11 11", fill: "none", stroke: "#8B8779", strokeWidth: 1.5 },
+              React.createElement("path", { d: "M5.5 1 V7" }),
+              React.createElement("path", { d: "M3 4.5 L5.5 7 L8 4.5" }),
+              React.createElement("path", { d: "M1 9 H10" })
+            )
+          )
+        )
+      ),
+      React.createElement("div", { style: { ...this.labelStyle(), marginBottom: "10px" } }, "Series"),
+      React.createElement("div", { style: { fontSize: "11px", color: "#8B8779", lineHeight: 1.55, marginBottom: "10px" } },
+        "Export the same composition across every format in one go."
+      ),
+      React.createElement("button", {
+        onClick: () => {},
+        style: {
+          width: "100%",
+          padding: "10px",
+          border: "none",
+          background: "#0F0E0C",
+          color: "#fff",
+          borderRadius: "4px",
+          cursor: "pointer",
+          fontSize: "12px",
+          fontFamily: "inherit",
+          letterSpacing: "0.02em",
+        }
+      }, "Export all 5 formats →")
+    );
+  }
+
+  // ───── tiny UI helpers ─────
+  labelStyle() {
+    return { fontSize: "10px", color: "#8B8779", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 500 };
+  }
+  selectStyle() {
+    return {
+      width: "100%",
+      padding: "5px 8px",
+      border: "1px solid #E6E3DD",
+      borderRadius: "3px",
+      background: "#fff",
+      fontSize: "12px",
+      color: "#1F1F1D",
+      fontFamily: "inherit",
+      outline: "none",
+      cursor: "pointer",
+    };
+  }
+  iconBtnStyle() {
+    return {
+      width: "24px",
+      height: "24px",
+      border: "none",
+      background: "transparent",
+      color: "#8B8779",
+      cursor: "pointer",
+      borderRadius: "3px",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: "12px",
+      fontFamily: "inherit",
+    };
+  }
+  section(label, content) {
+    return React.createElement("div", { style: { marginBottom: "20px" } },
+      React.createElement("div", { style: { ...this.labelStyle(), marginBottom: "10px" } }, label),
+      content
+    );
+  }
+  sliderRow(label, value, min, max, step, onChange, formatter) {
+    const pct = ((value - min) / (max - min)) * 100;
+    const display = formatter ? formatter(value) : Number(value).toFixed(2);
+    return React.createElement("div", { style: { display: "grid", gridTemplateColumns: "70px 1fr 52px", alignItems: "center", gap: "10px" } },
+      React.createElement("span", { style: { fontSize: "11px", color: "#1F1F1D" } }, label),
+      React.createElement("input", {
+        type: "range",
+        className: "ed-slider",
+        min, max, step,
+        value,
+        onChange: (e) => onChange(parseFloat(e.target.value)),
+        style: { "--fill": pct + "%" },
+      }),
+      React.createElement("span", { style: { fontSize: "11px", color: "#8B8779", textAlign: "right", fontVariantNumeric: "tabular-nums" } }, display)
+    );
+  }
+
+  // ───── refs ─────
+  workspaceRef = (el) => {
+    this._workspaceEl = el;
+    if (el && this._ro) this._ro.observe(el);
+    if (el) requestAnimationFrame(() => this.fit());
+  };
+
+  renderVals() {
+    const fmt = FORMATS[this.state.format];
+
+    // rail tools
+    const rail = [
+      { key: "select", label: "Select",    icon: "↖" },
+      { key: "text",   label: "Text",      icon: "T" },
+      { key: "bg",     label: "Background",icon: "◐" },
+      { key: "layers", label: "Layers",    icon: "≡" },
+      { key: "grid",   label: "Grid",      icon: "⊞" },
+    ];
+    const railTools = rail.map((t, i) => ({
+      label: t.label,
+      icon: t.icon,
+      onClick: () => {
+        if (t.key === "text" || t.key === "select") this.setActiveTab("block");
+        if (t.key === "bg") this.setActiveTab("background");
+        if (t.key === "layers") this.setActiveTab("layers");
+        if (t.key === "grid") this.toggleGrid();
+      },
+      bg: i === 0 ? "#F4F2EE" : "transparent",
+      fg: i === 0 ? "#0F0E0C" : "#8B8779",
+    }));
+
+    // format pills
+    const formatPills = FORMAT_ORDER.map((key) => {
+      const f = FORMATS[key];
+      const active = this.state.format === key;
+      return {
+        label: f.ratio,
+        iconW: f.iconW,
+        iconH: f.iconH,
+        onClick: () => this.setFormat(key),
+        border: active ? "#0F0E0C" : "#E6E3DD",
+        bg: active ? "#0F0E0C" : "#fff",
+        fg: active ? "#fff" : "#1F1F1D",
+      };
+    });
+
+    // tabs
+    const tabs = [
+      { key: "block",      label: "Block" },
+      { key: "background", label: "Background" },
+      { key: "layers",     label: "Layers" },
+      { key: "export",     label: "Export" },
+    ];
+    const panelTabs = tabs.map((t) => ({
+      label: t.label,
+      onClick: () => this.setActiveTab(t.key),
+      fg: this.state.activeTab === t.key ? "#0F0E0C" : "#8B8779",
+      border: this.state.activeTab === t.key ? "#0F0E0C" : "transparent",
+    }));
+
+    return {
+      docName: this.state.docName,
+      formatLabel: fmt.label,
+      canvasWidth: fmt.w,
+      canvasHeight: fmt.h,
+      scalePct: this.state.scale == null ? "—" : Math.round(this.state.scale * 100),
+      gridBtnBg: this.state.showGrid ? "#0F0E0C" : "#fff",
+      gridBtnFg: this.state.showGrid ? "#fff" : "#8B8779",
+
+      workspaceRef: this.workspaceRef,
+      railTools,
+      formatPills,
+      panelTabs,
+
+      canvasMount: this.renderCanvas(),
+      panelBody: this.renderPanel(),
+
+      toggleGrid: () => this.toggleGrid(),
+      zoomIn: () => this.zoomIn(),
+      zoomOut: () => this.zoomOut(),
+      zoomFit: () => this.zoomFit(),
+      noop: () => {},
+      sheetOpenAttr: this.state.sheetOpen ? "true" : "false",
+      toggleSheet: () => this.toggleSheet(),
+      openSheet: () => this.openSheet(),
+    };
+  }
+}
+</script>
+</body>
+</html>

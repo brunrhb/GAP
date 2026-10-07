@@ -14,12 +14,11 @@
  *        await GAP.PresetStore.save({ kind:'animmix', name:'GAP 2', data:{...} });
  *        await GAP.PresetStore.remove(id);
  *
- * SWAPPING TO YOUR SERVER
- *   Everything talks to one private backend object: `backend`.
- *   Today it is `localBackend` (browser localStorage).
- *   When your site has a domain + API, replace `const backend = localBackend;`
- *   with `const backend = httpBackend('/api/presets');` (a ready-made stub is
- *   included at the bottom). NOTHING ELSE in your app needs to change.
+ * SWAPPING TO A SHARED LIBRARY (Cloudflare Worker + D1)
+ *   By default presets live in this browser (localStorage).
+ *   Deploy the shipped worker.js + wrangler.toml (steps in those files),
+ *   create a D1 database, then set API_URL = "/api/presets" below. The
+ *   library becomes SHARED across the whole team — no files to exchange.
  * ========================================================================== */
 
 (function (global) {
@@ -64,27 +63,35 @@
     },
   };
 
-  // ── ready-made HTTP backend (use this once your server exists) ────────────
-  //   const backend = httpBackend('/api/presets');
+  // ── same-origin server backend (Cloudflare Worker + D1) ───────────────────
+  // Each preset is its own row, so simultaneous saves never clobber each other.
   function httpBackend(baseUrl) {
-    const json = (r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); };
+    const json = (r) => { if (!r.ok) return r.text().then((t) => { throw new Error(r.status + " " + t); }); return r.json(); };
     return {
-      async all() { return fetch(baseUrl, { credentials: "include" }).then(json); },
-      async writeAll() { throw new Error("httpBackend uses per-item routes; see PresetStore.save/remove notes"); },
-      // Per-item routes — PresetStore.save/remove will prefer these if present:
-      async create(p) { return fetch(baseUrl, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(p) }).then(json); },
-      async update(p) { return fetch(baseUrl + "/" + encodeURIComponent(p.id), { method: "PUT", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(p) }).then(json); },
-      async destroy(id) { return fetch(baseUrl + "/" + encodeURIComponent(id), { method: "DELETE", credentials: "include" }).then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); }); },
+      async all() {
+        const arr = await fetch(baseUrl, { headers: { "Accept": "application/json" } }).then(json);
+        return Array.isArray(arr) ? arr : [];
+      },
+      async create(p) {
+        return fetch(baseUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(p) }).then(json);
+      },
+      async update(p) {
+        return fetch(baseUrl + "/" + encodeURIComponent(p.id), { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(p) }).then(json);
+      },
+      async destroy(id) {
+        const r = await fetch(baseUrl + "/" + encodeURIComponent(id), { method: "DELETE" });
+        if (!r.ok) throw new Error("DELETE → " + r.status);
+      },
     };
   }
 
-  // ── pick your backend HERE ──────────────────────────────────────────────
-  // Leave API_URL = null while there is no server → presets live in this
-  // browser (localStorage). The day the site is deployed, set API_URL to your
-  // endpoint (e.g. "/api/presets" or "https://api.gap.xyz/presets") and the
-  // library becomes SHARED across the whole team automatically — no files to
-  // exchange, nothing to drop in the root. That single line is the only change.
-  const API_URL = null;
+  // ── CONFIGURE HERE ─────────────────────────────────────────────────────────
+  // API_URL = null   → presets in THIS browser only (localStorage).
+  // API_URL = "/api/presets" → shared library via your Cloudflare Worker + D1
+  //   (see worker.js + wrangler.toml shipped alongside). Every teammate then
+  //   sees the same library — no files to exchange, nothing in the site root.
+  const API_URL = "/api/presets";   // shared library via Cloudflare Worker + D1
+
   const backend = API_URL ? httpBackend(API_URL) : localBackend;
 
   // ── public API ────────────────────────────────────────────────────────────

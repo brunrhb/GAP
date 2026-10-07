@@ -10,6 +10,7 @@
 <helmet>
 <link rel="stylesheet" href="https://use.typekit.net/scu0dna.css">
 <script src="preset-store.js"></script>
+<script src="modeles-base.js"></script>
 <style>
   html, body { margin: 0; padding: 0; height: 100%; }
   body {
@@ -20,55 +21,86 @@
     -webkit-font-smoothing: antialiased;
   }
   *, *::before, *::after { box-sizing: border-box; }
+
+  /* ── Le document ──
+     Les cadres vivent en px NATIFS du format (1080×1350, 2480×3508…) dans .v2-doc,
+     réduit à l'écran par un transform: scale(var(--z)). Le texte est donc mis en page
+     exactement comme dans l'export, quelle que soit la taille de la fenêtre.
+     L'interface posée sur les cadres (poignées, barre, contours) est contre-réduite
+     avec --u = 1px écran, pour garder une taille constante à l'écran. */
+  .v2-doc {
+    position: absolute; left: 0; top: 0;
+    transform-origin: 0 0;
+    pointer-events: none;
+    z-index: 3;
+    --u: calc(1px / var(--z, 1));
+  }
+  .v2-doc > .v2-frame { pointer-events: auto; }
   .v2-frame { position: absolute; box-sizing: border-box; }
+  /* contour d'édition : dessiné en dehors du flux, il ne touche jamais la mise en page du texte */
+  .v2-frame::after {
+    content: "";
+    position: absolute;
+    inset: calc(-3 * var(--u, 1px));
+    border: calc(1 * var(--u, 1px)) dashed rgba(0,0,0,0.25);
+    pointer-events: none;
+    transition: border-color 0.12s;
+  }
+  .v2-frame[data-selected="false"]:hover::after { border-color: rgba(0,0,0,0.45); }
+  .v2-frame[data-selected="true"]::after {
+    border: calc(1 * var(--u, 1px)) solid #2D7CF0;
+    box-shadow: 0 0 0 calc(1 * var(--u, 1px)) rgba(45,124,240,0.18);
+  }
+  /* text going past the page edge = cut in the export */
+  .v2-frame[data-overflow="true"]::after { border-color: rgba(230,115,0,0.95); border-style: dashed; }
+  .v2-frame[data-overflow="true"] .v2-frame-drag > span::after { content: " · coupé à l'export"; color: rgb(214,104,0); text-transform: none; }
   .v2-frame-content {
     width: 100%;
     height: 100%;
-    padding: 8px 10px;
-    background: rgba(255,255,255,0.0);
-    border: 1px dashed rgba(0,0,0,0.25);
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border: none;
     font-family: inherit;
     font-size: 16px;
-    line-height: 1.4;
     color: #1a1a1a;
     outline: none;
     resize: none;
     overflow: hidden;
     -webkit-user-select: text;
     cursor: text;
-    transition: border-color 0.12s;
-  }
-  .v2-frame[data-selected="true"] .v2-frame-content {
-    border: 1px solid #2D7CF0;
-    box-shadow: 0 0 0 1px rgba(45,124,240,0.18), 0 6px 20px -8px rgba(0,0,0,0.15);
-  }
-  .v2-frame[data-selected="false"] .v2-frame-content:hover {
-    border-color: rgba(0,0,0,0.45);
   }
   .v2-frame-drag {
     position: absolute;
-    top: -28px; left: -1px; right: -1px;
-    height: 24px;
+    top: calc(-28 * var(--u, 1px)); left: calc(-3 * var(--u, 1px)); right: calc(-3 * var(--u, 1px));
+    height: calc(24 * var(--u, 1px));
     background: rgba(0,0,0,0);
     cursor: move;
     display: flex;
     align-items: center;
-    padding: 0 6px;
-    font-size: 10px;
+    padding: 0 calc(6 * var(--u, 1px));
+    font-size: calc(10 * var(--u, 1px));
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 400;
     color: rgba(0,0,0,0.4);
     letter-spacing: 0.05em;
     text-transform: uppercase;
+    white-space: nowrap;
     opacity: 0;
     transition: opacity 0.12s;
+  }
+  .v2-frame-drag button {
+    width: calc(16 * var(--u, 1px)) !important; height: calc(16 * var(--u, 1px)) !important;
+    font-size: calc(11 * var(--u, 1px)) !important; border-radius: calc(3 * var(--u, 1px)) !important;
   }
   .v2-frame[data-selected="true"] .v2-frame-drag,
   .v2-frame:hover .v2-frame-drag { opacity: 1; }
   .v2-frame-handle {
     position: absolute;
-    right: -5px; bottom: -5px;
-    width: 12px; height: 12px;
+    right: calc(-8 * var(--u, 1px)); bottom: calc(-8 * var(--u, 1px));
+    width: calc(12 * var(--u, 1px)); height: calc(12 * var(--u, 1px));
     background: #fff;
-    border: 1px solid #2D7CF0;
+    border: calc(1 * var(--u, 1px)) solid #2D7CF0;
     cursor: nwse-resize;
     opacity: 0;
   }
@@ -76,37 +108,33 @@
   .v2-frame-handle-l, .v2-frame-handle-r, .v2-frame-handle-t, .v2-frame-handle-b {
     position: absolute;
     background: #fff;
-    border: 1px solid #2D7CF0;
+    border: calc(1 * var(--u, 1px)) solid #2D7CF0;
+    width: calc(8 * var(--u, 1px)); height: calc(8 * var(--u, 1px));
     opacity: 0;
   }
   .v2-frame[data-selected="true"] .v2-frame-handle-l,
   .v2-frame[data-selected="true"] .v2-frame-handle-r,
   .v2-frame[data-selected="true"] .v2-frame-handle-t,
   .v2-frame[data-selected="true"] .v2-frame-handle-b { opacity: 1; }
-  .v2-frame-handle-l { left: -4px; top: 50%; width: 8px; height: 8px; margin-top: -4px; cursor: ew-resize; }
-  .v2-frame-handle-r { right: -4px; top: 50%; width: 8px; height: 8px; margin-top: -4px; cursor: ew-resize; }
-  .v2-frame-handle-t { left: 50%; top: -4px; width: 8px; height: 8px; margin-left: -4px; cursor: ns-resize; }
-  .v2-frame-handle-b { left: 50%; bottom: -4px; width: 8px; height: 8px; margin-left: -4px; cursor: ns-resize; }
+  .v2-frame-handle-l { left: calc(-7 * var(--u, 1px)); top: 50%; margin-top: calc(-4 * var(--u, 1px)); cursor: ew-resize; }
+  .v2-frame-handle-r { right: calc(-7 * var(--u, 1px)); top: 50%; margin-top: calc(-4 * var(--u, 1px)); cursor: ew-resize; }
+  .v2-frame-handle-t { left: 50%; top: calc(-7 * var(--u, 1px)); margin-left: calc(-4 * var(--u, 1px)); cursor: ns-resize; }
+  .v2-frame-handle-b { left: 50%; bottom: calc(-7 * var(--u, 1px)); margin-left: calc(-4 * var(--u, 1px)); cursor: ns-resize; }
 
-  /* contenteditable paragraph */
+  /* contenteditable paragraph — AUCUN padding / bordure : la boîte du texte = la boîte du cadre,
+     comme dans l'export (le contour est le ::after du cadre). */
   div.v2-editable {
     width: 100%; height: 100%;
-    padding: 8px 10px;
+    padding: 0; margin: 0;
     background: transparent;
-    border: 1px dashed rgba(0,0,0,0.25);
-    font-size: 16px; line-height: 1.4; color: #1a1a1a;
+    border: none;
+    color: #1a1a1a;
     outline: none; overflow: visible;
     cursor: text;
     white-space: pre-wrap; word-break: break-word;
     box-sizing: border-box;
-    transition: border-color 0.12s;
     -webkit-user-select: text;
   }
-  .v2-frame[data-selected="true"] div.v2-editable {
-    border: 1px solid #2D7CF0;
-    box-shadow: 0 0 0 1px rgba(45,124,240,0.18), 0 6px 20px -8px rgba(0,0,0,0.15);
-  }
-  .v2-frame[data-selected="false"] div.v2-editable:hover { border-color: rgba(0,0,0,0.45); }
   div.v2-editable:empty::before {
     content: attr(data-placeholder);
     color: rgba(0,0,0,0.28);
@@ -123,8 +151,8 @@
   }
   .v2-bridge-ext-handle {
     position: absolute;
-    right: -3px; top: 15%; height: 70%; width: 7px;
-    background: #2D7CF0; border-radius: 2px;
+    right: calc(-3 * var(--u, 1px)); top: 15%; height: 70%; width: calc(7 * var(--u, 1px));
+    background: #2D7CF0; border-radius: calc(2 * var(--u, 1px));
     cursor: ew-resize; opacity: 0;
     transition: opacity 0.15s;
   }
@@ -133,16 +161,17 @@
   /* move handle (mobile drag affordance) */
   .v2-move-handle {
     position: absolute;
-    top: -36px; left: 50%; transform: translateX(-50%);
-    width: 44px; height: 32px;
+    top: calc(-36 * var(--u, 1px)); left: 50%; transform: translateX(-50%);
+    width: calc(44 * var(--u, 1px)); height: calc(32 * var(--u, 1px));
     background: #1a1a1a;
-    border-radius: 6px;
+    border-radius: calc(6 * var(--u, 1px));
     display: flex; align-items: center; justify-content: center;
     cursor: grab; touch-action: none;
     opacity: 0; transition: opacity 0.15s;
     pointer-events: none;
     z-index: 10;
   }
+  .v2-move-handle svg { width: calc(16 * var(--u, 1px)); height: calc(10 * var(--u, 1px)); }
   .v2-frame[data-selected="true"] .v2-move-handle {
     opacity: 1; pointer-events: auto;
   }
@@ -170,7 +199,12 @@
       flex-shrink: 0 !important;
       overflow: hidden !important;
     }
+    /* the panel's content (tabs + scroll) sits in a wrapper: lay it out as a row too,
+       otherwise the scroll area is pushed below the screen */
+    .v2-panel-inner { flex-direction: row !important; min-width: 0 !important; }
     .v2-tab-strip {
+      padding-left: 0 !important;
+      padding-top: 40px !important;
       flex-direction: column !important;
       border-bottom: none !important;
       border-right: 1px solid rgba(0,0,0,0.10) !important;
@@ -191,16 +225,12 @@
     }
     .v2-panel-scroll {
       flex: 1 !important;
-      overflow-x: auto !important;
-      overflow-y: hidden !important;
+      overflow-x: hidden !important;
+      overflow-y: auto !important;          /* the panels are tall single blocks: scroll them */
       height: 160px !important;
-      display: flex !important;
-      flex-direction: row !important;
-      align-items: flex-start !important;
+      display: block !important;
       padding: 10px 12px !important;
-      gap: 16px !important;
       -webkit-overflow-scrolling: touch !important;
-      scrollbar-width: none !important;
     }
     .v2-panel-scroll::-webkit-scrollbar { display: none; }
     .v2-panel-scroll > div { flex-shrink: 0 !important; }
@@ -224,6 +254,7 @@
       <span style="font-size: 14px; line-height: 1;">+</span>
       Paragraph
     </button>
+    <button onClick="{{ undo }}" title="{{ undoTitle }}" disabled="{{ undoDisabled }}" style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 1px solid rgba(0,0,0,0.15); background: #fff; color: {{ undoDisabled ? 'rgba(0,0,0,0.25)' : '#1a1a1a' }}; font-size: 15px; line-height: 1; font-family: inherit; cursor: {{ undoDisabled ? 'default' : 'pointer' }}; border-radius: 3px;">↶</button>
     <div style="width: 1px; height: 18px; background: rgba(0,0,0,0.12);"></div>
 
     <!-- format selector -->
@@ -282,7 +313,7 @@
       <button onClick="{{ cyclePanelWidth }}" title="Élargir le panneau" style="position: absolute; top: 7px; left: 38px; z-index: 40; width: 26px; height: 26px; border: 1px solid rgba(0,0,0,0.12); background: rgba(255,255,255,0.9); color: #1a1a1a; font-size: 10px; font-weight: 600; line-height: 1; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 0;">{{ panelWidthLabel }}</button>
 
       <!-- inner content (hidden when collapsed) -->
-      <div style="display: {{ panelInnerDisplay }}; flex: 1; min-height: 0; flex-direction: column; width: 100%;">
+      <div class="v2-panel-inner" style="display: {{ panelInnerDisplay }}; flex: 1; min-height: 0; flex-direction: column; width: 100%;">
 
       <!-- tab strip -->
       <div class="v2-tab-strip" style="display: flex; border-bottom: 1px solid rgba(0,0,0,0.10); flex-shrink: 0; padding-left: 70px;">
@@ -345,9 +376,9 @@
           <!-- Grand -->
           <div style="display: grid; grid-template-columns: 24px 1fr 1fr 1fr; align-items: center; gap: 4px;">
             <span style="font-size: 9px; color: rgba(0,0,0,0.28); letter-spacing: 0.06em;">G</span>
-            <button onClick="{{ setSize72 }}" style="padding: 5px 0; border: {{ sz72Border }}; background: {{ sz72Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: #1a1a1a; text-align: center;">72</button>
-            <button onClick="{{ setSize96 }}" style="padding: 5px 0; border: {{ sz96Border }}; background: {{ sz96Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: #1a1a1a; text-align: center;">96</button>
-            <button onClick="{{ setSize128 }}" style="padding: 5px 0; border: {{ sz128Border }}; background: {{ sz128Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: #1a1a1a; text-align: center;">128</button>
+            <button onClick="{{ setSize72 }}" style="padding: 5px 0; border: {{ sz72Border }}; background: {{ sz72Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: {{ sz72Fg }}; text-align: center;" title="{{ sz72Title }}">72</button>
+            <button onClick="{{ setSize96 }}" style="padding: 5px 0; border: {{ sz96Border }}; background: {{ sz96Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: {{ sz96Fg }}; text-align: center;" title="{{ sz96Title }}">96</button>
+            <button onClick="{{ setSize128 }}" style="padding: 5px 0; border: {{ sz128Border }}; background: {{ sz128Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: {{ sz128Fg }}; text-align: center;" title="{{ sz128Title }}">128</button>
           </div>
 
           <!-- separator jump -->
@@ -356,9 +387,9 @@
           <!-- Moyen -->
           <div style="display: grid; grid-template-columns: 24px 1fr 1fr 1fr; align-items: center; gap: 4px;">
             <span style="font-size: 9px; color: rgba(0,0,0,0.28); letter-spacing: 0.06em;">M</span>
-            <button onClick="{{ setSize28 }}" style="padding: 5px 0; border: {{ sz28Border }}; background: {{ sz28Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: #1a1a1a; text-align: center;">28</button>
-            <button onClick="{{ setSize36 }}" style="padding: 5px 0; border: {{ sz36Border }}; background: {{ sz36Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: #1a1a1a; text-align: center;">36</button>
-            <button onClick="{{ setSize48 }}" style="padding: 5px 0; border: {{ sz48Border }}; background: {{ sz48Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: #1a1a1a; text-align: center;">48</button>
+            <button onClick="{{ setSize28 }}" style="padding: 5px 0; border: {{ sz28Border }}; background: {{ sz28Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: {{ sz28Fg }}; text-align: center;" title="{{ sz28Title }}">28</button>
+            <button onClick="{{ setSize36 }}" style="padding: 5px 0; border: {{ sz36Border }}; background: {{ sz36Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: {{ sz36Fg }}; text-align: center;" title="{{ sz36Title }}">36</button>
+            <button onClick="{{ setSize48 }}" style="padding: 5px 0; border: {{ sz48Border }}; background: {{ sz48Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: {{ sz48Fg }}; text-align: center;" title="{{ sz48Title }}">48</button>
           </div>
 
           <!-- separator jump -->
@@ -367,9 +398,9 @@
           <!-- Petit -->
           <div style="display: grid; grid-template-columns: 24px 1fr 1fr 1fr; align-items: center; gap: 4px;">
             <span style="font-size: 9px; color: rgba(0,0,0,0.28); letter-spacing: 0.06em;">P</span>
-            <button onClick="{{ setSize11 }}" style="padding: 5px 0; border: {{ sz11Border }}; background: {{ sz11Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: #1a1a1a; text-align: center;">11</button>
-            <button onClick="{{ setSize14 }}" style="padding: 5px 0; border: {{ sz14Border }}; background: {{ sz14Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: #1a1a1a; text-align: center;">14</button>
-            <button onClick="{{ setSize18 }}" style="padding: 5px 0; border: {{ sz18Border }}; background: {{ sz18Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: #1a1a1a; text-align: center;">18</button>
+            <button onClick="{{ setSize11 }}" style="padding: 5px 0; border: {{ sz11Border }}; background: {{ sz11Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: {{ sz11Fg }}; text-align: center;" title="{{ sz11Title }}">11</button>
+            <button onClick="{{ setSize14 }}" style="padding: 5px 0; border: {{ sz14Border }}; background: {{ sz14Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: {{ sz14Fg }}; text-align: center;" title="{{ sz14Title }}">14</button>
+            <button onClick="{{ setSize18 }}" style="padding: 5px 0; border: {{ sz18Border }}; background: {{ sz18Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: {{ sz18Fg }}; text-align: center;" title="{{ sz18Title }}">18</button>
           </div>
 
         </div>
@@ -535,18 +566,27 @@ class Component extends DCLogic {
   };
 
   // ── PNG export ──
-  openCleanView  = () => this.setState({ cleanView: true, selectedId: null });
+  openCleanView  = () => {
+    // pull the live text into the state first (the export view renders from it)
+    this.setState({ frames: this._liveFrames(), cleanView: true, selectedId: null });
+    this._ensureExportFaces();
+  };
   closeCleanView = () => this.setState({ cleanView: false });
+
+  // wait until the export view is painted with its export fonts
+  _cleanReady = () => this._ensureExportFaces()
+    .then(() => (document.fonts && document.fonts.ready) ? document.fonts.ready : null)
+    .then(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
 
   // render to a PNG and open it in a new browser tab (savable / shareable)
   openInNewTab = () => {
     this._ensureH2C()
-      .then(() => (document.fonts && document.fonts.ready) ? document.fonts.ready : null)
+      .then(() => this._cleanReady())
       .then(() => {
         const { pageLayout } = this.state;
         if (!pageLayout || !this._cleanArtboard) return;
         return window.html2canvas(this._cleanArtboard, {
-          scale: 1, useCORS: true, allowTaint: true,
+          scale: 1, useCORS: true, allowTaint: true, onclone: this._h2cOnClone,
           backgroundColor: "#ffffff", logging: false,
           width: pageLayout.fmtW, height: pageLayout.fmtH,
           windowWidth: pageLayout.fmtW, windowHeight: pageLayout.fmtH,
@@ -563,24 +603,131 @@ class Component extends DCLogic {
 
   _escHtml(s) { return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
-  // Scale inline A-pont SVGs by k so the native-size clean/export render keeps them
-  // proportional to the text (fixes the "wrong weight" the native-size render introduced).
+  // Scale inline A-pont SVGs by k (used when a composition is mapped onto another format,
+  // and to migrate old screen-px templates).
   _scaleBridgesInHtml(html, k) {
     if (!k || k === 1 || !html || html.indexOf("v2-inline-bridge") < 0) return html;
     const tmp = document.createElement("div");
     tmp.innerHTML = html;
     tmp.querySelectorAll(".v2-inline-bridge").forEach((b) => {
       const sz = parseFloat(b.dataset.size);
-      if (sz) b.dataset.size = String(sz * k);
+      if (sz) b.dataset.size = String(Math.round(sz * k * 1000) / 1000);
       const svg = b.querySelector("svg");
       if (svg) {
         const w = parseFloat(svg.getAttribute("width")), h = parseFloat(svg.getAttribute("height"));
-        if (w) svg.setAttribute("width", String(w * k));
-        if (h) svg.setAttribute("height", String(h * k));
+        if (w) svg.setAttribute("width", String(Math.round(w * k * 1000) / 1000));
+        if (h) svg.setAttribute("height", String(Math.round(h * k * 1000) / 1000));
       }
     });
     return tmp.innerHTML;
   }
+
+  // HTML of a frame for the export view: no editing handles, and the A-pont colour written
+  // explicitly (html2canvas renders the SVG on its own, where "currentColor" would turn black).
+  _cleanHtml(html, f) {
+    if (!html || html.indexOf("v2-inline-bridge") < 0) return html;
+    const tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    tmp.querySelectorAll(".v2-bridge-ext-handle").forEach((h) => h.remove());
+    tmp.querySelectorAll(".v2-inline-bridge").forEach((b) => b.removeAttribute("contenteditable"));
+    tmp.querySelectorAll(".v2-inline-bridge path").forEach((p) => {
+      if ((p.getAttribute("fill") || "currentColor") === "currentColor") p.setAttribute("fill", f.color || "#000000");
+    });
+    return tmp.innerHTML;
+  }
+
+  // ONE text style for the editor AND the export: same font, size, line height, wrapping,
+  // squish (origin top-left, so the box height never moves the text). WYSIWYG by construction.
+  LINE_HEIGHT = 1.05;
+  _textStyle(f, opts) {
+    const key = this.FONTS[f.font] ? f.font : "none";
+    const fnt = this.FONTS[key];
+    const useExportFace = !!(opts && opts.exportFaces && (key === "main1" || key === "main2"));
+    return {
+      fontFamily:            useExportFace ? '"gapx-' + key + '", ' + fnt.fontFamily : fnt.fontFamily,
+      fontVariationSettings: useExportFace ? "normal" : fnt.fontVariationSettings,
+      fontWeight:            fnt.fontWeight || 400,
+      fontSize:              (f.fontSize || 16) + "px",
+      lineHeight:            fnt.lineHeight || this.LINE_HEIGHT,
+      color:                 f.color || "#000000",
+      opacity:               (f.opacity !== undefined ? f.opacity : 100) / 100,
+      transform:             fnt.transform,
+      transformOrigin:       fnt.transformOrigin,
+      whiteSpace:            "pre-wrap",
+      wordBreak:             "break-word",
+    };
+  }
+
+  // ── Export fonts ──
+  // html2canvas draws text with the canvas API, which ignores font-variation-settings:
+  // Obviously came out at wdth 100 instead of 121 (12,5 % too narrow → gaps before the
+  // periods, misaligned A-ponts). We register, for the export only, one face per role
+  // whose descriptors pin the axes (weight 803 / stretch 121 %): the browser clamps to
+  // them, so the canvas draws exactly what the screen shows. Checked against the DOM
+  // width; if anything fails we keep the normal font (old behaviour).
+  _axesOf(fvs) {
+    const o = {};
+    String(fvs || "").replace(/["']?(\w{4})["']?\s+(-?[\d.]+)/g, (_, k, v) => { o[k] = parseFloat(v); return ""; });
+    return o;
+  }
+  _exportFaceMatches(key) {
+    try {
+      const fnt = this.FONTS[key];
+      const txt = "PAIRING IS CARING éditer élargir";
+      const span = document.createElement("span");
+      span.textContent = txt;
+      span.style.cssText = "position:absolute;left:-99999px;top:0;white-space:nowrap;font-size:100px;" +
+        "font-family:" + fnt.fontFamily + ";font-weight:" + fnt.fontWeight + ";font-variation-settings:" + fnt.fontVariationSettings + ";";
+      document.body.appendChild(span);
+      const domW = span.getBoundingClientRect().width;
+      span.remove();
+      const ctx = document.createElement("canvas").getContext("2d");
+      ctx.font = fnt.fontWeight + ' 100px "gapx-' + key + '"';
+      const cw = ctx.measureText(txt).width;
+      return domW > 0 && Math.abs(cw - domW) / domW < 0.005;
+    } catch (e) { return false; }
+  }
+  _ensureExportFaces = () => {
+    if (this._exportFacesP) return this._exportFacesP;
+    this._exportFacesP = (async () => {
+      if (!window.FontFace || !document.fonts) return false;
+      const link = document.querySelector('link[href*="typekit"]');
+      if (!link) return false;
+      const css = await fetch(link.href).then((r) => (r.ok ? r.text() : ""));
+      const blocks = css.match(/@font-face\s*\{[^}]*\}/g) || [];
+      const blk = blocks.find((b) => /font-family:\s*["']?obviously-variable["']?\s*;/.test(b));
+      if (!blk) return false;
+      const m = blk.match(/url\(\s*["']?([^"')]+)["']?\s*\)\s*format\(\s*["']?woff2/) || blk.match(/url\(\s*["']?([^"')]+)["']?\s*\)/);
+      if (!m) return false;
+      const src = 'url("' + m[1] + '")';
+      const defs = ["main1", "main2"].map((key) => {
+        const ax = this._axesOf(this.FONTS[key].fontVariationSettings);
+        return { family: "gapx-" + key, src, desc: { weight: String(ax.wght || 400), stretch: (ax.wdth || 100) + "%", style: "normal" } };
+      });
+      const added = defs.map((d) => { const ff = new FontFace(d.family, d.src, d.desc); document.fonts.add(ff); return ff; });
+      await Promise.all(added.map((f) => f.load()));
+      if (!this._exportFaceMatches("main1") || !this._exportFaceMatches("main2")) {
+        added.forEach((f) => document.fonts.delete(f));
+        console.warn("[export] polices d'export : écart de chasse détecté — rendu normal conservé.");
+        return false;
+      }
+      this._exportFaceDefs = defs;
+      return true;
+    })().catch((e) => { console.warn("[export] polices d'export indisponibles :", e); return false; })
+      .then((ok) => { if (ok && !this.state.exportFacesReady) this.setState({ exportFacesReady: true }); return ok; });
+    return this._exportFacesP;
+  };
+
+  // html2canvas lays the text out again in a CLONE of the page (an iframe): the export
+  // faces must exist there too, or the clone falls back to the narrow font and the
+  // wide glyphs are drawn on top of each other.
+  _h2cOnClone = (doc) => {
+    const defs = this._exportFaceDefs;
+    const win = doc && doc.defaultView;
+    if (!defs || !win || !win.FontFace || !doc.fonts) return;
+    const faces = defs.map((d) => { const ff = new win.FontFace(d.family, d.src, d.desc); doc.fonts.add(ff); return ff; });
+    return Promise.all(faces.map((f) => f.load())).then(() => doc.fonts.ready).catch(() => {});
+  };
 
   // build a chrome-free, native-resolution clone of the artboard for screenshotting
   renderCleanOverlay() {
@@ -588,7 +735,6 @@ class Component extends DCLogic {
     const { pageLayout, format } = this.state;
     if (!pageLayout) return null;
 
-    const K = pageLayout.fmtW / pageLayout.w;      // screen → native upscale
     const nativeW = pageLayout.fmtW;
     const nativeH = pageLayout.fmtH;
 
@@ -610,43 +756,39 @@ class Component extends DCLogic {
       })
     ) : null;
 
-    // frames at on-screen scale, relative to page origin, no chrome
+    // frames: the document is already in native px → same boxes, same text style as the editor
+    const exportFaces = !!this.state.exportFacesReady;
     const frameNodes = this.state.frames.map((f, _fi) => {
-      const fnt = this.FONTS[f.font] || this.FONTS.none;
-      const rx = (f.x - pageLayout.x) * K;   // native px — clean artboard is rendered at native size (no root transform)
-      const ry = (f.y - pageLayout.y) * K;
+      if (f.type === "a-bridge") {
+        const pe = f.pe || 1, size = f.size || 90;
+        return React.createElement("div", {
+          key: "clean-" + f.id, "data-clean-id": f.id,
+          style: { position: "absolute", left: f.x + "px", top: f.y + "px", zIndex: _fi + 1 },
+        }, React.createElement("svg", { viewBox: this.aViewBox(pe), width: this.aBridgePxW(pe, size), height: size, preserveAspectRatio: "none", style: { display: "block", overflow: "visible" } },
+          React.createElement("path", { d: this.buildAPath(pe), fill: f.color || "#1a1a1a", fillRule: "evenodd" })));
+      }
       const liveEl = this._editableRefs[f.id];
-      const html = this._scaleBridgesInHtml((liveEl && liveEl.innerHTML) || f.html || this._escHtml(f.text), K);
+      const html = this._cleanHtml((liveEl && liveEl.innerHTML) || f.html || this._escHtml(f.text), f);
       return React.createElement("div", {
-        key: "clean-" + f.id,
-        style: { position: "absolute", left: rx + "px", top: ry + "px", width: (f.w * K) + "px", zIndex: _fi + 1 },
+        key: "clean-" + f.id, "data-clean-id": f.id,
+        style: { position: "absolute", left: f.x + "px", top: f.y + "px", width: f.w + "px", zIndex: _fi + 1 },
       },
         React.createElement("div", {
           dangerouslySetInnerHTML: { __html: html },
-          style: {
-            fontFamily: fnt.fontFamily,
-            fontVariationSettings: fnt.fontVariationSettings,
-            fontWeight: fnt.fontWeight || 400,
-            fontSize: ((f.fontSize || 16) * K) + "px",
-            color: f.color || "#000000",
-            opacity: (f.opacity !== undefined ? f.opacity : 100) / 100,
-            transform: fnt.transform,
-            transformOrigin: fnt.transformOrigin,
-            whiteSpace: "pre-wrap", wordBreak: "break-word", lineHeight: 1.05,
-          }
+          style: this._textStyle(f, { exportFaces }),
         })
       );
     });
 
-    // the artboard, at on-screen size, upscaled by K to native px
+    // the artboard, rendered at native px
     // animated layers — so the clean view shows the real final result
     const cleanShader = this.state.shaderBg ? React.createElement("iframe", {
-      key: "clean-shader", ref: (el) => { this._cleanShaderFrame = el; },
+      key: "clean-shader", ref: (el) => { this._cleanShaderFrame = el; }, className: "v2-clean-anim",
       src: this._shaderUrl(this.state.shaderBg), scrolling: "no",
       style: { position: "absolute", inset: 0, width: "100%", height: "100%", border: "none", pointerEvents: "none", zIndex: 0, background: "transparent" }
     }) : null;
     const cleanAura = this.state.auraOn ? React.createElement("iframe", {
-      key: "clean-aura", ref: (el) => { this._cleanAuraFrame = el; },
+      key: "clean-aura", ref: (el) => { this._cleanAuraFrame = el; }, className: "v2-clean-anim",
       src: "uploads/aura-anim.html", scrolling: "no",
       style: { position: "absolute", inset: 0, width: "100%", height: "100%", border: "none", pointerEvents: "none", zIndex: 0, background: "transparent" }
     }) : null;
@@ -814,8 +956,10 @@ class Component extends DCLogic {
   };
 
   exportPng = () => {
+    // the PNG is always rendered from the export view (native px, no editing chrome)
+    if (!this.state.cleanView) this.openCleanView();
     this._ensureH2C()
-      .then(() => (document.fonts && document.fonts.ready) ? document.fonts.ready : null)
+      .then(() => this._cleanReady())
       .then(() => this._doExportPng())
       .catch((err) => {
         console.error(err);
@@ -826,59 +970,15 @@ class Component extends DCLogic {
   _doExportPng = () => {
     const { pageLayout, format } = this.state;
     if (!pageLayout) { alert("Choisis un format d'abord."); return; }
-
-    // If the clean view is open, capture its native-size artboard directly (no chrome present).
-    if (this.state.cleanView && this._cleanArtboard) {
-      window.html2canvas(this._cleanArtboard, {
-        scale: 1,
-        useCORS: true, allowTaint: true,
-        backgroundColor: "#ffffff", logging: false,
-        width: pageLayout.fmtW, height: pageLayout.fmtH,
-        windowWidth: pageLayout.fmtW, windowHeight: pageLayout.fmtH,
-      }).then((canvas) => this._download(canvas, format))
-        .catch((err) => { console.error("Export PNG failed:", err); alert("Export PNG impossible. Utilise une capture d'écran."); });
-      return;
-    }
-
-    if (!this._canvasEl) { return; }
-    const target  = this._canvasEl;
-    const exportW = pageLayout.fmtW;          // full-res target width (e.g. 1080)
-    const scale   = exportW / pageLayout.w;   // upscale from on-screen size to native px
-
-    // hide UI chrome that shouldn't export (safe zones, handles, move handle, frame drag bar, A-pont drag handles)
-    const allHide = [...document.querySelectorAll(
-      ".v2-safe-zone-overlay, .v2-frame-drag, .v2-frame-handle-l, .v2-frame-handle-r, .v2-frame-handle-t, .v2-frame-handle-b, .v2-move-handle, .v2-bridge-ext-handle, .v2-page-label"
-    )];
-    allHide.forEach(el => { el._prevDisplay = el.style.display; el.style.display = "none"; });
-    // drop selection outline on frames during capture
-    const selEl = this._canvasEl.querySelector('[data-selected="true"]');
-    if (selEl) { selEl._prevSel = selEl.getAttribute("data-selected"); selEl.setAttribute("data-selected", "false"); }
-
-    window.html2canvas(target, {
-      scale,
-      x: pageLayout.x,
-      y: pageLayout.y,
-      width:  pageLayout.w,
-      height: pageLayout.h,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: "#ffffff",
-      logging: false,
-    }).then((canvas) => {
-      allHide.forEach(el => { el.style.display = el._prevDisplay || ""; });
-      if (selEl && selEl._prevSel) selEl.setAttribute("data-selected", selEl._prevSel);
-      const link = document.createElement("a");
-      const fmt  = this.FORMATS.find(f => f.id === format);
-      const name = (fmt && fmt.label ? fmt.label.replace(/[^a-z0-9]/gi, "-").toLowerCase() : "export") + "-" + Date.now() + ".png";
-      link.download = name;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-    }).catch((err) => {
-      allHide.forEach(el => { el.style.display = el._prevDisplay || ""; });
-      if (selEl && selEl._prevSel) selEl.setAttribute("data-selected", selEl._prevSel);
-      console.error("Export PNG failed:", err);
-      alert("Export impossible. Vérifie que les fonds chargés sont du même domaine.");
-    });
+    if (!this._cleanArtboard) { alert("Vue d'export indisponible. Réessaie."); return; }
+    return window.html2canvas(this._cleanArtboard, {
+      scale: 1,
+      useCORS: true, allowTaint: true, onclone: this._h2cOnClone,
+      backgroundColor: "#ffffff", logging: false,
+      width: pageLayout.fmtW, height: pageLayout.fmtH,
+      windowWidth: pageLayout.fmtW, windowHeight: pageLayout.fmtH,
+    }).then((canvas) => this._download(canvas, format))
+      .catch((err) => { console.error("Export PNG failed:", err); alert("Export PNG impossible. Utilise une capture d'écran."); });
   };
 
   _download = (canvas, format) => {
@@ -905,9 +1005,10 @@ class Component extends DCLogic {
     if (!pageLayout) { alert("Choisis un format d'abord."); return; }
     if (!window.MediaRecorder && !window.VideoEncoder) { alert("Ton navigateur ne supporte pas l'enregistrement vidéo."); return; }
 
+    if (!this.state.cleanView) this.openCleanView();
     this.setState({ recording: true, recordPct: 0 });
     this._ensureH2C()
-      .then(() => (document.fonts && document.fonts.ready) ? document.fonts.ready : null)
+      .then(() => this._cleanReady())
       .then(() => this._doExportVideo(pageLayout, format, bgColor))
       .catch((err) => { console.error(err); alert("Export vidéo impossible : " + (err && err.message)); this.setState({ recording: false }); });
   };
@@ -923,77 +1024,78 @@ class Component extends DCLogic {
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   }
 
+  // longest side of an exported video (H.264 levels stop around 4096 px wide; social video is
+  // 1080×1920 at most) — big poster formats are scaled down, social formats are untouched
+  VIDEO_MAX_SIDE = 2160;
+
   _doExportVideo = (pageLayout, format, bgColor) => {
     const outW = pageLayout.fmtW, outH = pageLayout.fmtH;
-    const captureScale = outW / pageLayout.w;
+    const vs = Math.min(1, this.VIDEO_MAX_SIDE / Math.max(outW, outH));
+    const even = (v) => Math.max(2, Math.round(v / 2) * 2);
+    const vidW = even(outW * vs), vidH = even(outH * vs);
+    const art = this._cleanArtboard;
+    if (!art) { this.setState({ recording: false }); alert("Vue d'export indisponible. Réessaie."); return Promise.resolve(); }
 
-    // transparent TEXT snapshot (hide chrome + animated iframes + page bg)
-    const hide = [...document.querySelectorAll(
-      ".v2-safe-zone-overlay, .v2-page-label, .v2-frame-drag, .v2-move-handle, .v2-bridge-ext-handle, .v2-frame-handle, .v2-frame-handle-l, .v2-frame-handle-r, .v2-frame-handle-t, .v2-frame-handle-b"
-    )];
-    const iframes = [this._auraFrame, this._shaderFrame, this._artboardEl].filter(Boolean);
-    const toHide = [...hide, ...iframes];
-    toHide.forEach((el) => { el._pv = el.style.visibility; el.style.visibility = "hidden"; });
-    const selEl = this._canvasEl && this._canvasEl.querySelector('[data-selected="true"]');
-    if (selEl) { selEl._ps = selEl.getAttribute("data-selected"); selEl.setAttribute("data-selected", "false"); }
-    // Hide the editing chrome that lives ON the frames (dashed borders, outlines, "Type here…"
-    // placeholders) so the recorded text layer is clean — same result the PNG "clean" render gives.
-    const _oldNoChrome = document.getElementById("__vidNoChrome"); if (_oldNoChrome) _oldNoChrome.remove();
-    const _noChrome = document.createElement("style");
-    _noChrome.id = "__vidNoChrome";
-    _noChrome.textContent =
-      ".v2-frame,.v2-frame-content,.v2-editable{border-color:transparent !important;outline:none !important;box-shadow:none !important;}" +
-      ".v2-frame-content::before,.v2-frame-content::after,.v2-editable::before,.v2-editable::after{display:none !important;}";
-    document.head.appendChild(_noChrome);
+    // STATIC layer = the export view itself (native px, export fonts), minus what moves:
+    // shader / aura iframes and the page colour are hidden, they are composited live below.
+    const anim = [...art.querySelectorAll(".v2-clean-anim")];
+    anim.forEach((el) => { el._pv = el.style.visibility; el.style.visibility = "hidden"; });
+    const prevBg = art.style.background;
+    art.style.background = "transparent";
+    const artRect = art.getBoundingClientRect();
+    const fit = (artRect.width / outW) || 1;      // 1 unless the view is shrunk to fit
 
     // ── A-pont live layer ── reserve each ANIMATED bridge's slot (freeze it at its widest pe,
     // hide it in the snapshot) and record its geometry, so we redraw it ANIMATED on every
     // composite frame. Fast, one-click; the surrounding text stays put (no reflow, as agreed).
-    const _K = outW / pageLayout.w;
-    const _canvasRect = this._canvasEl.getBoundingClientRect();
     const aBridges = [];
     const _bridgesHidden = [];
     this._exportFrozenBridges = new Set();
     try {
       const _anims = this.state.bridgeAnims || {};
-      Object.values(this._editableRefs || {}).forEach((ed) => {
-        if (!ed) return;
-        ed.querySelectorAll(".v2-inline-bridge").forEach((b) => {
-          const id = b.dataset.bridgeId, cfg = id && _anims[id];
-          if (!cfg || !cfg.animate) return;
-          this._exportFrozenBridges.add(id);
-          const size = parseFloat(b.dataset.size) || 90;
-          this.setBridgePeVisual(b, cfg.pe1);           // reserve the slot at the widest pe
-          const r = b.getBoundingClientRect();
-          aBridges.push({
-            nx: (r.left - _canvasRect.left - pageLayout.x) * _K,
-            ny: (r.top  - _canvasRect.top  - pageLayout.y) * _K,
-            sizeNative: size * _K,
-            pe0: cfg.pe0, pe1: cfg.pe1, dur: cfg.dur,
-            color: getComputedStyle(b).color || "#000",
-          });
-          b._pvis = b.style.visibility;
-          b.style.visibility = "hidden";
-          _bridgesHidden.push(b);
+      art.querySelectorAll(".v2-inline-bridge").forEach((b) => {
+        const id = b.dataset.bridgeId, cfg = id && _anims[id];
+        if (!cfg || !cfg.animate) return;
+        this._exportFrozenBridges.add(id);
+        const size = parseFloat(b.dataset.size) || 90;
+        this.setBridgePeVisual(b, cfg.pe1);           // reserve the slot at the widest pe
+        const svg = b.querySelector("svg") || b;
+        const r = svg.getBoundingClientRect();
+        const fr = b.closest("[data-clean-id]");
+        const txt = fr && fr.firstElementChild;
+        aBridges.push({
+          nx: (r.left - artRect.left) / fit,
+          ny: (r.top  - artRect.top)  / fit,
+          sizeNative: size,
+          drawH: r.height / fit,                      // includes the Main squish (scaleY 0.88)
+          alpha: txt ? (parseFloat(getComputedStyle(txt).opacity) || 1) : 1,
+          pe0: cfg.pe0, pe1: cfg.pe1, dur: cfg.dur,
+          color: (svg.querySelector && svg.querySelector("path") && svg.querySelector("path").getAttribute("fill")) || getComputedStyle(b).color || "#000",
         });
+        b._pvis = b.style.visibility;
+        b.style.visibility = "hidden";
+        _bridgesHidden.push(b);
       });
     } catch (e) {}
 
-    return window.html2canvas(this._canvasEl, {
-      scale: captureScale, x: pageLayout.x, y: pageLayout.y, width: pageLayout.w, height: pageLayout.h,
-      backgroundColor: null, useCORS: true, allowTaint: true, logging: false,
-    }).then((textCanvas) => {
-      _noChrome.remove();
-      toHide.forEach((el) => { el.style.visibility = el._pv || ""; });
-      if (selEl && selEl._ps) selEl.setAttribute("data-selected", selEl._ps);
+    const restore = () => {
+      anim.forEach((el) => { el.style.visibility = el._pv || ""; });
+      art.style.background = prevBg;
       _bridgesHidden.forEach((b) => { b.style.visibility = b._pvis || ""; });
       this._exportFrozenBridges = null;
+    };
+
+    return window.html2canvas(art, {
+      scale: vs, width: outW, height: outH, windowWidth: outW, windowHeight: outH,
+      backgroundColor: null, useCORS: true, allowTaint: true, logging: false, onclone: this._h2cOnClone,
+    }).catch((e) => { restore(); throw e; }).then((textCanvas) => {
+      restore();
 
       const auraCanvas   = (this._cleanAuraFrame   || this._auraFrame)   && ((this._cleanAuraFrame   || this._auraFrame).contentDocument)   && (this._cleanAuraFrame   || this._auraFrame).contentDocument.querySelector("#c");
       const shaderCanvas = (this._cleanShaderFrame || this._shaderFrame) && ((this._cleanShaderFrame || this._shaderFrame).contentDocument) && (this._cleanShaderFrame || this._shaderFrame).contentDocument.querySelector("#root canvas");
 
       const comp = document.createElement("canvas");
-      comp.width = outW; comp.height = outH;
+      comp.width = vidW; comp.height = vidH;
       const ctx = comp.getContext("2d");
 
       // ── Programmed virtual cursor to drive the auras during the recording ──
@@ -1023,11 +1125,14 @@ class Component extends DCLogic {
 
       const draw = () => {
         driveAura(performance.now());
-        ctx.clearRect(0, 0, outW, outH);
-        ctx.fillStyle = bgColor || "#ffffff"; ctx.fillRect(0, 0, outW, outH);
-        try { if (shaderCanvas) ctx.drawImage(shaderCanvas, 0, 0, outW, outH); } catch (e) {}
-        try { if (auraCanvas)   ctx.drawImage(auraCanvas,   0, 0, outW, outH); } catch (e) {}
-        ctx.drawImage(textCanvas, 0, 0, outW, outH);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, vidW, vidH);
+        ctx.fillStyle = bgColor || "#ffffff"; ctx.fillRect(0, 0, vidW, vidH);
+        try { if (shaderCanvas) ctx.drawImage(shaderCanvas, 0, 0, vidW, vidH); } catch (e) {}
+        try { if (auraCanvas)   ctx.drawImage(auraCanvas,   0, 0, vidW, vidH); } catch (e) {}
+        ctx.drawImage(textCanvas, 0, 0, vidW, vidH);
+        // the A-ponts are positioned in native px
+        ctx.scale(vidW / outW, vidH / outH);
         // live animated A-pont(s), redrawn into their reserved slots each frame
         if (aBridges.length) {
           const tSec = performance.now() / 1000;
@@ -1040,8 +1145,9 @@ class Component extends DCLogic {
             const dispW = this.aBridgePxW(pe, b.sizeNative);
             const p2d = new Path2D(this.buildAPath(pe));
             ctx.save();
+            ctx.globalAlpha = b.alpha != null ? b.alpha : 1;
             ctx.translate(b.nx, b.ny);
-            ctx.scale(dispW / vb[2], b.sizeNative / 36.96);
+            ctx.scale(dispW / vb[2], (b.drawH || b.sizeNative) / 36.96);
             ctx.translate(-vb[0], 0);
             ctx.fillStyle = b.color;
             ctx.fill(p2d, "evenodd");
@@ -1051,7 +1157,7 @@ class Component extends DCLogic {
       };
 
       if (window.VideoEncoder && window.VideoFrame) {
-        return this._encodeWebCodecs(comp, draw, outW, outH, format)
+        return this._encodeWebCodecs(comp, draw, vidW, vidH, format)
           .catch((err) => { console.warn("WebCodecs failed, falling back:", err); return this._encodeMediaRecorder(comp, draw, format); });
       }
       return this._encodeMediaRecorder(comp, draw, format);
@@ -1147,74 +1253,162 @@ class Component extends DCLogic {
   _editableRefs = {};
   _artboardEl   = null;
 
-  computePageLayout() {
-    const fmt = this.FORMATS.find(f => f.id === this.state.format);
-    if (!fmt || !fmt.w) { this.setState({ pageLayout: null, safeZones: [] }); return; }
+  // ── Geometry ──
+  // Frames (x, y, w, h, fontSize, A-pont sizes) are stored in NATIVE px of the current
+  // format. The screen only decides the zoom (pageLayout.scale) of the .v2-doc layer, so a
+  // window resize or a panel change never touches the frames: nothing drifts, nothing reflows.
+  _fmt(id) { return this.FORMATS.find((f) => f.id === (id || this.state.format)); }
+  _layoutFor(fmt) {
     const el = this._canvasEl;
-    if (!el) return;
     const pad = 48;
-    const wsW = el.clientWidth  - pad * 2;
-    const wsH = el.clientHeight - pad * 2;
-    const scale = Math.min(wsW / fmt.w, wsH / fmt.h, 1);
-    const w = fmt.w * scale;
-    const h = fmt.h * scale;
-    const x = (el.clientWidth  - w) / 2;
-    const y = (el.clientHeight - h) / 2;
+    const cw = el ? el.clientWidth : 1000, ch = el ? el.clientHeight : 800;
+    const scale = Math.max(0.02, Math.min((cw - pad * 2) / fmt.w, (ch - pad * 2) / fmt.h, 1));
+    const w = fmt.w * scale, h = fmt.h * scale;
+    return { x: (cw - w) / 2, y: (ch - h) / 2, w, h, scale, fmtW: fmt.w, fmtH: fmt.h };
+  }
+  // reference unit of the size buttons: a label "28" = 28 px when the page is shown 540 px wide
+  // (≈ what the buttons gave before, on a normal screen) → 56 px natifs on a 1080 post.
+  _sizeUnit(fmtW) { return (fmtW || (this._fmt() || { w: 1080 }).w) / 540; }
+  // inner safe zone (max of all zones) in native px
+  _safeInset(formatId) {
+    return (this.SAFE_ZONES[formatId || this.state.format] || []).reduce((a, z) => ({
+      l: Math.max(a.l, z.l), t: Math.max(a.t, z.t), r: Math.max(a.r, z.r), b: Math.max(a.b, z.b),
+    }), { l: 0, t: 0, r: 0, b: 0 });
+  }
+  // screen zoom of an element (doc layer scale, fit-to-screen of the export view…)
+  _zoomOf(el) {
+    const host = el && (el.closest(".v2-editable, [data-clean-id] > div") || el);
+    if (!host || !host.offsetWidth) return (this.state.pageLayout && this.state.pageLayout.scale) || 1;
+    return (host.getBoundingClientRect().width / host.offsetWidth) || 1;
+  }
+
+  computePageLayout() {
+    const fmt = this._fmt();
+    if (!fmt || !fmt.w) { this.setState({ pageLayout: null, safeZones: [] }); return; }
+    if (!this._canvasEl) return;
+    const pl = this._layoutFor(fmt);
+    const old = this.state.pageLayout;
+    if (old && old.fmtW === pl.fmtW && old.fmtH === pl.fmtH &&
+        Math.abs(old.x - pl.x) < 0.01 && Math.abs(old.y - pl.y) < 0.01 && Math.abs(old.scale - pl.scale) < 1e-6) return;
     const safeZones = (this.SAFE_ZONES[this.state.format] || []).map(z => ({
       ...z,
-      left:   z.l * scale, top:    z.t * scale,
-      right:  z.r * scale, bottom: z.b * scale,
+      left:   z.l * pl.scale, top:    z.t * pl.scale,
+      right:  z.r * pl.scale, bottom: z.b * pl.scale,
     }));
-
-    // ── Keep text frames locked to the poster when it is re-scaled / re-centered ──
-    // Frames are stored in on-screen px relative to the canvas area, so whenever the
-    // poster box (x,y,w,h) changes — window resize, panel width, format change — we
-    // remap every frame from the OLD poster box onto the NEW one. Without this the
-    // blocks drift off the poster (position) and keep a fixed px size (scale).
-    const oldPL = this.state.pageLayout;
-    let framesPatch = null;
-    let kTaille = 1;                              // facteur appliqué au texte (et donc aux A-ponts)
-    if (oldPL && oldPL.w > 0 && oldPL.h > 0 &&
-        (oldPL.x !== x || oldPL.y !== y || oldPL.w !== w || oldPL.h !== h)) {
-      const k = scale / oldPL.scale;              // uniform size ratio (fonts, widths, heights)
-      kTaille = k;
-      framesPatch = this.state.frames.map(f => {
-        const p = { ...f };
-        if (typeof f.x === "number")        p.x = x + ((f.x - oldPL.x) / oldPL.w) * w;
-        if (typeof f.y === "number")        p.y = y + ((f.y - oldPL.y) / oldPL.h) * h;
-        if (typeof f.w === "number")        p.w = f.w * k;
-        if (typeof f.h === "number")        p.h = f.h * k;
-        if (typeof f.fontSize === "number") p.fontSize = f.fontSize * k;
-        return p;
-      });
-    }
-
-    this.setState({
-      pageLayout: { x, y, w, h, scale, fmtW: fmt.w, fmtH: fmt.h },
-      safeZones,
-      ...(framesPatch ? { frames: framesPatch } : {}),
-    }, () => {
-      // A-ponts : même facteur que le texte, une fois les cadres redessinés à leur nouvelle taille
-      if (framesPatch && kTaille !== 1) this._scaleInlineBridges(kTaille);
-    });
-
-    // On first layout, drop the welcome paragraph inside the top-left safe zone of the page
-    if (!this._didInitialPlace) {
-      this._didInitialPlace = true;
-      const inner = (this.SAFE_ZONES[this.state.format] || []).reduce((acc, z) => ({
-        l: Math.max(acc.l, z.l), t: Math.max(acc.t, z.t),
-      }), { l: 0, t: 0 });
-      const fx = x + inner.l * scale;
-      const fy = y + inner.t * scale;
-      this.setState(s => ({
-        frames: s.frames.map(f => {
-          if (f.id === "f1") return { ...f, x: Math.round(fx), y: Math.round(fy) };
-          if (f.id === "f2") return { ...f, x: Math.round(fx), y: Math.round(fy + 140) };
-          return f;
-        }),
-      }));
-    }
+    this.setState({ pageLayout: pl, safeZones });
   }
+
+  // ── Format change ──
+  // The composition is mapped from the old safe zone onto the new one: positions follow the
+  // zone (anchored to the nearest edge or the centre), sizes scale uniformly by min(sx, sy)
+  // so the text keeps the same line breaks and nothing that was apart can end up overlapping.
+  // `_master` remembers the last composition you actually edited: switching formats back and
+  // forth without editing always maps from it, so a round trip lands exactly where it started.
+  _master = null;
+  _mapFrames(frames, from, to) {
+    // from / to: { id, w, h } (format id → its safe zone; unknown id → whole page)
+    const area = (f) => {
+      const i = f.id && this.SAFE_ZONES[f.id] ? this._safeInset(f.id) : { l: 0, t: 0, r: 0, b: 0 };
+      const w = f.w - i.l - i.r, h = f.h - i.t - i.b;
+      return (w > f.w * 0.3 && h > f.h * 0.3) ? { x: i.l, y: i.t, w, h } : { x: 0, y: 0, w: f.w, h: f.h };
+    };
+    const A = area(from), B = area(to);
+    const sx = B.w / A.w, sy = B.h / A.h, k = Math.min(sx, sy);
+    const r = (v) => Math.round(v * 100) / 100;
+    const axis = (p, size, a0, aLen, b0, s) => {
+      const q = p - a0;                               // position in the old zone
+      const c = (q + size / 2) / aLen;
+      const ns = size * k;
+      if (c < 0.4) return b0 + q * s;                       // anchored to the start edge
+      if (c > 0.6) return b0 + (q + size) * s - ns;         // anchored to the end edge
+      return b0 + (q + size / 2) * s - ns / 2;              // centred
+    };
+    return frames.map((f) => {
+      const p = { ...f };
+      if (f.type === "a-bridge") {
+        const size = f.size || 90, w = this.aBridgePxW(f.pe || 1, size);
+        p.x = r(axis(f.x, w, A.x, A.w, B.x, sx)); p.y = r(axis(f.y, size, A.y, A.h, B.y, sy)); p.size = r(size * k);
+        return p;
+      }
+      p.x = r(axis(f.x, f.w, A.x, A.w, B.x, sx));
+      p.y = r(axis(f.y, f.h, A.y, A.h, B.y, sy));
+      p.w = r(f.w * k); p.h = r(f.h * k);
+      p.fontSize = r((f.fontSize || 16) * k);
+      if (f.html) p.html = this._scaleBridgesInHtml(f.html, k);
+      return p;
+    });
+  }
+  changeFormat = (format) => {
+    const oldFmt = this._fmt(), newFmt = this._fmt(format);
+    if (!newFmt || !oldFmt || format === this.state.format) return;
+    this._pushHistory();
+    if (!this._master) this._master = { format: oldFmt.id, fmtW: oldFmt.w, fmtH: oldFmt.h, frames: this._liveFrames() };
+    const m = this._master;
+    const frames = (m.format === newFmt.id)
+      ? m.frames.map((f) => ({ ...f }))
+      : this._mapFrames(m.frames, { id: m.format, w: m.fmtW, h: m.fmtH }, newFmt);
+    this.setState({ format, frames, selectedId: null }, () => {
+      this.computePageLayout();
+      this._syncEditablesFromState(true);
+    });
+  };
+
+  // frames with the text as it is right now in the editables
+  _liveFrames() {
+    return this.state.frames.map((f) => {
+      const el = this._editableRefs[f.id];
+      return (el && f.type !== "a-bridge") ? { ...f, html: el.innerHTML } : { ...f };
+    });
+  }
+  // write the state's html back into the editables (format mapping, undo, …)
+  _syncEditablesFromState(recap) {
+    this.state.frames.forEach((f) => {
+      const el = this._editableRefs[f.id];
+      if (!el || f.type === "a-bridge") return;
+      const html = f.html || this._escHtml(f.text || "");
+      if (el.innerHTML !== html) el.innerHTML = html;
+      if (recap) el.querySelectorAll(".v2-inline-bridge").forEach((b) => this.setBridgePeVisual(b, parseFloat(b.dataset.pe) || 0.3));
+    });
+  }
+
+  // ── Undo (⌘Z outside the text, or the ↶ button) ──
+  // Snapshots are taken before every structural change (move, resize, add, delete, font,
+  // size, colour, format, template) and before each typing session in a paragraph.
+  _history = [];
+  _redo = [];
+  _snapshot() {
+    const s = {};
+    this.TEMPLATE_KEYS.forEach((k) => { s[k] = k === "frames" ? this._liveFrames() : this.state[k]; });
+    return s;
+  }
+  _pushHistory(snap) {
+    this._history.push(snap || this._snapshot());
+    if (this._history.length > 50) this._history.shift();
+    this._redo = [];
+    if (!this.state.canUndo) this.setState({ canUndo: true });
+  }
+  _restore(snap) {
+    const fmtChanged = snap.format !== this.state.format;
+    this._master = null;
+    const patch = { selectedId: null, selectedBridgeId: null };
+    this.TEMPLATE_KEYS.forEach((k) => { if (k in snap) patch[k] = k === "frames" ? snap.frames.map((f) => ({ ...f })) : snap[k]; });
+    this.setState(patch, () => {
+      if (fmtChanged) this.computePageLayout();
+      this._syncEditablesFromState(true);
+    });
+  }
+  undo = () => {
+    if (!this._history.length) return;
+    this._redo.push(this._snapshot());
+    this._restore(this._history.pop());
+    this.setState({ canUndo: this._history.length > 0 });
+  };
+  redo = () => {
+    if (!this._redo.length) return;
+    this._history.push(this._snapshot());
+    this._restore(this._redo.pop());
+    this.setState({ canUndo: true });
+  };
 
   componentDidMount() {
     this._ro = new ResizeObserver(() => this.computePageLayout());
@@ -1236,9 +1430,12 @@ class Component extends DCLogic {
         const startPe = parseFloat(bridge.dataset.pe)   || 0.3;
         const startX  = e.clientX;
         const size    = parseFloat(bridge.dataset.size) || 20;
-        const pxPerPe = (468.15 / 36.96) * size;
+        const pxPerPe = (468.15 / 36.96) * size;          // native px per unit of pe
+        const z       = this._zoomOf(bridge);             // screen px per native px
+        let snapped   = false;
         const onMove  = (ev) => {
-          const newPe = Math.max(0.02, Math.min(10, startPe + (ev.clientX - startX) / pxPerPe));
+          if (!snapped) { snapped = true; this._pushHistory(); }
+          const newPe = Math.max(0.02, Math.min(10, startPe + (ev.clientX - startX) / z / pxPerPe));
           bridge.dataset.pe = newPe;
           this.setBridgePeVisual(bridge, newPe);
         };
@@ -1280,17 +1477,62 @@ class Component extends DCLogic {
     };
     window.addEventListener("keydown", this._spaceHandler);
 
+    // ⌘Z / ⌘⇧Z (Ctrl on Windows) outside the text: undo / redo the last change.
+    // Inside a paragraph the browser keeps its own text undo.
+    this._undoHandler = (e) => {
+      if (!(e.metaKey || e.ctrlKey) || (e.key !== "z" && e.key !== "Z")) return;
+      const a = document.activeElement;
+      if (a && (a.isContentEditable || a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.tagName === "SELECT")) return;
+      if (this.state.cleanView) return;
+      e.preventDefault();
+      if (e.shiftKey) this.redo(); else this.undo();
+    };
+    window.addEventListener("keydown", this._undoHandler);
+
     // seed the welcome paragraph with an A-pont in place of the "a" of "déplacer"
-    requestAnimationFrame(() => {
+    // (once the paragraph is mounted and the fonts are there, to measure the cap height)
+    let tries = 0;
+    const seed = () => {
       const el = this._editableRefs["f1"];
       const f1 = this.state.frames.find(f => f.id === "f1");
-      if (el && f1 && !f1.html) {
-        const size = Math.round((f1.fontSize || 28) * 0.72);
-        const bridge = this.buildBridgeSpanHTML(0.3, size);
-        const html = "éditer. élargir. dépl" + bridge + "cer";
-        el.innerHTML = html;
-        this.updateFrame("f1", { html });
+      if (!f1 || f1.html) return;
+      if (!el) { if (tries++ < 120) requestAnimationFrame(seed); return; }
+      const size = this._capHeight(el, f1.fontSize || 56);
+      const bridge = this.buildBridgeSpanHTML(0.3, size);
+      const html = "éditer. élargir. dépl" + bridge + "cer";
+      el.innerHTML = html;
+      this.setState((s) => ({ frames: s.frames.map((f) => (f.id === "f1" ? { ...f, html } : f)) }));
+    };
+    ((document.fonts && document.fonts.ready) || Promise.resolve()).then(() => requestAnimationFrame(seed));
+  }
+
+  // after each render: flag the paragraphs whose text goes past the page edge (cut in the export)
+  componentDidUpdate() {
+    if (this._ovRAF) return;
+    this._ovRAF = requestAnimationFrame(() => { this._ovRAF = null; this._checkOverflow(); });
+  }
+  _checkOverflow() {
+    const doc = this._docEl, pl = this.state.pageLayout, fmt = this._fmt();
+    if (!doc || !pl || !fmt) return;
+    const dr = doc.getBoundingClientRect();
+    const z = pl.scale || 1;
+    this.state.frames.forEach((f) => {
+      const el = this._editableRefs[f.id];
+      const fr = el && el.closest("[data-frame-id]");
+      if (!fr) return;
+      let out = false;
+      if (el.firstChild) {
+        const rg = document.createRange();
+        rg.selectNodeContents(el);
+        const r = rg.getBoundingClientRect();
+        if (r.width || r.height) {
+          const x0 = (r.left - dr.left) / z, y0 = (r.top - dr.top) / z;
+          const x1 = (r.right - dr.left) / z, y1 = (r.bottom - dr.top) / z;
+          out = x0 < -1 || y0 < -1 || x1 > fmt.w + 1 || y1 > fmt.h + 1;
+        }
       }
+      const v = out ? "true" : "false";
+      if (fr.getAttribute("data-overflow") !== v) fr.setAttribute("data-overflow", v);
     });
   }
 
@@ -1300,10 +1542,39 @@ class Component extends DCLogic {
     if (this._animRAF) cancelAnimationFrame(this._animRAF);
     if (this._escHandler) window.removeEventListener("keydown", this._escHandler);
     if (this._spaceHandler) window.removeEventListener("keydown", this._spaceHandler);
+    if (this._undoHandler) window.removeEventListener("keydown", this._undoHandler);
+  }
+
+  // cap height (px, before any transform) of the font used in an editable, for A-pont sizing
+  _capHeight(el, fallbackFs) {
+    const cs = window.getComputedStyle(el);
+    const fs = parseFloat(cs.fontSize) || fallbackFs || 16;
+    let size = Math.round(fs * 0.72 * 100) / 100;
+    try {
+      const ctx = document.createElement("canvas").getContext("2d");
+      ctx.font = (cs.fontWeight || 400) + " " + fs + "px " + cs.fontFamily;
+      const m = ctx.measureText("H");
+      if (m.actualBoundingBoxAscent > 2) size = Math.round(m.actualBoundingBoxAscent * 100) / 100;
+    } catch (e) {}
+    return size;
   }
 
   // ── A-pont animation ──
-  _nextBridgeId = () => "br" + (this._bridgeSeq = (this._bridgeSeq || 0) + 1);
+  // ids must stay unique across duplicates, templates and sessions (anims are keyed by id)
+  _nextBridgeId = () => "br" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + (this._bridgeSeq = (this._bridgeSeq || 0) + 1);
+  // give fresh ids to the A-ponts of an html string; returns { html, map: { oldId: newId } }
+  _rekeyBridges(html) {
+    const map = {};
+    if (!html || html.indexOf("data-bridge-id") < 0) return { html, map };
+    const tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    tmp.querySelectorAll(".v2-inline-bridge[data-bridge-id]").forEach((b) => {
+      const nid = this._nextBridgeId();
+      map[b.dataset.bridgeId] = nid;
+      b.dataset.bridgeId = nid;
+    });
+    return { html: tmp.innerHTML, map };
+  }
 
   selectBridge = (bridgeEl) => {
     const id = bridgeEl.dataset.bridgeId;
@@ -1359,24 +1630,6 @@ class Component extends DCLogic {
     svg.setAttribute("width", String(this.aBridgePxW(usePe, size)));
     svg.setAttribute("height", String(size));
     if (path) path.setAttribute("d", this.buildAPath(usePe));
-  }
-
-  // Les A-ponts sont dimensionnés en px (data-size). Quand computePageLayout met le texte à
-  // l'échelle (fenêtre, panneau, format), on leur applique le même facteur pour qu'ils restent
-  // proportionnels au texte, puis on enregistre le HTML du cadre (modèles, export).
-  _scaleInlineBridges(k) {
-    Object.entries(this._editableRefs || {}).forEach(([id, el]) => {
-      if (!el) return;
-      const bridges = el.querySelectorAll(".v2-inline-bridge");
-      if (!bridges.length) return;
-      bridges.forEach((b) => {
-        const size = parseFloat(b.dataset.size);
-        if (!size) return;
-        b.dataset.size = String(Math.round(size * k * 1000) / 1000);
-        this.setBridgePeVisual(b, parseFloat(b.dataset.pe) || 0.3);
-      });
-      this.updateFrame(id, { html: el.innerHTML });
-    });
   }
 
   _tickBridgeAnims = () => {
@@ -1482,23 +1735,15 @@ class Component extends DCLogic {
   insertABridgeIntoFrame = (frameId) => {
     const el = this._editableRefs[frameId];
     if (!el) return;
+    this._pushHistory();
     el.focus();
     const pe = 0.3; // sensible default; user adjusts by dragging after insert
 
     // Measure real cap-height using canvas.measureText — this API returns
     // actualBoundingBoxAscent = distance from baseline to top of "H" = cap-height.
-    // This is pre-transform (not affected by scaleY on the parent), which is exactly
-    // what we need for the SVG height attribute.
-    const cs = window.getComputedStyle(el);
-    const computedFs = parseFloat(cs.fontSize) || 16;
-    let size = Math.round(computedFs * 0.72); // safe fallback
-    try {
-      const cv = document.createElement("canvas");
-      const ctx = cv.getContext("2d");
-      ctx.font = computedFs + "px " + cs.fontFamily;
-      const m = ctx.measureText("H");
-      if (m.actualBoundingBoxAscent > 2) size = Math.round(m.actualBoundingBoxAscent);
-    } catch (e) {}
+    // This is pre-transform (not affected by scaleY on the parent, nor by the doc zoom),
+    // which is exactly what we need for the SVG height attribute (native px).
+    const size = this._capHeight(el);
     const vb   = this.aViewBox(pe);
     const path = this.buildAPath(pe);
     const w    = this.aBridgePxW(pe, size);
@@ -1569,14 +1814,16 @@ class Component extends DCLogic {
   // px width for a given pe + height (px)
   aBridgePxW(pe, h) { return ((68.19 + pe * 468.15) / 36.96) * h; }
 
-  // max bar width (px) that fits from the bridge's left edge to the frame's right padding
+  // max bar width (native px) that fits from the bridge's left edge to the frame's right edge
+  // (works in the editor, zoomed by the doc layer, and in the export view)
   _bridgeMaxW(bridgeEl) {
-    const ed = bridgeEl.closest(".v2-editable");
+    const ed = bridgeEl.closest(".v2-editable, [data-clean-id] > div");
     if (!ed) return Infinity;
+    const z = this._zoomOf(ed);
     const br = bridgeEl.getBoundingClientRect();
     const er = ed.getBoundingClientRect();
     const padR = parseFloat(getComputedStyle(ed).paddingRight) || 0;
-    return Math.max(20, (er.right - padR) - br.left);
+    return Math.max(20, (er.right - br.left) / z - padR);
   }
   // largest pe whose rendered width fits within maxW
   _peForWidth(maxW, size) {
@@ -1596,21 +1843,26 @@ class Component extends DCLogic {
       '<span class="v2-bridge-ext-handle"></span></span>';
   }
 
-  // font presets — only variation-settings + transform, no size, no color
+  // font presets — variation-settings + squish + line height, no size, no color.
+  // The squish is anchored top-left: the text starts at the top of its frame in the editor
+  // AND in the export, whatever the frame height (with "bottom left" the two differed).
+  // lineHeight is shared by the editor and the export (it was 1.4 on screen / 1.05 in the PNG).
   FONTS = {
     main1: {
       fontFamily: '"obviously-variable", sans-serif',
       fontVariationSettings: '"ital" 0, "wght" 803, "wdth" 121',
       fontWeight: 800,
       transform: "scaleY(0.88)",
-      transformOrigin: "bottom left",
+      transformOrigin: "top left",
+      lineHeight: 1.05,
     },
     main2: {
       fontFamily: '"obviously-variable", sans-serif',
       fontVariationSettings: '"ital" 0, "wght" 699, "wdth" 121',
       fontWeight: 700,
       transform: "scaleY(0.88)",
-      transformOrigin: "bottom left",
+      transformOrigin: "top left",
+      lineHeight: 1.05,
     },
     corps1: {
       fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
@@ -1618,6 +1870,7 @@ class Component extends DCLogic {
       fontWeight: 300,
       transform: "none",
       transformOrigin: "initial",
+      lineHeight: 1.2,
     },
     corps2: {
       fontFamily: 'Arial, "Helvetica Neue", Helvetica, sans-serif',
@@ -1625,6 +1878,7 @@ class Component extends DCLogic {
       fontWeight: 400,
       transform: "none",
       transformOrigin: "initial",
+      lineHeight: 1.2,
     },
     corps3: {
       fontFamily: 'Arial, "Helvetica Neue", Helvetica, sans-serif',
@@ -1632,6 +1886,7 @@ class Component extends DCLogic {
       fontWeight: 700,
       transform: "none",
       transformOrigin: "initial",
+      lineHeight: 1.2,
     },
     none: {
       fontFamily: "-apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif",
@@ -1639,18 +1894,23 @@ class Component extends DCLogic {
       fontWeight: 400,
       transform: "none",
       transformOrigin: "initial",
+      lineHeight: 1.2,
     },
   };
 
+  // frames are in NATIVE px of the format (here IG post 1080×1350), placed in the safe zone
   state = {
     frames: [
-      { id: "f1", x: 24, y: 60, w: 300, h: 120, text: "éditer. élargir. déplacer", font: "main1", type: "text", html: "", fontSize: 28, color: "#000000", opacity: 100 },
-      { id: "f2", x: 24, y: 210, w: 300, h: 90, text: "éditer. élargir. déplacer", font: "corps3", type: "text", html: "", fontSize: 18, color: "#000000", opacity: 100 },
+      { id: "f1", x: 80, y: 162, w: 600, h: 220, text: "éditer. élargir. déplacer", font: "main1", type: "text", html: "", fontSize: 56, color: "#000000", opacity: 100 },
+      { id: "f2", x: 80, y: 412, w: 600, h: 160, text: "éditer. élargir. déplacer", font: "corps3", type: "text", html: "", fontSize: 36, color: "#000000", opacity: 100 },
     ],
     selectedId: "f1",
     nextId: 3,
     inlinePe: 0.20,
-    defaultFontSize: 28,
+    defaultFontSize: 28,     // size-button label (× _sizeUnit → native px)
+    canUndo: false,
+    exportFacesReady: false,
+    templatesStatus: "",     // "serveur" | "local" | "" — where "Mes modèles" are stored
     format: "ig-post",
     pageLayout: null,
     safeZones: [],
@@ -1690,15 +1950,18 @@ class Component extends DCLogic {
 
   addABridge = () => {
     const id = "f" + this.state.nextId;
-    const offset = (this.state.nextId % 6) * 24;
+    const U = this._sizeUnit();
+    const ins = this._safeInset();
+    const offset = (this.state.nextId % 6) * 24 * U;
+    this._pushHistory();
     this.setState((s) => ({
       frames: [...s.frames, {
         id,
         type: "a-bridge",
-        x: 80 + offset,
-        y: 220 + offset,
-        pe: 1.0,      // bridge extension
-        size: 90,     // height in px
+        x: ins.l + offset,
+        y: ins.t + 120 * U + offset,
+        pe: 1.0,          // bridge extension
+        size: 45 * U,     // height in native px
         color: "#1a1a1a",
       }],
       selectedId: id,
@@ -1714,8 +1977,11 @@ class Component extends DCLogic {
     const startPe = frame.pe;
     const startX  = e.clientX;
     const pxPerPe = (468.15 / 36.96) * frame.size;
+    const z = (this.state.pageLayout && this.state.pageLayout.scale) || 1;
+    let snapped = false;
     const onMove  = (ev) => {
-      const newPe = Math.max(0.05, Math.min(10, startPe + (ev.clientX - startX) / pxPerPe));
+      if (!snapped) { snapped = true; this._pushHistory(); }
+      const newPe = Math.max(0.05, Math.min(10, startPe + (ev.clientX - startX) / z / pxPerPe));
       this.updateFrame(id, { pe: newPe });
     };
     const onUp = () => {
@@ -1779,28 +2045,27 @@ class Component extends DCLogic {
         React.createElement("path", { d: path, fill: "currentColor", fillRule: "evenodd" })
       ),
 
-      // selection border
-      isSelected ? React.createElement("div", { style: { position: "absolute", inset: 0, border: "1.5px solid #2D7CF0", pointerEvents: "none" } }) : null,
+      // (selection outline: the frame's ::after)
 
-      // bridge-extension drag handle (right edge)
+      // bridge-extension drag handle (right edge) — sizes in screen px (var(--u))
       isSelected ? React.createElement("div", {
         onPointerDown: (e) => this.startBridgeExtDrag(e, f.id),
         title: "Drag to extend/shrink bridge",
         style: {
           position: "absolute",
-          right: "-8px", top: "50%", marginTop: "-14px",
-          width: "16px", height: "28px",
+          right: "calc(-8 * var(--u, 1px))", top: "50%", marginTop: "calc(-14 * var(--u, 1px))",
+          width: "calc(16 * var(--u, 1px))", height: "calc(28 * var(--u, 1px))",
           background: "#2D7CF0",
-          borderRadius: "4px",
+          borderRadius: "calc(4 * var(--u, 1px))",
           cursor: "ew-resize",
           display: "flex", alignItems: "center", justifyContent: "center",
           boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
           zIndex: 5,
         }
       },
-        React.createElement("div", { style: { display: "flex", gap: "2px" } },
-          React.createElement("div", { style: { width: "2px", height: "12px", background: "rgba(255,255,255,0.8)", borderRadius: "1px" } }),
-          React.createElement("div", { style: { width: "2px", height: "12px", background: "rgba(255,255,255,0.8)", borderRadius: "1px" } })
+        React.createElement("div", { style: { display: "flex", gap: "calc(2 * var(--u, 1px))" } },
+          React.createElement("div", { style: { width: "calc(2 * var(--u, 1px))", height: "calc(12 * var(--u, 1px))", background: "rgba(255,255,255,0.8)", borderRadius: "1px" } }),
+          React.createElement("div", { style: { width: "calc(2 * var(--u, 1px))", height: "calc(12 * var(--u, 1px))", background: "rgba(255,255,255,0.8)", borderRadius: "1px" } })
         )
       ) : null
     );
@@ -2030,51 +2295,134 @@ class Component extends DCLogic {
     { id: "gap2", name: "GAP 2", type: "waterPlane", c1: "#d6d3e2", c2: "#CCB0A8", c3: "#f0ece4", uSpeed: 0.1, uStrength: 1.5, uDensity: 1.5, uTime: 0.1, fov: 45, cDistance: 2.1 },
     { id: "gap3", name: "GAP 3", type: "waterPlane", c1: "#F4C4B8", c2: "#CCB0A8", c3: "#f0ece4", uSpeed: 0.1, uStrength: 1.5, uDensity: 1.5, uTime: 0.1, fov: 45, cDistance: 2.1 },
   ];
-  // ── full-state "modèle" presets (the WHOLE editor) via PresetStore ──
+  // ── Modèles (templates) ────────────────────────────────────────────────────────
+  // A template is the WHOLE composition. Format v2 (Oct. 2026):
+  //   { v: 2, format, fmtW, fmtH, frames: [...native px...], bgColor, shaderBg, auraOn,
+  //     bridgeAnims, bgSelected, bgScale, bgRotate, bgPosX, bgPosY, bgCustom? }
+  // Everything is in native px of the format → a template looks the same whatever the
+  // window it is saved or opened in. v1 templates (screen px) are converted on the fly.
+  // Sources: "Modèles de base" (modeles-base.js, read-only, shipped with the site) +
+  // "Mes modèles" (PresetStore: shared server library, or this browser as a fallback).
   TEMPLATE_KEYS = ["frames", "format", "bgColor", "shaderBg", "auraOn", "bridgeAnims", "bgSelected", "bgScale", "bgRotate", "bgPosX", "bgPosY"];
+  TEMPLATE_VERSION = 2;
+
+  _baseTemplates() {
+    const arr = Array.isArray(window.GAP_MODELES_BASE) ? window.GAP_MODELES_BASE : [];
+    return arr.filter((p) => p && p.data).map((p) => ({ ...p, kind: "template", base: true }));
+  }
 
   _loadTemplates = () => {
+    const base = this._baseTemplates();
     const PS = window.GAP && window.GAP.PresetStore;
-    if (!PS) return;
-    PS.list("template").then((arr) => this.setState({ savedTemplates: arr || [] })).catch(() => {});
+    if (!PS) { this.setState({ savedTemplates: base, templatesStatus: "" }); return Promise.resolve(); }
+    return PS.list("template")
+      .then((arr) => this.setState({ savedTemplates: [...base, ...(arr || [])], templatesStatus: PS.status || "" }))
+      .catch(() => this.setState({ savedTemplates: base, templatesStatus: "local" }));
   };
 
   _captureState = () => {
-    // pull live edited HTML into each frame so the snapshot matches the screen
-    const frames = this.state.frames.map((f) => {
-      const el = this._editableRefs[f.id];
-      return (el && f.type !== "a-bridge") ? { ...f, html: el.innerHTML } : { ...f };
-    });
-    const data = {};
-    this.TEMPLATE_KEYS.forEach((k) => { data[k] = k === "frames" ? frames : this.state[k]; });
+    const fmt = this._fmt();
+    const data = { v: this.TEMPLATE_VERSION, fmtW: fmt.w, fmtH: fmt.h };
+    this.TEMPLATE_KEYS.forEach((k) => { data[k] = k === "frames" ? this._liveFrames() : this.state[k]; });
+    // only keep the animations of A-ponts that are really in the frames
+    const ids = new Set();
+    data.frames.forEach((f) => (f.html || "").replace(/data-bridge-id="([^"]+)"/g, (_, id) => { ids.add(id); return ""; }));
+    data.bridgeAnims = Object.fromEntries(Object.entries(data.bridgeAnims || {}).filter(([id]) => ids.has(id)));
+    // a background picked from the computer is not on the server: embed it if it is reasonable
+    const custom = (this.state.bgImages || []).find((b) => b.id === this.state.bgSelected);
+    if (custom && custom.url && custom.url.length < 1500000) data.bgCustom = { id: custom.id, url: custom.url, name: custom.name };
     return data;
   };
 
+  // any template (v1 or v2, any format) → v2 in native px of its own format
+  _normalizeTemplate(data) {
+    if (!data) return null;
+    this._normCache = this._normCache || new WeakMap();
+    if (typeof data === "object" && this._normCache.has(data)) return this._normCache.get(data);
+    const fmt = this._fmt(data.format) || this._fmt();
+    let frames = (data.frames || []).map((f) => ({ ...f }));
+    if (!(data.v >= 2)) {
+      // v1: frames were in screen px of the canvas area, at the window size of the save.
+      // Best guess: that window was like this one → undo the page position / zoom it had.
+      const pl = this._layoutFor(fmt);
+      const s = pl.scale || 1;
+      const r = (v) => Math.round(v * 100) / 100;
+      frames = frames.map((f) => {
+        const p = { ...f };
+        p.x = r(((f.x || 0) - pl.x) / s); p.y = r(((f.y || 0) - pl.y) / s);
+        if (f.type === "a-bridge") { p.size = r((f.size || 90) / s); return p; }
+        p.w = r((f.w || 300) / s); p.h = r((f.h || 100) / s); p.fontSize = r((f.fontSize || 16) / s);
+        if (f.html) p.html = this._scaleBridgesInHtml(f.html, 1 / s);
+        return p;
+      });
+    } else if (data.fmtW && data.fmtH && (data.fmtW !== fmt.w || data.fmtH !== fmt.h)) {
+      frames = this._mapFrames(frames, { id: data.format, w: data.fmtW, h: data.fmtH }, fmt);
+    }
+    const out = { ...data, v: this.TEMPLATE_VERSION, format: fmt.id, fmtW: fmt.w, fmtH: fmt.h, frames };
+    if (typeof data === "object") this._normCache.set(data, out);
+    return out;
+  }
+
   _applyState = (data) => {
-    if (!data) return;
-    // remap frame ids so the contenteditable refs re-init from the saved html
-    const idMap = {};
-    const frames = (data.frames || []).map((f, i) => {
+    const tpl = this._normalizeTemplate(data);
+    if (!tpl) return;
+    this._pushHistory();
+    // fresh frame ids (the editables re-mount from the template html) and fresh A-pont ids
+    // (their animations follow)
+    const anims = {};
+    const frames = tpl.frames.map((f, i) => {
       const nid = "f" + (this.state.nextId + i);
-      idMap[f.id] = nid;
-      return { ...f, id: nid };
+      if (f.type === "a-bridge") return { ...f, id: nid };
+      const { html, map } = this._rekeyBridges(f.html || "");
+      Object.keys(map).forEach((old) => { if (tpl.bridgeAnims && tpl.bridgeAnims[old]) anims[map[old]] = { ...tpl.bridgeAnims[old] }; });
+      return { ...f, id: nid, html: html || f.html || "" };
     });
-    this._editableRefs = {};
-    const patch = { ...data, frames, selectedId: null, nextId: this.state.nextId + frames.length + 1 };
-    // re-key bridge anims if present
-    if (data.bridgeAnims) { /* bridge ids are embedded in html; anims keyed by bridgeId stay valid only within same html — drop to avoid stale refs */ patch.bridgeAnims = {}; }
-    this.setState(patch);
+    this._master = null;
+    const patch = { frames, selectedId: null, selectedBridgeId: null, nextId: this.state.nextId + frames.length + 1, bridgeAnims: anims };
+    ["format", "bgColor", "shaderBg", "auraOn", "bgSelected", "bgScale", "bgRotate", "bgPosX", "bgPosY"].forEach((k) => { if (k in tpl) patch[k] = tpl[k]; });
+    if (tpl.bgCustom && tpl.bgCustom.id && !(this.state.bgImages || []).some((b) => b.id === tpl.bgCustom.id)) {
+      patch.bgImages = [...(this.state.bgImages || []), tpl.bgCustom];
+    }
+    this.setState(patch, () => this.computePageLayout());
   };
+
+  // the store asks for the team key when the server requires one (HTTP 401)
+  _withTeamKey(run) {
+    const PS = window.GAP && window.GAP.PresetStore;
+    return run().catch((e) => {
+      if (!(e && e.status === 401) || !PS || !PS.setTeamKey) throw e;
+      const k = window.prompt("Clé d'équipe pour enregistrer sur le serveur partagé :", "");
+      if (!k) throw e;
+      PS.setTeamKey(k.trim());
+      return run();
+    });
+  }
 
   saveTemplate = () => {
     const PS = window.GAP && window.GAP.PresetStore;
     if (!PS) { alert("PresetStore introuvable (preset-store.js non chargé)."); return; }
     const name = window.prompt("Nom du modèle :", "");
     if (!name || !name.trim()) return;
-    PS.save({ kind: "template", name: name.trim(), data: this._captureState() })
-      .then(() => this._loadTemplates())
+    const nm = name.trim();
+    const same = this.state.savedTemplates.find((p) => !p.base && p.name === nm);
+    const replace = same ? window.confirm("Un modèle « " + nm + " » existe déjà. Le remplacer ?\n(Annuler = en créer un nouveau)") : false;
+    const preset = { kind: "template", name: nm, data: this._captureState() };
+    if (replace) { preset.id = same.id; preset.local = same.local; preset.createdAt = same.createdAt; }
+    return this._withTeamKey(() => PS.save(preset))
+      .then((saved) => {
+        this._loadTemplates();
+        this._templateNotice(saved && saved.local
+          ? "« " + nm + " » enregistré dans ce navigateur (serveur partagé injoignable)."
+          : "« " + nm + " » enregistré.");
+      })
       .catch((e) => alert("Échec : " + (e && e.message)));
   };
+
+  _templateNotice(msg) {
+    this.setState({ templateNotice: msg });
+    clearTimeout(this._noticeT);
+    this._noticeT = setTimeout(() => this.setState({ templateNotice: "" }), 5000);
+  }
 
   applyTemplate = (id) => {
     if (!id) return;
@@ -2083,42 +2431,97 @@ class Component extends DCLogic {
   };
 
   renderTemplatesBar() {
-    const items = this.state.savedTemplates;
+    const mine = this.state.savedTemplates.filter((p) => !p.base).length;
     return React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "5px" } },
       React.createElement("button", {
         onClick: () => this.setState((s) => ({ templatesManagerOpen: !s.templatesManagerOpen })),
-        title: "Modèles enregistrés",
+        title: "Modèles (de base et enregistrés)",
         style: { display: "inline-flex", alignItems: "center", gap: "5px", padding: "0 10px", height: "28px", border: "1px solid rgba(0,0,0,0.15)", background: this.state.templatesManagerOpen ? "#1a1a1a" : "#fff", color: this.state.templatesManagerOpen ? "#fff" : "#1a1a1a", fontSize: "12px", fontFamily: "inherit", cursor: "pointer", borderRadius: "3px" }
       },
         React.createElement("svg", { width: 12, height: 12, viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: 1.4, strokeLinecap: "round", strokeLinejoin: "round" },
           React.createElement("rect", { x: 2, y: 2, width: 10, height: 4, rx: 1 }), React.createElement("rect", { x: 2, y: 8, width: 10, height: 4, rx: 1 })),
-        "Modèles", items.length ? React.createElement("span", { style: { opacity: 0.55 } }, items.length) : null
+        "Modèles", mine ? React.createElement("span", { style: { opacity: 0.55 } }, mine) : null
       ),
       React.createElement("button", {
-        onClick: this.saveTemplate, title: "Enregistrer l'état actuel comme modèle",
+        onClick: this.saveTemplate, title: "Enregistrer la composition actuelle comme modèle",
         style: { display: "inline-flex", alignItems: "center", padding: "0 10px", height: "28px", border: "1px solid rgba(0,0,0,0.15)", background: "#fff", color: "#1a1a1a", fontSize: "12px", fontFamily: "inherit", cursor: "pointer", borderRadius: "3px" }
       }, "+ Modèle")
+    );
+  }
+
+  // small, faithful preview of a template (same text style as the editor / export)
+  _renderMini(data, boxW) {
+    let tpl;
+    try { tpl = this._normalizeTemplate(data); } catch (e) { tpl = null; }
+    if (!tpl) return null;
+    const s = boxW / tpl.fmtW;
+    const boxH = Math.round(tpl.fmtH * s);
+    const kids = [];
+    const pool = [...this.BUILT_IN_BG, ...(this.state.bgImages || []), ...(tpl.bgCustom ? [tpl.bgCustom] : [])];
+    const bg = tpl.bgSelected && pool.find((b) => b.id === tpl.bgSelected);
+    if (bg) {
+      const px = tpl.bgPosX != null ? tpl.bgPosX : 50, py = tpl.bgPosY != null ? tpl.bgPosY : 50;
+      kids.push(React.createElement("img", { key: "bg", src: bg.url, loading: "lazy", style: {
+        position: "absolute", left: px + "%", top: py + "%", width: (tpl.bgScale || 100) + "%", height: "auto", maxWidth: "none",
+        transform: "translate(-" + px + "%, -" + py + "%) rotate(" + (tpl.bgRotate || 0) + "deg)", transformOrigin: "center center" } }));
+    } else if (tpl.shaderBg) {
+      const p = tpl.shaderBg;
+      kids.push(React.createElement("div", { key: "sh", style: { position: "absolute", inset: 0, background: "radial-gradient(circle at 30% 30%, " + p.c2 + " 0%, " + p.c1 + " 45%, " + p.c3 + " 100%)" } }));
+    }
+    (tpl.frames || []).forEach((f, i) => {
+      if (f.type === "a-bridge") return;
+      kids.push(React.createElement("div", { key: "m" + i, style: { position: "absolute", left: f.x + "px", top: f.y + "px", width: f.w + "px" } },
+        React.createElement("div", { style: this._textStyle(f), dangerouslySetInnerHTML: { __html: this._cleanHtml(f.html || this._escHtml(f.text || ""), f) } })));
+    });
+    return React.createElement("div", { style: { position: "relative", width: boxW + "px", height: boxH + "px", overflow: "hidden", flexShrink: 0, background: tpl.bgColor || "#fff", border: "1px solid rgba(0,0,0,0.12)", borderRadius: "2px", pointerEvents: "none" } },
+      React.createElement("div", { style: { position: "absolute", left: 0, top: 0, width: tpl.fmtW + "px", height: tpl.fmtH + "px", transform: "scale(" + s + ")", transformOrigin: "0 0" } }, ...kids));
+  }
+
+  _templateRow(p) {
+    const fmt = this._fmt(p.data && p.data.format);
+    const btn = { border: "1px solid rgba(0,0,0,0.12)", background: "#fff", borderRadius: "3px", cursor: "pointer", padding: "3px 6px", fontSize: "9px", flexShrink: 0 };
+    return React.createElement("div", {
+      key: p.id, style: { display: "flex", alignItems: "center", gap: "8px", padding: "6px 4px", borderTop: "1px solid rgba(0,0,0,0.06)" }
+    },
+      React.createElement("button", {
+        onClick: () => { this.applyTemplate(p.id); this.setState({ templatesManagerOpen: false }); },
+        title: "Appliquer (⌘Z pour revenir en arrière)",
+        style: { flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: "9px", textAlign: "left", border: "none", background: "transparent", cursor: "pointer", padding: 0, fontFamily: "inherit" }
+      },
+        this._renderMini(p.data, 44),
+        React.createElement("span", { style: { display: "grid", gap: "2px", minWidth: 0 } },
+          React.createElement("span", { style: { fontSize: "11px", color: "#1a1a1a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, p.name),
+          React.createElement("span", { style: { fontSize: "9px", color: "rgba(0,0,0,0.4)" } },
+            (fmt ? fmt.label : "") + (p.local ? " · ce navigateur" : "") + (p.data && !(p.data.v >= 2) ? " · ancien format" : ""))
+        )
+      ),
+      p.local && !p.base ? React.createElement("button", { onClick: () => this.pushTemplate(p.id), title: "Envoyer sur le serveur partagé", style: btn }, "⇪") : null,
+      React.createElement("button", { onClick: () => this.downloadTemplate(p.id), title: "Télécharger (partager)", style: btn }, "↓"),
+      p.base ? null : React.createElement("button", { onClick: () => this.deleteTemplate(p.id), title: "Supprimer", style: { ...btn, border: "1px solid rgba(200,50,30,0.25)", color: "rgba(200,50,30,0.85)" } }, "✕")
     );
   }
 
   renderTemplatesManager() {
     if (!this.state.templatesManagerOpen) return null;
     const items = this.state.savedTemplates;
+    const base = items.filter((p) => p.base), mine = items.filter((p) => !p.base);
+    const head = (label, note) => React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: "6px", margin: "10px 0 2px" } },
+      React.createElement("span", { style: { fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(0,0,0,0.45)", fontWeight: 600 } }, label),
+      note ? React.createElement("span", { style: { fontSize: "9px", color: "rgba(0,0,0,0.35)" } }, note) : null);
+    const st = this.state.templatesStatus;
     return React.createElement("div", {
-      style: { position: "absolute", top: "44px", left: "12px", zIndex: 60, width: "300px", maxHeight: "60vh", overflowY: "auto", background: "#fff", border: "1px solid rgba(0,0,0,0.12)", borderRadius: "8px", boxShadow: "0 10px 34px rgba(0,0,0,0.2)", padding: "10px" }
+      style: { position: "absolute", top: "44px", left: "12px", zIndex: 60, width: "320px", maxHeight: "70vh", overflowY: "auto", background: "#fff", border: "1px solid rgba(0,0,0,0.12)", borderRadius: "8px", boxShadow: "0 10px 34px rgba(0,0,0,0.2)", padding: "10px" }
     },
-      React.createElement("div", { style: { display: "flex", alignItems: "center", marginBottom: "8px" } },
-        React.createElement("span", { style: { flex: 1, fontSize: "11px", fontWeight: 600 } }, "Modèles enregistrés"),
-        React.createElement("button", { onClick: () => this.setState({ templatesManagerOpen: false }), style: { border: "none", background: "transparent", cursor: "pointer", fontSize: "14px", color: "rgba(0,0,0,0.4)" } }, "\u00D7")
+      React.createElement("div", { style: { display: "flex", alignItems: "center" } },
+        React.createElement("span", { style: { flex: 1, fontSize: "11px", fontWeight: 600 } }, "Modèles"),
+        React.createElement("button", { onClick: () => this.setState({ templatesManagerOpen: false }), style: { border: "none", background: "transparent", cursor: "pointer", fontSize: "14px", color: "rgba(0,0,0,0.4)" } }, "×")
       ),
-      items.length === 0 ? React.createElement("div", { style: { fontSize: "10px", color: "rgba(0,0,0,0.4)", fontStyle: "italic" } }, "Aucun modèle.") : null,
-      items.map((p) => React.createElement("div", {
-        key: p.id, style: { display: "flex", alignItems: "center", gap: "6px", padding: "6px 4px", borderTop: "1px solid rgba(0,0,0,0.06)" }
-      },
-        React.createElement("button", { onClick: () => { this.applyTemplate(p.id); this.setState({ templatesManagerOpen: false }); }, style: { flex: 1, textAlign: "left", border: "none", background: "transparent", cursor: "pointer", fontSize: "11px", color: "#1a1a1a", fontFamily: "inherit" } }, p.name),
-        React.createElement("button", { onClick: () => this.downloadTemplate(p.id), title: "Télécharger (partager)", style: { border: "1px solid rgba(0,0,0,0.12)", background: "#fff", borderRadius: "3px", cursor: "pointer", padding: "3px 6px", fontSize: "9px" } }, "↓"),
-        React.createElement("button", { onClick: () => this.deleteTemplate(p.id), title: "Supprimer", style: { border: "1px solid rgba(200,50,30,0.25)", background: "#fff", color: "rgba(200,50,30,0.85)", borderRadius: "3px", cursor: "pointer", padding: "3px 6px", fontSize: "9px" } }, "✕")
-      )),
+      this.state.templateNotice ? React.createElement("div", { style: { fontSize: "10px", color: "#1a1a1a", background: "rgba(45,124,240,0.08)", borderRadius: "4px", padding: "6px 8px", marginTop: "6px" } }, this.state.templateNotice) : null,
+      base.length ? head("Modèles de base", base.length) : null,
+      base.map((p) => this._templateRow(p)),
+      head("Mes modèles", st === "serveur" ? "· bibliothèque partagée" : (st === "local" ? "· ce navigateur (serveur injoignable)" : "")),
+      mine.length === 0 ? React.createElement("div", { style: { fontSize: "10px", color: "rgba(0,0,0,0.4)", fontStyle: "italic", padding: "4px" } }, "Aucun modèle enregistré — « + Modèle » enregistre la composition actuelle.") : null,
+      mine.map((p) => this._templateRow(p)),
       // footer: import a teammate's file (fallback while there is no server)
       React.createElement("label", {
         style: { display: "flex", alignItems: "center", justifyContent: "center", gap: "5px", marginTop: "10px", padding: "7px", border: "1px dashed rgba(0,0,0,0.18)", borderRadius: "4px", cursor: "pointer", fontSize: "10px", color: "rgba(0,0,0,0.5)" }
@@ -2131,15 +2534,29 @@ class Component extends DCLogic {
 
   deleteTemplate = (id) => {
     const PS = window.GAP && window.GAP.PresetStore;
-    if (!PS || !id) return;
-    PS.remove(id).then(() => this._loadTemplates());
+    const t = this.state.savedTemplates.find((p) => p.id === id);
+    if (!PS || !t || t.base) return;
+    if (!window.confirm("Supprimer le modèle « " + t.name + " »" + (t.local ? "" : " pour toute l'équipe") + " ?")) return;
+    this._withTeamKey(() => PS.remove(id, !!t.local)).then(() => this._loadTemplates())
+      .catch((e) => alert("Échec : " + (e && e.message)));
+  };
+
+  // send a template kept in this browser to the shared server library
+  pushTemplate = (id) => {
+    const PS = window.GAP && window.GAP.PresetStore;
+    const t = this.state.savedTemplates.find((p) => p.id === id);
+    if (!PS || !t || !PS.push) return;
+    this._withTeamKey(() => PS.push(id)).then((ok) => {
+      this._loadTemplates();
+      this._templateNotice(ok ? "« " + t.name + " » est maintenant sur le serveur partagé." : "Serveur toujours injoignable — le modèle reste dans ce navigateur.");
+    }).catch((e) => alert("Échec : " + (e && e.message)));
   };
 
   // share one template as a .json file (give it to a teammate)
   downloadTemplate = (id) => {
     const PS = window.GAP && window.GAP.PresetStore;
     const t = this.state.savedTemplates.find((p) => p.id === id);
-    if (PS && t) PS.download(t);
+    if (PS && t) PS.download({ kind: "template", name: t.name, data: t.data, author: t.author || "" });
   };
   // import a .json template from a teammate
   importTemplateFile = (e) => {
@@ -2148,8 +2565,8 @@ class Component extends DCLogic {
     if (!PS || !file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      PS.importFrom(String(ev.target.result))
-        .then(() => this._loadTemplates())
+      this._withTeamKey(() => PS.importFrom(String(ev.target.result)))
+        .then((saved) => { this._loadTemplates(); this._templateNotice("Modèle importé" + (saved && saved.local ? " (dans ce navigateur)." : ".")); })
         .catch((err) => alert("Fichier invalide : " + (err && err.message)));
     };
     reader.readAsText(file);
@@ -2424,6 +2841,7 @@ class Component extends DCLogic {
   applyFont = (fontKey) => {
     const id = this.state.selectedId;
     if (!id) return;
+    this._pushHistory();
     const isMain = fontKey === "main1" || fontKey === "main2";
     // A-pont bridges only live in Main fonts — strip them when switching to a Corps font
     if (!isMain) {
@@ -2440,70 +2858,78 @@ class Component extends DCLogic {
     this.updateFrame(id, { font: fontKey });
   };
 
+  // size in native px (the size buttons pass label × _sizeUnit())
   setFrameFontSize = (id, size) => {
-    const s = Math.max(6, Math.min(400, Math.round(size)));
+    const s = Math.max(4, Math.min(4000, Math.round(size * 10) / 10));
+    this._pushHistory();
     this.updateFrame(id, { fontSize: s });
     // update inline bridge sizes after the DOM repaint
     requestAnimationFrame(() => {
       const el = this._editableRefs[id];
       if (!el) return;
-      el.querySelectorAll(".v2-inline-bridge").forEach((bridge) => {
-        const pe   = parseFloat(bridge.dataset.pe) || 0.3;
-        // Re-probe cap-height with the new font size
-        const probe = document.createElement("span");
-        probe.textContent = "H";
-        probe.style.cssText = "font-size:inherit;font-family:inherit;font-variation-settings:inherit;font-weight:inherit;line-height:1;white-space:nowrap;visibility:hidden;position:absolute;pointer-events:none;";
-        el.appendChild(probe);
-        const measuredH = probe.getBoundingClientRect().height;
-        el.removeChild(probe);
-        const cs = window.getComputedStyle(el);
-        const computedFs = parseFloat(cs.fontSize) || s;
-        let newSize = Math.round(computedFs * 0.72);
-        try {
-          const cv = document.createElement("canvas");
-          const ctx = cv.getContext("2d");
-          ctx.font = computedFs + "px " + cs.fontFamily;
-          const m = ctx.measureText("H");
-          if (m.actualBoundingBoxAscent > 2) newSize = Math.round(m.actualBoundingBoxAscent);
-        } catch(e) {}
+      const bridges = el.querySelectorAll(".v2-inline-bridge");
+      if (!bridges.length) return;
+      const newSize = this._capHeight(el, s);
+      bridges.forEach((bridge) => {
         bridge.dataset.size = newSize;
-        const svg = bridge.querySelector("svg");
-        if (svg) {
-          const pe2 = parseFloat(bridge.dataset.pe) || pe;
-          svg.setAttribute("viewBox", this.aViewBox(pe2));
-          svg.setAttribute("height", String(newSize));
-          svg.setAttribute("width",  String(this.aBridgePxW(pe2, newSize)));
-        }
+        this.setBridgePeVisual(bridge, parseFloat(bridge.dataset.pe) || 0.3);
       });
       // persist html
       this.updateFrame(id, { html: el.innerHTML });
     });
   };
 
+  // first free spot inside the safe zone, so new paragraphs never land off the page or on
+  // top of another one (cascade as a last resort)
+  _freeSpot(w, h) {
+    const fmt = this._fmt();
+    const ins = this._safeInset();
+    const U = this._sizeUnit();
+    const step = 24 * U;
+    const boxes = this.state.frames.map((f) => (f.type === "a-bridge"
+      ? [f.x, f.y, this.aBridgePxW(f.pe || 1, f.size || 90), f.size || 90]
+      : [f.x, f.y, f.w, f.h]));
+    const hit = (x, y) => boxes.some(([bx, by, bw, bh]) => x < bx + bw && bx < x + w && y < by + bh && by < y + h);
+    const maxX = Math.max(ins.l, fmt.w - ins.r - w), maxY = Math.max(ins.t, fmt.h - ins.b - h);
+    for (let x = ins.l; x <= maxX + 0.5; x += Math.max(step, w / 2)) {
+      for (let y = ins.t; y <= maxY + 0.5; y += step) {
+        if (!hit(x, y)) return { x, y };
+      }
+    }
+    const n = this.state.frames.length % 8;
+    return { x: Math.min(ins.l + n * step, maxX), y: Math.min(ins.t + n * step, maxY) };
+  }
+
   addParagraph = () => {
     const id = "f" + this.state.nextId;
-    // Stagger placement so new frames don't pile up
-    const offset = (this.state.nextId % 6) * 24;
+    const fmt = this._fmt();
+    const ins = this._safeInset();
+    const U = this._sizeUnit();
+    const w = Math.round(Math.min(300 * U, fmt.w - ins.l - ins.r));
+    const fontSize = Math.round(this.state.defaultFontSize * U * 10) / 10;
+    const h = Math.round(Math.max(fontSize * 2.2, 60 * U));
+    const spot = this._freeSpot(w, h);
+    this._pushHistory();
+    this._master = null;
     this.setState((s) => ({
       frames: [...s.frames, {
         id,
-        x: 24 + offset,
-        y: 60 + offset,
-        w: Math.min(300, (window.innerWidth || 400) - 48),
-        h: 100,
+        x: Math.round(spot.x),
+        y: Math.round(spot.y),
+        w, h,
         text: "",
         font: "main1",
-        fontSize: s.defaultFontSize,
+        fontSize,
         color: "#000000",
         opacity: 100,
       }],
       selectedId: id,
       nextId: s.nextId + 1,
     }), () => {
-      // focus the new textarea
+      // put the caret in the new paragraph
       requestAnimationFrame(() => {
-        const ta = document.querySelector(`[data-frame-id="${id}"] textarea`);
-        if (ta) ta.focus();
+        const el = this._editableRefs[id];
+        if (el) el.focus();
       });
     });
   };
@@ -2518,33 +2944,60 @@ class Component extends DCLogic {
     if (e.target === this._canvasEl) this.setState({ selectedId: null });
   };
 
+  // every change of the composition goes through here → it becomes the new "master"
+  // for format changes
   updateFrame = (id, patch) => {
+    this._master = null;
     this.setState((s) => ({
       frames: s.frames.map((f) => (f.id === id ? { ...f, ...patch } : f)),
     }));
   };
 
+  // keep at least ~40 screen px of a frame on the page, so it can always be grabbed back
+  _clampPos(f, x, y) {
+    const pl = this.state.pageLayout;
+    const fmt = this._fmt();
+    if (!pl || !fmt) return { x, y };
+    const keep = 40 / pl.scale;
+    const w = f.type === "a-bridge" ? this.aBridgePxW(f.pe || 1, f.size || 90) : (f.w || 100);
+    const h = f.type === "a-bridge" ? (f.size || 90) : (f.h || 60);
+    return {
+      x: Math.round(Math.max(-(w - keep), Math.min(fmt.w - keep, x)) * 100) / 100,
+      y: Math.round(Math.max(-(h - keep), Math.min(fmt.h - keep, y)) * 100) / 100,
+    };
+  }
+
+  // shared move logic for the drag bar, the frame body and the touch handle
+  _beginMove(e, id, threshold) {
+    const frame = this.state.frames.find((f) => f.id === id);
+    if (!frame) return null;
+    const z = (this.state.pageLayout && this.state.pageLayout.scale) || 1;
+    const startX = e.clientX, startY = e.clientY, origX = frame.x, origY = frame.y;
+    let moved = false;
+    const onMove = (ev) => {
+      const dx = ev.clientX - startX, dy = ev.clientY - startY;
+      if (!moved) {
+        if (Math.hypot(dx, dy) <= threshold) return;
+        moved = true;
+        this._pushHistory();
+      }
+      ev.preventDefault();
+      this.updateFrame(id, this._clampPos(frame, origX + dx / z, origY + dy / z));
+    };
+    return { onMove, moved: () => moved };
+  }
+
   startDrag = (e, id) => {
     e.preventDefault();
     e.stopPropagation();
-    const frame = this.state.frames.find((f) => f.id === id);
-    if (!frame) return;
     this.setState({ selectedId: id });
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const origX = frame.x;
-    const origY = frame.y;
-    const onMove = (ev) => {
-      this.updateFrame(id, {
-        x: Math.max(0, origX + ev.clientX - startX),
-        y: Math.max(0, origY + ev.clientY - startY),
-      });
-    };
+    const m = this._beginMove(e, id, 0);
+    if (!m) return;
     const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointermove", m.onMove);
       window.removeEventListener("pointerup", onUp);
     };
-    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointermove", m.onMove);
     window.addEventListener("pointerup", onUp);
   };
 
@@ -2555,30 +3008,14 @@ class Component extends DCLogic {
         e.target.closest(".v2-frame-handle-t") || e.target.closest(".v2-frame-handle-b") ||
         e.target.closest(".v2-move-handle") ||
         e.target.closest(".v2-inline-bridge")) return;
-
-    const startX = e.clientX;
-    const startY = e.clientY;
-    let moved = false;
-    const frame = this.state.frames.find((f) => f.id === id);
-    if (!frame) return;
-    const origX = frame.x;
-    const origY = frame.y;
-
-    const onMove = (ev) => {
-      const dx = ev.clientX - startX;
-      const dy = ev.clientY - startY;
-      if (!moved && Math.hypot(dx, dy) > 6) { moved = true; ev.preventDefault(); }
-      if (moved) {
-        ev.preventDefault();
-        this.updateFrame(id, { x: Math.max(0, origX + dx), y: Math.max(0, origY + dy) });
-      }
-    };
+    const m = this._beginMove(e, id, 6);
+    if (!m) return;
     const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointermove", m.onMove);
       window.removeEventListener("pointerup", onUp);
-      if (!moved) this.selectFrame(id);
+      if (!m.moved()) this.selectFrame(id);
     };
-    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointermove", m.onMove);
     window.addEventListener("pointerup", onUp);
   };
 
@@ -2586,21 +3023,13 @@ class Component extends DCLogic {
   startMoveHandle = (e, id) => {
     e.preventDefault();
     e.stopPropagation();
-    const frame = this.state.frames.find((f) => f.id === id);
-    if (!frame) return;
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const origX = frame.x;
-    const origY = frame.y;
-    const onMove = (ev) => {
-      ev.preventDefault();
-      this.updateFrame(id, { x: Math.max(0, origX + ev.clientX - startX), y: Math.max(0, origY + ev.clientY - startY) });
-    };
+    const m = this._beginMove(e, id, 0);
+    if (!m) return;
     const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointermove", m.onMove);
       window.removeEventListener("pointerup", onUp);
     };
-    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointermove", m.onMove);
     window.addEventListener("pointerup", onUp);
   };
 
@@ -2609,25 +3038,30 @@ class Component extends DCLogic {
     e.stopPropagation();
     const frame = this.state.frames.find((f) => f.id === id);
     if (!frame) return;
+    const z = (this.state.pageLayout && this.state.pageLayout.scale) || 1;
+    const minW = 60 / z, minH = 40 / z;         // same on-screen minimum as before
     const startX = e.clientX;
     const startY = e.clientY;
     const o = { ...frame };
+    let snapped = false;
     const onMove = (ev) => {
-      const dx = ev.clientX - startX;
-      const dy = ev.clientY - startY;
+      if (!snapped) { snapped = true; this._pushHistory(); }
+      const dx = (ev.clientX - startX) / z;
+      const dy = (ev.clientY - startY) / z;
       const patch = {};
-      if (edge.includes("r")) patch.w = Math.max(60, o.w + dx);
-      if (edge.includes("b")) patch.h = Math.max(40, o.h + dy);
+      if (edge.includes("r")) patch.w = Math.max(minW, o.w + dx);
+      if (edge.includes("b")) patch.h = Math.max(minH, o.h + dy);
       if (edge.includes("l")) {
-        const newW = Math.max(60, o.w - dx);
+        const newW = Math.max(minW, o.w - dx);
         patch.w = newW;
         patch.x = o.x + (o.w - newW);
       }
       if (edge.includes("t")) {
-        const newH = Math.max(40, o.h - dy);
+        const newH = Math.max(minH, o.h - dy);
         patch.h = newH;
         patch.y = o.y + (o.h - newH);
       }
+      Object.keys(patch).forEach((k) => { patch[k] = Math.round(patch[k] * 100) / 100; });
       this.updateFrame(id, patch);
     };
     const onUp = () => {
@@ -2639,6 +3073,8 @@ class Component extends DCLogic {
   };
 
   deleteFrame = (id) => {
+    this._pushHistory();
+    this._master = null;
     this.setState((s) => ({
       frames: s.frames.filter((f) => f.id !== id),
       selectedId: s.selectedId === id ? null : s.selectedId,
@@ -2647,25 +3083,27 @@ class Component extends DCLogic {
 
   // ── z-order: frame array order = stacking order (later = on top) ──
   moveFrameOrder = (id, dir) => {  // dir: +1 forward (up), -1 backward (down)
+    const i = this.state.frames.findIndex((f) => f.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= this.state.frames.length) return;
+    this._pushHistory();
+    this._master = null;
     this.setState((s) => {
       const arr = [...s.frames];
-      const i = arr.findIndex((f) => f.id === id);
-      const j = i + dir;
-      if (i < 0 || j < 0 || j >= arr.length) return null;
       const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
       return { frames: arr };
     });
   };
-  frameToFront = (id) => this.setState((s) => {
+  frameToFront = (id) => { this._pushHistory(); this._master = null; this.setState((s) => {
     const arr = s.frames.filter((f) => f.id !== id);
     const f = s.frames.find((f) => f.id === id);
     return f ? { frames: [...arr, f] } : null;
-  });
-  frameToBack = (id) => this.setState((s) => {
+  }); };
+  frameToBack = (id) => { this._pushHistory(); this._master = null; this.setState((s) => {
     const arr = s.frames.filter((f) => f.id !== id);
     const f = s.frames.find((f) => f.id === id);
     return f ? { frames: [f, ...arr] } : null;
-  });
+  }); };
 
   // drag-reorder in the layers list. Indices are in DISPLAY order (top-first = reversed array).
   _onLayerDragStart = (e, id) => {
@@ -2684,6 +3122,8 @@ class Component extends DCLogic {
     const dragId = this._dragLayerId;
     this._dragLayerId = null;
     if (!dragId || dragId === targetId) { this.setState({ dragLayerId: null, dragOverId: null }); return; }
+    this._pushHistory();
+    this._master = null;
     this.setState((s) => {
       // work in display order (top-first), then store back reversed
       const disp = [...s.frames].reverse();
@@ -2698,19 +3138,24 @@ class Component extends DCLogic {
   _onLayerDragEnd = () => { this._dragLayerId = null; this.setState({ dragLayerId: null, dragOverId: null }); };
 
   duplicateFrame = (id) => {
-    this.setState((s) => {
-      const i = s.frames.findIndex((f) => f.id === id);
-      if (i < 0) return null;
-      const src = s.frames[i];
-      const newId = "f" + s.nextId;
-      // pull the live edited HTML so the copy matches what's on screen
-      const liveEl = this._editableRefs[id];
-      const html = (liveEl && liveEl.innerHTML) || src.html || "";
-      const copy = { ...src, id: newId, x: src.x + 18, y: src.y + 18, html };
-      const arr = [...s.frames];
-      arr.splice(i + 1, 0, copy);   // insert just above the source in stack
-      return { frames: arr, selectedId: newId, nextId: s.nextId + 1 };
-    });
+    const i = this.state.frames.findIndex((f) => f.id === id);
+    if (i < 0) return;
+    this._pushHistory();
+    this._master = null;
+    const src = this.state.frames[i];
+    const newId = "f" + this.state.nextId;
+    // pull the live edited HTML so the copy matches what's on screen; its A-ponts get new
+    // ids (otherwise the two copies share one animation / selection), animations are copied
+    const liveEl = this._editableRefs[id];
+    const { html, map } = this._rekeyBridges((liveEl && liveEl.innerHTML) || src.html || "");
+    const anims = { ...this.state.bridgeAnims };
+    Object.keys(map).forEach((old) => { if (anims[old]) anims[map[old]] = { ...anims[old] }; });
+    const off = 24 / ((this.state.pageLayout && this.state.pageLayout.scale) || 1);
+    const pos = this._clampPos(src, src.x + off, src.y + off);
+    const copy = { ...src, id: newId, x: pos.x, y: pos.y, html };
+    const arr = [...this.state.frames];
+    arr.splice(i + 1, 0, copy);   // insert just above the source in stack
+    this.setState({ frames: arr, selectedId: newId, nextId: this.state.nextId + 1, bridgeAnims: anims });
   };
 
   _frameLabel(f) {
@@ -2830,11 +3275,76 @@ class Component extends DCLogic {
     };
   }
 
+  // ⌘⌫ is "delete to the start of the line" on a Mac: it must not wipe the whole paragraph.
+  // It only removes the frame when the paragraph is already empty.
   onKeyDown = (e, id) => {
-    if ((e.key === "Backspace" || e.key === "Delete") && e.metaKey) {
-      e.preventDefault();
-      this.deleteFrame(id);
+    if ((e.key === "Backspace" || e.key === "Delete") && (e.metaKey || e.ctrlKey)) {
+      const el = this._editableRefs[id];
+      const empty = el && !el.textContent.trim() && !el.querySelector(".v2-inline-bridge");
+      if (empty) { e.preventDefault(); this.deleteFrame(id); }
     }
+  };
+
+  // Pasted / dropped content: plain text only. HTML from a web page or a document brings
+  // its own fonts, sizes, colours and boxes into the paragraph (layout breaks, the export
+  // differs). A-ponts copied from another paragraph of the editor are kept (new ids).
+  _sanitizeHtml(html) {
+    const tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    const out = document.createElement("div");
+    const walk = (node, into) => {
+      node.childNodes.forEach((n) => {
+        if (n.nodeType === 3) { into.appendChild(document.createTextNode(n.nodeValue)); return; }
+        if (n.nodeType !== 1) return;
+        if (n.classList && n.classList.contains("v2-inline-bridge")) {
+          const b = n.cloneNode(true);
+          b.setAttribute("contenteditable", "false");
+          b.dataset.bridgeId = this._nextBridgeId();
+          into.appendChild(b);
+          return;
+        }
+        const tag = n.tagName;
+        if (tag === "BR") { into.appendChild(document.createElement("br")); return; }
+        if (tag === "STYLE" || tag === "SCRIPT" || tag === "META" || tag === "TITLE") return;
+        const block = /^(DIV|P|LI|H[1-6]|TR|BLOCKQUOTE)$/.test(tag);
+        if (block && into.lastChild && !(into.lastChild.nodeName === "BR")) into.appendChild(document.createElement("br"));
+        walk(n, into);
+      });
+    };
+    walk(tmp, out);
+    return out.innerHTML;
+  }
+  onEditablePaste = (e) => {
+    const cd = e.clipboardData;
+    if (!cd) return;
+    e.preventDefault();
+    const html = cd.getData("text/html");
+    if (html && html.indexOf("v2-inline-bridge") >= 0) document.execCommand("insertHTML", false, this._sanitizeHtml(html));
+    else document.execCommand("insertText", false, cd.getData("text/plain") || "");
+  };
+  onEditableDrop = (e) => {
+    const dt = e.dataTransfer;
+    if (!dt) return;
+    // files (images…) never go inside a paragraph; outside text is inserted as plain text
+    if ((dt.files && dt.files.length) || (dt.types && Array.prototype.indexOf.call(dt.types, "text/html") >= 0)) {
+      e.preventDefault();
+      const txt = dt.getData("text/plain");
+      if (!txt) return;
+      const r = document.caretRangeFromPoint ? document.caretRangeFromPoint(e.clientX, e.clientY) : null;
+      if (r) { const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+      document.execCommand("insertText", false, txt);
+    }
+  };
+
+  // one undo step per typing session: the state before the first keystroke
+  onEditableFocus = (id) => {
+    this.selectFrame(id);
+    this._typingSnap = this._snapshot();
+    this._typingPushed = false;
+  };
+  onEditableInput = (id, el) => {
+    if (!this._typingPushed && this._typingSnap) { this._pushHistory(this._typingSnap); this._typingPushed = true; }
+    this.updateFrame(id, { html: el.innerHTML });
   };
 
   renderFrames() {
@@ -2958,9 +3468,8 @@ class Component extends DCLogic {
       }
     }) : null;
 
-    return React.createElement("div", { style: { position: "absolute", inset: 0 } },
-      pageEl, bgImgNode, shaderNode, auraNode, ...safeZoneEls, pageLabelEl,
-      this.state.frames.map((f, _fi) => {
+    // ── the document: frames in native px, zoomed to the screen as one block ──
+    const frameEls = this.state.frames.map((f, _fi) => {
         if (f.type === "a-bridge") return this.renderABridgeFrame(f, _fi);
         const isSelected = f.id === this.state.selectedId;
         return React.createElement("div", {
@@ -2993,14 +3502,12 @@ class Component extends DCLogic {
             isSelected ? React.createElement("button", {
               onPointerDown: (e) => e.stopPropagation(),
               onClick: (e) => { e.stopPropagation(); this.deleteFrame(f.id); },
+              title: "Supprimer le paragraphe",
               style: {
-                width: "16px", height: "16px",
                 border: "none",
                 background: "rgba(200,50,30,0.85)",
                 color: "#fff",
-                borderRadius: "3px",
                 cursor: "pointer",
-                fontSize: "11px",
                 lineHeight: 1,
                 padding: 0,
                 display: "flex", alignItems: "center", justifyContent: "center",
@@ -3035,19 +3542,13 @@ class Component extends DCLogic {
                      if (this._inited) this._inited.delete(f.id);
                    }
                  }),
-            onInput: (e) => this.updateFrame(f.id, { html: e.currentTarget.innerHTML }),
-            onFocus: () => this.selectFrame(f.id),
+            onInput: (e) => this.onEditableInput(f.id, e.currentTarget),
+            onFocus: () => this.onEditableFocus(f.id),
             onKeyDown: (e) => this.onKeyDown(e, f.id),
-            style: {
-              fontFamily:            (this.FONTS[f.font] || this.FONTS.none).fontFamily,
-              fontVariationSettings: (this.FONTS[f.font] || this.FONTS.none).fontVariationSettings,
-              fontWeight:            (this.FONTS[f.font] || this.FONTS.none).fontWeight || 400,
-              fontSize:              (f.fontSize || 16) + "px",
-              color:                 f.color || "#000000",
-              opacity:               (f.opacity !== undefined ? f.opacity : 100) / 100,
-              transform:             (this.FONTS[f.font] || this.FONTS.none).transform,
-              transformOrigin:       (this.FONTS[f.font] || this.FONTS.none).transformOrigin,
-            },
+            onPaste: this.onEditablePaste,
+            onDrop: this.onEditableDrop,
+            // exactly the export's text style (font, size, line height, wrapping, squish)
+            style: this._textStyle(f),
           }),
 
           // resize handles
@@ -3057,17 +3558,40 @@ class Component extends DCLogic {
           isSelected ? React.createElement("div", { className: "v2-frame-handle-b", onPointerDown: (e) => this.startResize(e, f.id, "b") }) : null,
           isSelected ? React.createElement("div", { className: "v2-frame-handle", onPointerDown: (e) => this.startResize(e, f.id, "br") }) : null
         );
-      })
-    );
+      });
+
+    const z = pageLayout ? pageLayout.scale : 1;
+    const docLayer = pageLayout ? React.createElement("div", {
+      key: "doc",
+      className: "v2-doc",
+      ref: (el) => { this._docEl = el; },
+      style: {
+        left: pageLayout.x + "px", top: pageLayout.y + "px",
+        width: pageLayout.fmtW + "px", height: pageLayout.fmtH + "px",
+        transform: "scale(" + z + ")",
+        "--z": z,
+      },
+    }, frameEls) : null;
+
+    return React.createElement("div", { style: { position: "absolute", inset: 0 } },
+      pageEl, bgImgNode, shaderNode, auraNode, ...safeZoneEls, pageLabelEl, docLayer);
   }
 
   renderVals() {
     const sel = this.state.frames.find((f) => f.id === this.state.selectedId);
     const selFont = sel ? (sel.font || "none") : null;
     const hasSelection = !!sel;
+    // size buttons: label × unit of the format (native px); highlight with a tolerance
+    const U = this._sizeUnit();
+    const isSz = (label) => !!(sel && sel.type !== "a-bridge" && Math.abs((sel.fontSize || 0) - label * U) < 0.6);
+    const setSz = (label) => () => { if (sel) this.setFrameFontSize(sel.id, label * U); };
+    const colorOf = (c) => () => { if (sel && (sel.color || "#000000") !== c) { this._pushHistory(); this.updateFrame(sel.id, { color: c }); } };
 
     return {
       addParagraph: this.addParagraph,
+      undo: this.undo,
+      undoDisabled: !this.state.canUndo,
+      undoTitle: "Annuler (⌘Z)",
       exportPng: this.exportPng,
       openCleanView: this.openCleanView,
       cleanOverlay: this.renderCleanOverlay(),
@@ -3103,9 +3627,7 @@ class Component extends DCLogic {
 
       // format + safe zone toggle
       format: this.state.format,
-      onFormatChange: (e) => {
-        this.setState({ format: e.target.value }, () => this.computePageLayout());
-      },
+      onFormatChange: (e) => this.changeFormat(e.target.value),
       showSafeZone: this.state.showSafeZone,
       toggleSafeZone: () => this.setState((s) => ({ showSafeZone: !s.showSafeZone })),
       hasSafeZone: !!(this.SAFE_ZONES[this.state.format] && this.SAFE_ZONES[this.state.format].length),
@@ -3148,40 +3670,65 @@ class Component extends DCLogic {
       // color + opacity
       selColor:   sel ? (sel.color   || "#000000") : "#000000",
       selOpacity: sel ? (sel.opacity !== undefined ? sel.opacity : 100) : 100,
-      setBlack:   () => { if (sel) this.updateFrame(sel.id, { color: "#000000" }); },
-      setWhite:   () => { if (sel) this.updateFrame(sel.id, { color: "#ffffff" }); },
-      onOpacityChange: (e) => { if (sel) this.updateFrame(sel.id, { opacity: parseFloat(e.target.value) }); },
+      setBlack:   colorOf("#000000"),
+      setWhite:   colorOf("#ffffff"),
+      onOpacityChange: (e) => {
+        if (!sel) return;
+        // one undo step per slider gesture
+        const now = Date.now();
+        if (!this._opacityT || now - this._opacityT > 1200) this._pushHistory();
+        this._opacityT = now;
+        this.updateFrame(sel.id, { opacity: parseFloat(e.target.value) });
+      },
       isBlack: !sel || (sel.color || "#000000") === "#000000",
       isWhite:  sel && sel.color === "#ffffff",
 
-      // preset size buttons
-      sz11Bg: sel && sel.fontSize===11 ? "#1a1a1a" : "#fff",
-      sz14Bg: sel && sel.fontSize===14 ? "#1a1a1a" : "#fff",
-      sz18Bg: sel && sel.fontSize===18 ? "#1a1a1a" : "#fff",
-      sz28Bg: sel && sel.fontSize===28 ? "#1a1a1a" : "#fff",
-      sz36Bg: sel && sel.fontSize===36 ? "#1a1a1a" : "#fff",
-      sz48Bg: sel && sel.fontSize===48 ? "#1a1a1a" : "#fff",
-      sz72Bg: sel && sel.fontSize===72 ? "#1a1a1a" : "#fff",
-      sz96Bg: sel && sel.fontSize===96 ? "#1a1a1a" : "#fff",
-      sz128Bg:sel && sel.fontSize===128? "#1a1a1a" : "#fff",
-      sz11Border: sel && sel.fontSize===11 ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
-      sz14Border: sel && sel.fontSize===14 ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
-      sz18Border: sel && sel.fontSize===18 ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
-      sz28Border: sel && sel.fontSize===28 ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
-      sz36Border: sel && sel.fontSize===36 ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
-      sz48Border: sel && sel.fontSize===48 ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
-      sz72Border: sel && sel.fontSize===72 ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
-      sz96Border: sel && sel.fontSize===96 ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
-      sz128Border:sel && sel.fontSize===128? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
-      setSize11:  () => { if (sel) this.setFrameFontSize(sel.id, 11);  },
-      setSize14:  () => { if (sel) this.setFrameFontSize(sel.id, 14);  },
-      setSize18:  () => { if (sel) this.setFrameFontSize(sel.id, 18);  },
-      setSize28:  () => { if (sel) this.setFrameFontSize(sel.id, 28);  },
-      setSize36:  () => { if (sel) this.setFrameFontSize(sel.id, 36);  },
-      setSize48:  () => { if (sel) this.setFrameFontSize(sel.id, 48);  },
-      setSize72:  () => { if (sel) this.setFrameFontSize(sel.id, 72);  },
-      setSize96:  () => { if (sel) this.setFrameFontSize(sel.id, 96);  },
-      setSize128: () => { if (sel) this.setFrameFontSize(sel.id, 128); },
+      // preset size buttons (labels × format unit → native px)
+      sz11Bg: isSz(11) ? "#1a1a1a" : "#fff",
+      sz14Bg: isSz(14) ? "#1a1a1a" : "#fff",
+      sz18Bg: isSz(18) ? "#1a1a1a" : "#fff",
+      sz28Bg: isSz(28) ? "#1a1a1a" : "#fff",
+      sz36Bg: isSz(36) ? "#1a1a1a" : "#fff",
+      sz48Bg: isSz(48) ? "#1a1a1a" : "#fff",
+      sz72Bg: isSz(72) ? "#1a1a1a" : "#fff",
+      sz96Bg: isSz(96) ? "#1a1a1a" : "#fff",
+      sz128Bg: isSz(128) ? "#1a1a1a" : "#fff",
+      sz11Fg: isSz(11) ? "#fff" : "#1a1a1a",
+      sz11Title: Math.round(11 * U) + " px sur le visuel",
+      sz14Fg: isSz(14) ? "#fff" : "#1a1a1a",
+      sz14Title: Math.round(14 * U) + " px sur le visuel",
+      sz18Fg: isSz(18) ? "#fff" : "#1a1a1a",
+      sz18Title: Math.round(18 * U) + " px sur le visuel",
+      sz28Fg: isSz(28) ? "#fff" : "#1a1a1a",
+      sz28Title: Math.round(28 * U) + " px sur le visuel",
+      sz36Fg: isSz(36) ? "#fff" : "#1a1a1a",
+      sz36Title: Math.round(36 * U) + " px sur le visuel",
+      sz48Fg: isSz(48) ? "#fff" : "#1a1a1a",
+      sz48Title: Math.round(48 * U) + " px sur le visuel",
+      sz72Fg: isSz(72) ? "#fff" : "#1a1a1a",
+      sz72Title: Math.round(72 * U) + " px sur le visuel",
+      sz96Fg: isSz(96) ? "#fff" : "#1a1a1a",
+      sz96Title: Math.round(96 * U) + " px sur le visuel",
+      sz128Fg: isSz(128) ? "#fff" : "#1a1a1a",
+      sz128Title: Math.round(128 * U) + " px sur le visuel",
+      sz11Border: isSz(11) ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
+      sz14Border: isSz(14) ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
+      sz18Border: isSz(18) ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
+      sz28Border: isSz(28) ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
+      sz36Border: isSz(36) ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
+      sz48Border: isSz(48) ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
+      sz72Border: isSz(72) ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
+      sz96Border: isSz(96) ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
+      sz128Border: isSz(128) ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
+      setSize11: setSz(11),
+      setSize14: setSz(14),
+      setSize18: setSz(18),
+      setSize28: setSz(28),
+      setSize36: setSz(36),
+      setSize48: setSz(48),
+      setSize72: setSz(72),
+      setSize96: setSz(96),
+      setSize128: setSz(128),
       selPe:   (sel && sel.type === "a-bridge") ? sel.pe.toFixed(2) : "",
       selSize: (sel && sel.type === "a-bridge") ? sel.size : "",
       onPeChange:   (e) => { if (sel && sel.type === "a-bridge") this.setPe(sel.id, e.target.value); },

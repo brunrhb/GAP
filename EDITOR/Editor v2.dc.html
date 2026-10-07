@@ -2574,9 +2574,19 @@ class Component extends DCLogic {
     if (!PS || !file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      this._withTeamKey(() => PS.importFrom(String(ev.target.result)))
-        .then((saved) => { this._loadTemplates(); this._templateNotice("Modèle importé" + (saved && saved.local ? " (dans ce navigateur)." : ".")); })
-        .catch((err) => alert("Fichier invalide : " + (err && err.message)));
+      // one preset, or a list of them (outils/recuperer-modeles.js)
+      let list;
+      try { const obj = JSON.parse(String(ev.target.result)); list = Array.isArray(obj) ? obj : [obj]; }
+      catch (err) { alert("Fichier invalide : " + (err && err.message)); return; }
+      list = list.filter((p) => p && p.name && p.data);
+      if (!list.length) { alert("Aucun modèle dans ce fichier."); return; }
+      let local = 0;
+      list.reduce((prev, p) => prev.then(() => this._withTeamKey(() => PS.importFrom(p)).then((saved) => { if (saved && saved.local) local++; })), Promise.resolve())
+        .then(() => {
+          this._loadTemplates();
+          this._templateNotice((list.length > 1 ? list.length + " modèles importés" : "Modèle importé") + (local ? " (dans ce navigateur)." : "."));
+        })
+        .catch((err) => alert("Import interrompu : " + (err && err.message)));
     };
     reader.readAsText(file);
     e.target.value = "";

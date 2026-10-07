@@ -14,7 +14,9 @@
  *   1. Create the D1 database (Cloudflare dashboard → Storage & Databases → D1
  *      → Create, name it "gap_presets") and copy its Database ID.
  *   2. Paste that ID into wrangler.toml (database_id).
- *   3. Create the table — in the D1 "Console" tab, run:
+ *   3. The table is created automatically on the first API call
+ *      (CREATE TABLE IF NOT EXISTS below). To create it by hand instead, run in
+ *      the D1 "Console" tab:
  *
  *        CREATE TABLE IF NOT EXISTS presets (
  *          id         TEXT PRIMARY KEY,
@@ -27,7 +29,16 @@
  *   4. Commit worker.js + wrangler.toml to the repo root and push.
  *   5. In preset-store.js set  API_URL = "/api/presets"  and push.
  *   Done — the preset library is shared across the whole domain.
+ *
+ * OPTIONAL — TEAM KEY FOR WRITES
+ *   Without it anyone who finds the URL can add or delete presets. To require a
+ *   key for POST / PUT / DELETE (reading stays open):
+ *     npx wrangler secret put GAP_WRITE_KEY      (or Dashboard → Worker →
+ *     Settings → Variables and Secrets → add a Secret named GAP_WRITE_KEY)
+ *   The editor asks for the key once (header X-GAP-Key) and remembers it.
  * ========================================================================== */
+
+const MAX_BODY = 1800000;   // bytes — D1 rows are limited to ~2 MB
 
 export default {
   async fetch(request, env) {
@@ -45,12 +56,42 @@ export default {
   },
 };
 
+// the table is created once per Worker instance, the first time the API is used
+let tableReady = null;
+function ensureTable(db) {
+  if (!tableReady) {
+    tableReady = db.prepare(
+      "CREATE TABLE IF NOT EXISTS presets (id TEXT PRIMARY KEY, kind TEXT, name TEXT, updated_at TEXT, body TEXT)"
+    ).run().catch((e) => { tableReady = null; throw e; });
+  }
+  return tableReady;
+}
+
+async function readPreset(request) {
+  const text = await request.text();
+  if (text.length > MAX_BODY) {
+    const e = new Error("preset trop lourd (" + Math.round(text.length / 1024) + " ko)");
+    e.status = 413;
+    throw e;
+  }
+  const p = JSON.parse(text);
+  if (!p || typeof p !== "object") throw new Error("preset invalide");
+  return p;
+}
+
 async function handleApi(request, env, path) {
   const db = env.DB;
   const method = request.method;
   const id = path.startsWith("/api/presets/") ? decodeURIComponent(path.slice("/api/presets/".length)) : null;
 
   if (method === "OPTIONS") return new Response(null, { headers: cors() });
+
+  // optional team key for every write
+  if (env.GAP_WRITE_KEY && method !== "GET" && request.headers.get("X-GAP-Key") !== env.GAP_WRITE_KEY) {
+    return json({ error: "clé d'équipe requise" }, 401);
+  }
+
+  await ensureTable(db);
 
   // GET /api/presets — list all
   if (method === "GET" && !id) {
@@ -61,7 +102,9 @@ async function handleApi(request, env, path) {
 
   // POST /api/presets — create
   if (method === "POST" && !id) {
-    const p = await request.json();
+    let p;
+    try { p = await readPreset(request); } catch (e) { return json({ error: e.message }, e.status || 400); }
+    if (!p.id) p.id = "p_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
     await db.prepare("INSERT OR REPLACE INTO presets (id, kind, name, updated_at, body) VALUES (?,?,?,?,?)")
       .bind(p.id, p.kind || "", p.name || "", p.updatedAt || "", JSON.stringify(p)).run();
     return json(p);
@@ -69,7 +112,8 @@ async function handleApi(request, env, path) {
 
   // PUT /api/presets/:id — update
   if (method === "PUT" && id) {
-    const p = await request.json();
+    let p;
+    try { p = await readPreset(request); } catch (e) { return json({ error: e.message }, e.status || 400); }
     p.id = id;
     await db.prepare("INSERT OR REPLACE INTO presets (id, kind, name, updated_at, body) VALUES (?,?,?,?,?)")
       .bind(id, p.kind || "", p.name || "", p.updatedAt || "", JSON.stringify(p)).run();
@@ -98,6 +142,6 @@ function cors(extra) {
   return Object.assign({
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, X-GAP-Key",
   }, extra || {});
 }

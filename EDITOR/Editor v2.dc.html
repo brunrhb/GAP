@@ -1938,6 +1938,7 @@ class Component extends DCLogic {
     recordPct: 0,
     savedTemplates: [],
     templatesManagerOpen: false,
+    templateGroupsOpen: {},  // base-template groups unfolded in the "Modèles" panel
     selectedBridgeId: null,  // currently selected inline A-pont
     bridgeAnims: {},     // { bridgeId: { animate, pe0, pe1, dur } }
     // panels
@@ -2478,7 +2479,13 @@ class Component extends DCLogic {
       kids.push(React.createElement("div", { key: "sh", style: { position: "absolute", inset: 0, background: "radial-gradient(circle at 30% 30%, " + p.c2 + " 0%, " + p.c1 + " 45%, " + p.c3 + " 100%)" } }));
     }
     (tpl.frames || []).forEach((f, i) => {
-      if (f.type === "a-bridge") return;
+      if (f.type === "a-bridge") {
+        const pe = f.pe || 1, size = f.size || 90;
+        kids.push(React.createElement("div", { key: "m" + i, style: { position: "absolute", left: f.x + "px", top: f.y + "px" } },
+          React.createElement("svg", { viewBox: this.aViewBox(pe), width: this.aBridgePxW(pe, size), height: size, preserveAspectRatio: "none", style: { display: "block", overflow: "visible" } },
+            React.createElement("path", { d: this.buildAPath(pe), fill: f.color || "#1a1a1a", fillRule: "evenodd" }))));
+        return;
+      }
       kids.push(React.createElement("div", { key: "m" + i, style: { position: "absolute", left: f.x + "px", top: f.y + "px", width: f.w + "px" } },
         React.createElement("div", { style: this._textStyle(f), dangerouslySetInnerHTML: { __html: this._cleanHtml(f.html || this._escHtml(f.text || ""), f) } })));
     });
@@ -2513,7 +2520,23 @@ class Component extends DCLogic {
   renderTemplatesManager() {
     if (!this.state.templatesManagerOpen) return null;
     const items = this.state.savedTemplates;
-    const base = items.filter((p) => p.base), mine = items.filter((p) => !p.base);
+    const base = items.filter((p) => p.base && !p.group), mine = items.filter((p) => !p.base);
+    // base templates that come as a set (e.g. the Claude Design bank) fold under one header
+    const groups = [];
+    items.filter((p) => p.base && p.group).forEach((p) => {
+      let g = groups.find((q) => q.name === p.group);
+      if (!g) { g = { name: p.group, items: [] }; groups.push(g); }
+      g.items.push(p);
+    });
+    const openG = this.state.templateGroupsOpen || {};
+    const groupHead = (g) => React.createElement("button", {
+      key: "gh-" + g.name,
+      onClick: () => this.setState((s) => ({ templateGroupsOpen: { ...(s.templateGroupsOpen || {}), [g.name]: !(s.templateGroupsOpen || {})[g.name] } })),
+      style: { display: "flex", alignItems: "baseline", gap: "6px", width: "100%", margin: "8px 0 2px", padding: "2px 0", border: "none", background: "transparent", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }
+    },
+      React.createElement("span", { style: { fontSize: "9px", color: "rgba(0,0,0,0.45)", width: "8px" } }, openG[g.name] ? "▾" : "▸"),
+      React.createElement("span", { style: { fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(0,0,0,0.45)", fontWeight: 600 } }, g.name),
+      React.createElement("span", { style: { fontSize: "9px", color: "rgba(0,0,0,0.35)" } }, g.items.length));
     const head = (label, note) => React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: "6px", margin: "10px 0 2px" } },
       React.createElement("span", { style: { fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(0,0,0,0.45)", fontWeight: 600 } }, label),
       note ? React.createElement("span", { style: { fontSize: "9px", color: "rgba(0,0,0,0.35)" } }, note) : null);
@@ -2526,8 +2549,11 @@ class Component extends DCLogic {
         React.createElement("button", { onClick: () => this.setState({ templatesManagerOpen: false }), style: { border: "none", background: "transparent", cursor: "pointer", fontSize: "14px", color: "rgba(0,0,0,0.4)" } }, "×")
       ),
       this.state.templateNotice ? React.createElement("div", { style: { fontSize: "10px", color: "#1a1a1a", background: "rgba(45,124,240,0.08)", borderRadius: "4px", padding: "6px 8px", marginTop: "6px" } }, this.state.templateNotice) : null,
-      base.length ? head("Modèles de base", base.length) : null,
+      (base.length || groups.length) ? head("Modèles de base", base.length + groups.reduce((n, g) => n + g.items.length, 0)) : null,
       base.map((p) => this._templateRow(p)),
+      ...groups.map((g) => React.createElement("div", { key: "g-" + g.name },
+        groupHead(g),
+        openG[g.name] ? g.items.map((p) => this._templateRow(p)) : null)),
       head("Mes modèles", st === "serveur" ? "· bibliothèque partagée" : (st === "local" ? "· ce navigateur (serveur injoignable)" : "")),
       mine.length === 0 ? React.createElement("div", { style: { fontSize: "10px", color: "rgba(0,0,0,0.4)", fontStyle: "italic", padding: "4px" } }, "Aucun modèle enregistré — « + Modèle » enregistre la composition actuelle.") : null,
       mine.map((p) => this._templateRow(p)),

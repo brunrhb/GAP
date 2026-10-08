@@ -1,0 +1,3764 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://use.typekit.net/scu0dna.css">
+<script src="preset-store.js"></script>
+<script src="modeles-base.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    background: #B8B8B8;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #1a1a1a;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+
+  /* ── Le document ──
+     Les cadres vivent en px NATIFS du format (1080×1350, 2480×3508…) dans .v2-doc,
+     réduit à l'écran par un transform: scale(var(--z)). Le texte est donc mis en page
+     exactement comme dans l'export, quelle que soit la taille de la fenêtre.
+     L'interface posée sur les cadres (poignées, barre, contours) est contre-réduite
+     avec --u = 1px écran, pour garder une taille constante à l'écran. */
+  .v2-doc {
+    position: absolute; left: 0; top: 0;
+    transform-origin: 0 0;
+    pointer-events: none;
+    z-index: 3;
+    --u: calc(1px / var(--z, 1));
+  }
+  .v2-doc > .v2-frame { pointer-events: auto; }
+  .v2-frame { position: absolute; box-sizing: border-box; }
+  /* contour d'édition : dessiné en dehors du flux, il ne touche jamais la mise en page du texte */
+  .v2-frame::after {
+    content: "";
+    position: absolute;
+    inset: calc(-3 * var(--u, 1px));
+    border: calc(1 * var(--u, 1px)) dashed rgba(0,0,0,0.25);
+    pointer-events: none;
+    transition: border-color 0.12s;
+  }
+  .v2-frame[data-selected="false"]:hover::after { border-color: rgba(0,0,0,0.45); }
+  .v2-frame[data-selected="true"]::after {
+    border: calc(1 * var(--u, 1px)) solid #2D7CF0;
+    box-shadow: 0 0 0 calc(1 * var(--u, 1px)) rgba(45,124,240,0.18);
+  }
+  /* text going past the page edge = cut in the export */
+  .v2-frame[data-overflow="true"]::after { border-color: rgba(230,115,0,0.95); border-style: dashed; }
+  .v2-frame[data-overflow="true"] .v2-frame-drag > span::after { content: " · coupé à l'export"; color: rgb(214,104,0); text-transform: none; }
+  .v2-frame-content {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    font-size: 16px;
+    color: #1a1a1a;
+    outline: none;
+    resize: none;
+    overflow: hidden;
+    -webkit-user-select: text;
+    cursor: text;
+  }
+  .v2-frame-drag {
+    position: absolute;
+    top: calc(-28 * var(--u, 1px)); left: calc(-3 * var(--u, 1px)); right: calc(-3 * var(--u, 1px));
+    height: calc(24 * var(--u, 1px));
+    background: rgba(0,0,0,0);
+    cursor: move;
+    display: flex;
+    align-items: center;
+    padding: 0 calc(6 * var(--u, 1px));
+    font-size: calc(10 * var(--u, 1px));
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 400;
+    color: rgba(0,0,0,0.4);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  .v2-frame-drag button {
+    width: calc(16 * var(--u, 1px)) !important; height: calc(16 * var(--u, 1px)) !important;
+    font-size: calc(11 * var(--u, 1px)) !important; border-radius: calc(3 * var(--u, 1px)) !important;
+  }
+  .v2-frame[data-selected="true"] .v2-frame-drag,
+  .v2-frame:hover .v2-frame-drag { opacity: 1; }
+  .v2-frame-handle {
+    position: absolute;
+    right: calc(-8 * var(--u, 1px)); bottom: calc(-8 * var(--u, 1px));
+    width: calc(12 * var(--u, 1px)); height: calc(12 * var(--u, 1px));
+    background: #fff;
+    border: calc(1 * var(--u, 1px)) solid #2D7CF0;
+    cursor: nwse-resize;
+    opacity: 0;
+  }
+  .v2-frame[data-selected="true"] .v2-frame-handle { opacity: 1; }
+  .v2-frame-handle-l, .v2-frame-handle-r, .v2-frame-handle-t, .v2-frame-handle-b {
+    position: absolute;
+    background: #fff;
+    border: calc(1 * var(--u, 1px)) solid #2D7CF0;
+    width: calc(8 * var(--u, 1px)); height: calc(8 * var(--u, 1px));
+    opacity: 0;
+  }
+  .v2-frame[data-selected="true"] .v2-frame-handle-l,
+  .v2-frame[data-selected="true"] .v2-frame-handle-r,
+  .v2-frame[data-selected="true"] .v2-frame-handle-t,
+  .v2-frame[data-selected="true"] .v2-frame-handle-b { opacity: 1; }
+  .v2-frame-handle-l { left: calc(-7 * var(--u, 1px)); top: 50%; margin-top: calc(-4 * var(--u, 1px)); cursor: ew-resize; }
+  .v2-frame-handle-r { right: calc(-7 * var(--u, 1px)); top: 50%; margin-top: calc(-4 * var(--u, 1px)); cursor: ew-resize; }
+  .v2-frame-handle-t { left: 50%; top: calc(-7 * var(--u, 1px)); margin-left: calc(-4 * var(--u, 1px)); cursor: ns-resize; }
+  .v2-frame-handle-b { left: 50%; bottom: calc(-7 * var(--u, 1px)); margin-left: calc(-4 * var(--u, 1px)); cursor: ns-resize; }
+
+  /* contenteditable paragraph — AUCUN padding / bordure : la boîte du texte = la boîte du cadre,
+     comme dans l'export (le contour est le ::after du cadre). */
+  div.v2-editable {
+    width: 100%; height: 100%;
+    padding: 0; margin: 0;
+    background: transparent;
+    border: none;
+    color: #1a1a1a;
+    outline: none; overflow: visible;
+    cursor: text;
+    white-space: pre-wrap; word-break: break-word;
+    box-sizing: border-box;
+    -webkit-user-select: text;
+  }
+  div.v2-editable:empty::before {
+    content: attr(data-placeholder);
+    color: rgba(0,0,0,0.28);
+    pointer-events: none;
+    display: block;
+  }
+  /* inline A-pont */
+  .v2-inline-bridge {
+    display: inline-block;
+    position: relative;
+    vertical-align: baseline;
+    cursor: default;
+    user-select: none; -webkit-user-select: none;
+  }
+  .v2-bridge-ext-handle {
+    position: absolute;
+    right: calc(-3 * var(--u, 1px)); top: 15%; height: 70%; width: calc(7 * var(--u, 1px));
+    background: #2D7CF0; border-radius: calc(2 * var(--u, 1px));
+    cursor: ew-resize; opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .v2-inline-bridge:hover .v2-bridge-ext-handle { opacity: 0.85; }
+
+  /* move handle (mobile drag affordance) */
+  .v2-move-handle {
+    position: absolute;
+    top: calc(-36 * var(--u, 1px)); left: 50%; transform: translateX(-50%);
+    width: calc(44 * var(--u, 1px)); height: calc(32 * var(--u, 1px));
+    background: #1a1a1a;
+    border-radius: calc(6 * var(--u, 1px));
+    display: flex; align-items: center; justify-content: center;
+    cursor: grab; touch-action: none;
+    opacity: 0; transition: opacity 0.15s;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .v2-move-handle svg { width: calc(16 * var(--u, 1px)); height: calc(10 * var(--u, 1px)); }
+  .v2-frame[data-selected="true"] .v2-move-handle {
+    opacity: 1; pointer-events: auto;
+  }
+  .v2-move-handle:active { cursor: grabbing; background: #333; }
+
+  /* ── RESPONSIVE ── */
+
+  /* Small desktop ≤ 1100px: slim the right panel */
+  .v2-right-panel.is-collapsed { width: 42px !important; }
+
+  /* Tablet / large phone landscape ≤ 820px:
+     panel becomes a horizontal bottom bar */
+  @media (max-width: 820px) {
+    .v2-body { flex-direction: column !important; }
+    .v2-canvas-area { flex: 1 !important; min-height: 0 !important; }
+    .v2-right-panel {
+      position: static !important;
+      inset: auto !important;
+      box-shadow: none !important;
+      width: 100% !important;
+      height: 160px !important;
+      flex-direction: row !important;
+      border-left: none !important;
+      border-top: 1px solid rgba(0,0,0,0.12) !important;
+      flex-shrink: 0 !important;
+      overflow: hidden !important;
+    }
+    /* the panel's content (tabs + scroll) sits in a wrapper: lay it out as a row too,
+       otherwise the scroll area is pushed below the screen */
+    .v2-panel-inner { flex-direction: row !important; min-width: 0 !important; }
+    .v2-tab-strip {
+      padding-left: 0 !important;
+      padding-top: 40px !important;
+      flex-direction: column !important;
+      border-bottom: none !important;
+      border-right: 1px solid rgba(0,0,0,0.10) !important;
+      width: 44px !important;
+      flex-shrink: 0 !important;
+      height: 100% !important;
+      overflow: hidden !important;
+    }
+    .v2-tab-strip button {
+      writing-mode: vertical-rl !important;
+      text-orientation: mixed !important;
+      height: 50% !important;
+      width: 44px !important;
+      padding: 8px 4px !important;
+      border-bottom: none !important;
+      border-right: 2px solid transparent !important;
+      margin: 0 !important;
+    }
+    .v2-panel-scroll {
+      flex: 1 !important;
+      overflow-x: hidden !important;
+      overflow-y: auto !important;          /* the panels are tall single blocks: scroll them */
+      height: 160px !important;
+      display: block !important;
+      padding: 10px 12px !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+    .v2-panel-scroll::-webkit-scrollbar { display: none; }
+    .v2-panel-scroll > div { flex-shrink: 0 !important; }
+  }
+
+  /* Phone portrait ≤ 500px */
+  @media (max-width: 500px) {
+    .v2-toolbar { flex-wrap: wrap !important; gap: 4px !important; padding: 6px 8px !important; }
+    .v2-toolbar .v2-hide-mobile { display: none !important; }
+    .v2-right-panel { height: 140px !important; }
+    .v2-panel-scroll { height: 140px !important; }
+  }
+</style>
+</helmet>
+
+<div style="position: fixed; inset: 0; display: flex; flex-direction: column; background: #B8B8B8; font-size: 13px;">
+
+  <!-- toolbar -->
+  <div class="v2-toolbar" style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(255,255,255,0.55); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(0,0,0,0.08); flex-shrink: 0;">
+    <button onClick="{{ addParagraph }}" style="display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; height: 28px; border: 1px solid rgba(0,0,0,0.15); background: #fff; color: #1a1a1a; font-size: 12px; font-family: inherit; cursor: pointer; border-radius: 3px;">
+      <span style="font-size: 14px; line-height: 1;">+</span>
+      Paragraph
+    </button>
+    <button onClick="{{ undo }}" title="{{ undoTitle }}" disabled="{{ undoDisabled }}" style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 1px solid rgba(0,0,0,0.15); background: #fff; color: {{ undoDisabled ? 'rgba(0,0,0,0.25)' : '#1a1a1a' }}; font-size: 15px; line-height: 1; font-family: inherit; cursor: {{ undoDisabled ? 'default' : 'pointer' }}; border-radius: 3px;">↶</button>
+    <div style="width: 1px; height: 18px; background: rgba(0,0,0,0.12);"></div>
+
+    <!-- format selector -->
+    <select value="{{ format }}" onChange="{{ onFormatChange }}" style="height: 28px; padding: 0 24px 0 8px; border: 1px solid rgba(0,0,0,0.15); background: #fff; color: #1a1a1a; font-size: 12px; font-family: inherit; cursor: pointer; border-radius: 3px; outline: none; appearance: none; -webkit-appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22 viewBox=%220 0 10 6%22><path d=%22M0 0l5 6 5-6z%22 fill=%22%23888%22/></svg>'); background-repeat: no-repeat; background-position: right 8px center;">
+      <option value="ig-post">IG Post · 4:5</option>
+      <option value="ig-square">IG Carré · 1:1</option>
+      <option value="ig-story">Story · 9:16</option>
+      <option value="li-post">LinkedIn · 1.9:1</option>
+      <option value="li-portrait">LI Portrait · 4:5</option>
+      <option value="affiche-a4">Affiche A4</option>
+      <option value="affiche-a3">Affiche A3</option>
+      <option value="affiche-land">A3 Paysage</option>
+      <option value="carre-40">Carré 40×40 cm</option>
+    </select>
+
+    <div style="width: 1px; height: 18px; background: rgba(0,0,0,0.12);"></div>
+    <span class="v2-hide-mobile" style="font-size: 11px; color: rgba(0,0,0,0.5);">{{ frameCount }} frame(s)</span>
+
+    <sc-if value="{{ hasSafeZone }}" hint-placeholder-val="{{ false }}">
+      <div style="width: 1px; height: 18px; background: rgba(0,0,0,0.12);"></div>
+      <button onClick="{{ toggleSafeZone }}" style="display: inline-flex; align-items: center; gap: 5px; padding: 0 10px; height: 28px; border: 1px solid rgba(0,0,0,0.15); background: {{ showSafeZone ? '#1a1a1a' : '#fff' }}; color: {{ showSafeZone ? '#fff' : '#1a1a1a' }}; font-size: 11px; font-family: inherit; cursor: pointer; border-radius: 3px; letter-spacing: 0.04em;">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.3">
+          <rect x="1" y="1" width="8" height="8" rx="1" stroke-dasharray="2 1.5"/>
+        </svg>
+        Safe zone
+      </button>
+    </sc-if>
+    <div style="flex: 1;"></div>
+    {{ templatesBar }}
+    <button onClick="{{ openCleanView }}" style="display: inline-flex; align-items: center; gap: 5px; padding: 0 12px; height: 28px; border: none; background: #1a1a1a; color: #fff; font-size: 11px; font-family: inherit; cursor: pointer; border-radius: 3px; letter-spacing: 0.05em; font-weight: 500; flex-shrink: 0;">
+      <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="2.5" width="10" height="7.5" rx="1"/><circle cx="6" cy="6.2" r="1.8"/></svg>
+      Exporter
+    </button>
+  </div>
+
+  {{ cleanOverlay }}
+  {{ templatesManager }}
+
+  <!-- body: canvas + right panel -->
+  <div class="v2-body" style="flex: 1; min-height: 0; display: flex; position: relative;">
+
+    <!-- canvas (full bleed gray) -->
+    <div ref="{{ canvasRef }}" onMouseDown="{{ deselectAll }}" onMouseMove="{{ onCanvasMouseMove }}" class="v2-canvas-area" style="flex: 1; min-height: 0; position: relative; overflow: hidden; cursor: default;">
+      {{ framesMount }}
+      {{ auraToast }}
+      {{ bridgeAnimPanel }}
+    </div>
+
+    <!-- right panel: TYPE + FONDS tabs -->
+    <div class="v2-right-panel {{ panelCollapsedClass }}" style="position: relative; width: {{ panelWidth }}; flex-shrink: 0; background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border-left: 1px solid rgba(0,0,0,0.10); z-index: 20; display: flex; flex-direction: column;">
+
+      <!-- collapse / expand toggle -->
+      <button onClick="{{ togglePanel }}" title="{{ panelToggleTitle }}" style="position: absolute; top: 7px; left: 7px; z-index: 40; width: 26px; height: 26px; border: 1px solid rgba(0,0,0,0.12); background: rgba(255,255,255,0.9); color: #1a1a1a; font-size: 15px; line-height: 1; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 0;">{{ panelToggleIcon }}</button>
+
+      <!-- width cycle -->
+      <button onClick="{{ cyclePanelWidth }}" title="Élargir le panneau" style="position: absolute; top: 7px; left: 38px; z-index: 40; width: 26px; height: 26px; border: 1px solid rgba(0,0,0,0.12); background: rgba(255,255,255,0.9); color: #1a1a1a; font-size: 10px; font-weight: 600; line-height: 1; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 0;">{{ panelWidthLabel }}</button>
+
+      <!-- inner content (hidden when collapsed) -->
+      <div class="v2-panel-inner" style="display: {{ panelInnerDisplay }}; flex: 1; min-height: 0; flex-direction: column; width: 100%;">
+
+      <!-- tab strip -->
+      <div class="v2-tab-strip" style="display: flex; border-bottom: 1px solid rgba(0,0,0,0.10); flex-shrink: 0; padding-left: 70px;">
+        <button onClick="{{ showTypePanel }}" style="flex: 1; padding: 10px 4px 8px; border: none; background: transparent; font-size: 10px; font-weight: 500; font-family: inherit; cursor: pointer; letter-spacing: 0.06em; text-transform: uppercase; color: {{ typePanelFg }}; border-bottom: 2px solid {{ typePanelBorder }}; margin-bottom: -1px;">Type</button>
+        <button onClick="{{ showFondsPanel }}" style="flex: 1; padding: 10px 4px 8px; border: none; background: transparent; font-size: 10px; font-weight: 500; font-family: inherit; cursor: pointer; letter-spacing: 0.06em; text-transform: uppercase; color: {{ fondsPanelFg }}; border-bottom: 2px solid {{ fondsPanelBorder }}; margin-bottom: -1px;">Back</button>
+        <button onClick="{{ showLayersPanel }}" style="flex: 1; padding: 10px 4px 8px; border: none; background: transparent; font-size: 10px; font-weight: 500; font-family: inherit; cursor: pointer; letter-spacing: 0.06em; text-transform: uppercase; color: {{ layersPanelFg }}; border-bottom: 2px solid {{ layersPanelBorder }}; margin-bottom: -1px;">Layer</button>
+      </div>
+
+    <div class="v2-panel-scroll" style="flex: 1; overflow-y: auto; padding: 14px 12px 20px;">
+      <div style="display: {{ typePanelDisplay }};">
+
+      <!-- ═══ A-PONT — top, illustrated ═══ -->
+      <div style="margin-bottom: 16px;">
+        <div style="font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(0,0,0,0.4); margin-bottom: 8px;">A Pont</div>
+
+        <!-- big visual A bridge — click to insert when a Main font is active -->
+        <button onClick="{{ insertInlineA }}" title="Insérer au curseur" style="display: block; width: 100%; position: relative; height: 40px; background: #1a1a1a; border: none; border-radius: 4px; overflow: hidden; cursor: pointer; padding: 0;">
+          <img src="uploads/a-pont-icon-white.png" alt="A pont" style="height: 18px; width: auto; display: block; margin: 0 auto;" />
+        </button>
+      </div>
+      <!-- ═══ /A-PONT ═══ -->
+
+      <div style="font-size: 9px; letter-spacing: 0.10em; text-transform: uppercase; color: rgba(0,0,0,0.3); margin-bottom: 6px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.08);">Display</div>
+
+      <!-- Main1 chip -->
+      <button onClick="{{ applyMain1 }}" style="display: block; width: 100%; padding: 8px 10px 6px; margin-bottom: 5px; border: {{ main1Border }}; background: {{ main1Bg }}; border-radius: 3px; cursor: pointer; text-align: left; overflow: hidden;">
+        <div style="font-family: 'obviously-variable', sans-serif; font-variation-settings: 'ital' 0, 'wght' 803, 'wdth' 121; font-size: 19px; line-height: 1; color: #1a1a1a; transform: scaleY(0.88); transform-origin: bottom left; display: block;">MAIN 1</div>
+      </button>
+
+      <!-- Main2 chip -->
+      <button onClick="{{ applyMain2 }}" style="display: block; width: 100%; padding: 8px 10px 6px; margin-bottom: 5px; border: {{ main2Border }}; background: {{ main2Bg }}; border-radius: 3px; cursor: pointer; text-align: left; overflow: hidden;">
+        <div style="font-family: 'obviously-variable', sans-serif; font-variation-settings: 'ital' 0, 'wght' 699, 'wdth' 121; font-size: 19px; line-height: 1; color: #1a1a1a; transform: scaleY(0.88); transform-origin: bottom left; display: block;">MAIN 2</div>
+      </button>
+
+      <!-- group label: Corps -->
+      <div style="font-size: 9px; letter-spacing: 0.10em; text-transform: uppercase; color: rgba(0,0,0,0.3); margin-top: 11px; margin-bottom: 6px;">Corps</div>
+
+      <!-- Corps 3 — Gras -->
+      <button onClick="{{ applyCorps3 }}" style="display: block; width: 100%; padding: 7px 10px; margin-bottom: 5px; border: {{ corps3Border }}; background: {{ corps3Bg }}; border-radius: 3px; cursor: pointer; text-align: left; overflow: hidden;">
+        <div style="font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; font-weight: 700; font-size: 16px; line-height: 1.1; color: #1a1a1a;">Corps Gras</div>
+      </button>
+
+      <!-- Corps 2 — Regular -->
+      <button onClick="{{ applyCorps2 }}" style="display: block; width: 100%; padding: 7px 10px; margin-bottom: 5px; border: {{ corps2Border }}; background: {{ corps2Bg }}; border-radius: 3px; cursor: pointer; text-align: left; overflow: hidden;">
+        <div style="font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; font-weight: 400; font-size: 16px; line-height: 1.1; color: #1a1a1a;">Corps</div>
+      </button>
+
+      <!-- Corps 1 — Fin -->
+      <button onClick="{{ applyCorps1 }}" style="display: block; width: 100%; padding: 7px 10px; margin-bottom: 5px; border: {{ corps1Border }}; background: {{ corps1Bg }}; border-radius: 3px; cursor: pointer; text-align: left; overflow: hidden;">
+        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 300; font-size: 16px; line-height: 1.1; color: #1a1a1a;">Corps Fin</div>
+      </button>
+
+      <!-- TAILLE -->
+      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.08);">
+        <div style="font-size: 9px; letter-spacing: 0.10em; text-transform: uppercase; color: rgba(0,0,0,0.3); margin-bottom: 10px;">Taille</div>
+
+        <!-- size presets: 3 groups -->
+        <div style="display: grid; gap: 6px; margin-bottom: 10px;">
+
+          <!-- Grand -->
+          <div style="display: grid; grid-template-columns: 24px 1fr 1fr 1fr; align-items: center; gap: 4px;">
+            <span style="font-size: 9px; color: rgba(0,0,0,0.28); letter-spacing: 0.06em;">G</span>
+            <button onClick="{{ setSize72 }}" style="padding: 5px 0; border: {{ sz72Border }}; background: {{ sz72Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: {{ sz72Fg }}; text-align: center;" title="{{ sz72Title }}">72</button>
+            <button onClick="{{ setSize96 }}" style="padding: 5px 0; border: {{ sz96Border }}; background: {{ sz96Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: {{ sz96Fg }}; text-align: center;" title="{{ sz96Title }}">96</button>
+            <button onClick="{{ setSize128 }}" style="padding: 5px 0; border: {{ sz128Border }}; background: {{ sz128Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: {{ sz128Fg }}; text-align: center;" title="{{ sz128Title }}">128</button>
+          </div>
+
+          <!-- separator jump -->
+          <div style="height: 1px; background: rgba(0,0,0,0.06); margin: 0 24px;"></div>
+
+          <!-- Moyen -->
+          <div style="display: grid; grid-template-columns: 24px 1fr 1fr 1fr; align-items: center; gap: 4px;">
+            <span style="font-size: 9px; color: rgba(0,0,0,0.28); letter-spacing: 0.06em;">M</span>
+            <button onClick="{{ setSize28 }}" style="padding: 5px 0; border: {{ sz28Border }}; background: {{ sz28Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: {{ sz28Fg }}; text-align: center;" title="{{ sz28Title }}">28</button>
+            <button onClick="{{ setSize36 }}" style="padding: 5px 0; border: {{ sz36Border }}; background: {{ sz36Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: {{ sz36Fg }}; text-align: center;" title="{{ sz36Title }}">36</button>
+            <button onClick="{{ setSize48 }}" style="padding: 5px 0; border: {{ sz48Border }}; background: {{ sz48Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: {{ sz48Fg }}; text-align: center;" title="{{ sz48Title }}">48</button>
+          </div>
+
+          <!-- separator jump -->
+          <div style="height: 1px; background: rgba(0,0,0,0.06); margin: 0 24px;"></div>
+
+          <!-- Petit -->
+          <div style="display: grid; grid-template-columns: 24px 1fr 1fr 1fr; align-items: center; gap: 4px;">
+            <span style="font-size: 9px; color: rgba(0,0,0,0.28); letter-spacing: 0.06em;">P</span>
+            <button onClick="{{ setSize11 }}" style="padding: 5px 0; border: {{ sz11Border }}; background: {{ sz11Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: {{ sz11Fg }}; text-align: center;" title="{{ sz11Title }}">11</button>
+            <button onClick="{{ setSize14 }}" style="padding: 5px 0; border: {{ sz14Border }}; background: {{ sz14Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: {{ sz14Fg }}; text-align: center;" title="{{ sz14Title }}">14</button>
+            <button onClick="{{ setSize18 }}" style="padding: 5px 0; border: {{ sz18Border }}; background: {{ sz18Bg }}; border-radius: 3px; cursor: pointer; font-size: 10px; font-family: inherit; color: {{ sz18Fg }}; text-align: center;" title="{{ sz18Title }}">18</button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- COULEUR -->
+      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.08);">
+        <div style="font-size: 9px; letter-spacing: 0.10em; text-transform: uppercase; color: rgba(0,0,0,0.3); margin-bottom: 10px;">Couleur</div>
+
+        <!-- noir / blanc toggle -->
+        <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+          <button onClick="{{ setBlack }}" style="flex: 1; height: 36px; border: {{ isBlack ? '2px solid #2D7CF0' : '1px solid rgba(0,0,0,0.15)' }}; background: #000; border-radius: 3px; cursor: pointer;"></button>
+          <button onClick="{{ setWhite }}" style="flex: 1; height: 36px; border: {{ isWhite ? '2px solid #2D7CF0' : '1px solid rgba(0,0,0,0.15)' }}; background: #fff; border-radius: 3px; cursor: pointer;"></button>
+        </div>
+
+        <!-- opacité -->
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 10px; color: rgba(0,0,0,0.4); flex-shrink: 0; width: 48px;">Opacité</span>
+          <input type="range" min="0" max="100" step="1" value="{{ selOpacity }}" onInput="{{ onOpacityChange }}"
+            style="flex: 1; height: 2px; accent-color: #1a1a1a; cursor: pointer;" />
+          <input type="number" min="0" max="100" step="1" value="{{ selOpacity }}" onChange="{{ onOpacityChange }}"
+            style="width: 40px; border: 1px solid rgba(0,0,0,0.15); border-radius: 3px; padding: 4px 5px; font-size: 12px; font-family: inherit; text-align: right; outline: none; background: #fff; color: #1a1a1a;" />
+          <span style="font-size: 10px; color: rgba(0,0,0,0.35);">%</span>
+        </div>
+      </div>
+
+      <!-- no selection hint -->
+      <div style="font-size: 10px; color: rgba(0,0,0,0.3); margin-top: 8px; line-height: 1.5; font-style: italic;">{{ fontHint }}</div>
+
+      </div><!-- /typePanelDisplay wrapper -->
+
+      {{ fondsPanel }}
+
+      {{ layersPanel }}
+
+    </div><!-- /scrollable area -->
+
+    </div><!-- /inner content -->
+
+    {{ bgControls }}
+
+    </div><!-- /right panel outer -->
+
+  </div><!-- /body grid -->
+
+</div><!-- /app -->
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;100%&quot;, &quot;height&quot;: &quot;100%&quot;}}">
+class Component extends DCLogic {
+  // ── safe zones — légèrement exagérées pour plus de sécurité ──
+  // Toutes les marges sont volontairement un peu plus grandes que le strict minimum
+  SAFE_ZONES = {
+    // IG Post 4:5 (1080×1350)
+    // Le feed crop les posts anciens sur grille 1:1 à 135px haut/bas
+    // On ajoute 20% de marge supplémentaire par sécurité
+    "ig-post": [
+      {
+        t: 162, b: 162, l: 80, r: 80,
+        color: "rgba(255,130,0,0.7)",
+        fill:  "rgba(255,130,0,0.04)",
+        label: "Ancien crop grille 1:1 (+20%)",
+      },
+      {
+        t: 80,  b: 80,  l: 80, r: 80,
+        color: "rgba(45,124,240,0.7)",
+        fill:  "rgba(45,124,240,0.04)",
+        label: "Safe zone générale",
+      },
+    ],
+    // IG Carré (1080×1080)
+    "ig-square": [
+      {
+        t: 80, b: 80, l: 80, r: 80,
+        color: "rgba(45,124,240,0.7)",
+        fill:  "rgba(45,124,240,0.04)",
+        label: "Safe zone",
+      },
+    ],
+    // Story / Reel (1080×1920)
+    // UI IG : username haut ~90px, barre basse ~250px, icônes droite ~120px
+    // On exagère généreusement
+    "ig-story": [
+      {
+        t: 200, b: 320, l: 80, r: 140,
+        color: "rgba(45,124,240,0.7)",
+        fill:  "rgba(45,124,240,0.04)",
+        label: "Safe · UI story (username, barre reply, icônes)",
+      },
+      {
+        t: 300, b: 400, l: 80, r: 140,
+        color: "rgba(220,50,50,0.65)",
+        fill:  "rgba(220,50,50,0.04)",
+        label: "Zone critique reels (boutons + barre texte)",
+      },
+    ],
+    // LinkedIn post paysage (1200×628)
+    "li-post": [
+      {
+        t: 100, b: 100, l: 100, r: 100,
+        color: "rgba(45,124,240,0.7)",
+        fill:  "rgba(45,124,240,0.04)",
+        label: "Safe zone LinkedIn (+25%)",
+      },
+    ],
+    // LinkedIn portrait (1080×1350)
+    "li-portrait": [
+      {
+        t: 100, b: 100, l: 80, r: 80,
+        color: "rgba(45,124,240,0.7)",
+        fill:  "rgba(45,124,240,0.04)",
+        label: "Safe zone LI portrait",
+      },
+    ],
+    // Affiche A4 (2480×3508 @ 300dpi)
+    // Bleed standard 3mm = 35px + texte à 10mm min = 118px → on prend 200px
+    "affiche-a4": [
+      {
+        t: 200, b: 200, l: 200, r: 200,
+        color: "rgba(45,124,240,0.7)",
+        fill:  "rgba(45,124,240,0.04)",
+        label: "Zone imprimable sûre (≈10mm marge)",
+      },
+    ],
+    // Affiche A3 (3508×4961)
+    "affiche-a3": [
+      {
+        t: 280, b: 280, l: 280, r: 280,
+        color: "rgba(45,124,240,0.7)",
+        fill:  "rgba(45,124,240,0.04)",
+        label: "Zone imprimable sûre (≈10mm marge)",
+      },
+    ],
+    "affiche-land": [
+      {
+        t: 280, b: 280, l: 280, r: 280,
+        color: "rgba(45,124,240,0.7)",
+        fill:  "rgba(45,124,240,0.04)",
+        label: "Zone imprimable sûre",
+      },
+    ],
+    "carre-40": [
+      {
+        t: 280, b: 280, l: 280, r: 280,
+        color: "rgba(45,124,240,0.7)",
+        fill:  "rgba(45,124,240,0.04)",
+        label: "Marge sûre",
+      },
+    ],
+  };
+
+  // lazy-load html2canvas only when needed (keeps initial load fast on mobile)
+  _ensureH2C = () => {
+    if (window.html2canvas) return Promise.resolve();
+    if (this._h2cPromise) return this._h2cPromise;
+    this._h2cPromise = new Promise((res, rej) => {
+      const s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+      s.onload = () => res();
+      s.onerror = () => rej(new Error("html2canvas load failed"));
+      document.head.appendChild(s);
+    });
+    return this._h2cPromise;
+  };
+
+  // ── PNG export ──
+  openCleanView  = () => {
+    // pull the live text into the state first (the export view renders from it)
+    this.setState({ frames: this._liveFrames(), cleanView: true, selectedId: null });
+    this._ensureExportFaces();
+  };
+  closeCleanView = () => this.setState({ cleanView: false });
+
+  // wait until the export view is painted with its export fonts
+  _cleanReady = () => this._ensureExportFaces()
+    .then(() => (document.fonts && document.fonts.ready) ? document.fonts.ready : null)
+    .then(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+
+  // render to a PNG and open it in a new browser tab (savable / shareable)
+  openInNewTab = () => {
+    this._ensureH2C()
+      .then(() => this._cleanReady())
+      .then(() => {
+        const { pageLayout } = this.state;
+        if (!pageLayout || !this._cleanArtboard) return;
+        return window.html2canvas(this._cleanArtboard, {
+          scale: 1, useCORS: true, allowTaint: true, onclone: this._h2cOnClone,
+          backgroundColor: "#ffffff", logging: false,
+          width: pageLayout.fmtW, height: pageLayout.fmtH,
+          windowWidth: pageLayout.fmtW, windowHeight: pageLayout.fmtH,
+        }).then((canvas) => {
+          canvas.toBlob((blob) => {
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            window.open(url, "_blank");
+          }, "image/png");
+        });
+      })
+      .catch((err) => { console.error(err); alert("Impossible d'ouvrir le rendu. Utilise une capture d'écran."); });
+  };
+
+  _escHtml(s) { return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  // Scale inline A-pont SVGs by k (used when a composition is mapped onto another format,
+  // and to migrate old screen-px templates).
+  _scaleBridgesInHtml(html, k) {
+    if (!k || k === 1 || !html || html.indexOf("v2-inline-bridge") < 0) return html;
+    const tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    tmp.querySelectorAll(".v2-inline-bridge").forEach((b) => {
+      const sz = parseFloat(b.dataset.size);
+      if (sz) b.dataset.size = String(Math.round(sz * k * 1000) / 1000);
+      const svg = b.querySelector("svg");
+      if (svg) {
+        const w = parseFloat(svg.getAttribute("width")), h = parseFloat(svg.getAttribute("height"));
+        if (w) svg.setAttribute("width", String(Math.round(w * k * 1000) / 1000));
+        if (h) svg.setAttribute("height", String(Math.round(h * k * 1000) / 1000));
+      }
+    });
+    return tmp.innerHTML;
+  }
+
+  // HTML of a frame for the export view: no editing handles, and the A-pont colour written
+  // explicitly (html2canvas renders the SVG on its own, where "currentColor" would turn black).
+  _cleanHtml(html, f) {
+    if (!html || html.indexOf("v2-inline-bridge") < 0) return html;
+    const tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    tmp.querySelectorAll(".v2-bridge-ext-handle").forEach((h) => h.remove());
+    tmp.querySelectorAll(".v2-inline-bridge").forEach((b) => b.removeAttribute("contenteditable"));
+    tmp.querySelectorAll(".v2-inline-bridge path").forEach((p) => {
+      if ((p.getAttribute("fill") || "currentColor") === "currentColor") p.setAttribute("fill", f.color || "#000000");
+    });
+    return tmp.innerHTML;
+  }
+
+  // ONE text style for the editor AND the export: same font, size, line height, wrapping,
+  // squish (origin top-left, so the box height never moves the text). WYSIWYG by construction.
+  LINE_HEIGHT = 1.05;
+  _textStyle(f, opts) {
+    const key = this.FONTS[f.font] ? f.font : "none";
+    const fnt = this.FONTS[key];
+    const useExportFace = !!(opts && opts.exportFaces && (key === "main1" || key === "main2"));
+    return {
+      fontFamily:            useExportFace ? '"gapx-' + key + '", ' + fnt.fontFamily : fnt.fontFamily,
+      fontVariationSettings: useExportFace ? "normal" : fnt.fontVariationSettings,
+      fontWeight:            fnt.fontWeight || 400,
+      fontSize:              (f.fontSize || 16) + "px",
+      lineHeight:            fnt.lineHeight || this.LINE_HEIGHT,
+      color:                 f.color || "#000000",
+      opacity:               (f.opacity !== undefined ? f.opacity : 100) / 100,
+      transform:             fnt.transform,
+      transformOrigin:       fnt.transformOrigin,
+      whiteSpace:            "pre-wrap",
+      wordBreak:             "break-word",
+    };
+  }
+
+  // ── Export fonts ──
+  // html2canvas draws text with the canvas API, which ignores font-variation-settings:
+  // Obviously came out at wdth 100 instead of 121 (12,5 % too narrow → gaps before the
+  // periods, misaligned A-ponts). We register, for the export only, one face per role
+  // whose descriptors pin the axes (weight 803 / stretch 121 %): the browser clamps to
+  // them, so the canvas draws exactly what the screen shows. Checked against the DOM
+  // width; if anything fails we keep the normal font (old behaviour).
+  _axesOf(fvs) {
+    const o = {};
+    String(fvs || "").replace(/["']?(\w{4})["']?\s+(-?[\d.]+)/g, (_, k, v) => { o[k] = parseFloat(v); return ""; });
+    return o;
+  }
+  // the export face must give the same width as the editor's font in the DOM (export view)
+  // AND on a canvas (html2canvas) — otherwise (some browser that does not pin the axes)
+  // we do not use it at all
+  _exportFaceMatches(key) {
+    try {
+      const fnt = this.FONTS[key];
+      const txt = "PAIRING IS CARING éditer élargir";
+      const domWidth = (family, fvs) => {
+        const span = document.createElement("span");
+        span.textContent = txt;
+        span.style.cssText = "position:absolute;left:-99999px;top:0;white-space:nowrap;font-size:100px;" +
+          "font-family:" + family + ";font-weight:" + fnt.fontWeight + ";font-variation-settings:" + fvs + ";";
+        document.body.appendChild(span);
+        const w = span.getBoundingClientRect().width;
+        span.remove();
+        return w;
+      };
+      const domW = domWidth(fnt.fontFamily, fnt.fontVariationSettings);
+      const domX = domWidth('"gapx-' + key + '", ' + fnt.fontFamily, "normal");
+      const ctx = document.createElement("canvas").getContext("2d");
+      ctx.font = fnt.fontWeight + ' 100px "gapx-' + key + '"';
+      const cw = ctx.measureText(txt).width;
+      const near = (a, b) => Math.abs(a - b) / b < 0.005;
+      return domW > 0 && near(cw, domW) && near(domX, domW);
+    } catch (e) { return false; }
+  }
+  _ensureExportFaces = () => {
+    if (this._exportFacesP) return this._exportFacesP;
+    this._exportFacesP = (async () => {
+      if (!window.FontFace || !document.fonts) return false;
+      const link = document.querySelector('link[href*="typekit"]');
+      if (!link) return false;
+      const css = await fetch(link.href).then((r) => (r.ok ? r.text() : ""));
+      const blocks = css.match(/@font-face\s*\{[^}]*\}/g) || [];
+      const blk = blocks.find((b) => /font-family:\s*["']?obviously-variable["']?\s*;/.test(b));
+      if (!blk) return false;
+      const m = blk.match(/url\(\s*["']?([^"')]+)["']?\s*\)\s*format\(\s*["']?woff2/) || blk.match(/url\(\s*["']?([^"')]+)["']?\s*\)/);
+      if (!m) return false;
+      const src = 'url("' + m[1] + '")';
+      const defs = ["main1", "main2"].map((key) => {
+        const ax = this._axesOf(this.FONTS[key].fontVariationSettings);
+        return { family: "gapx-" + key, src, desc: { weight: String(ax.wght || 400), stretch: (ax.wdth || 100) + "%", style: "normal" } };
+      });
+      const added = defs.map((d) => { const ff = new FontFace(d.family, d.src, d.desc); document.fonts.add(ff); return ff; });
+      await Promise.all(added.map((f) => f.load()));
+      if (!this._exportFaceMatches("main1") || !this._exportFaceMatches("main2")) {
+        added.forEach((f) => document.fonts.delete(f));
+        console.warn("[export] polices d'export : écart de chasse détecté — rendu normal conservé.");
+        return false;
+      }
+      this._exportFaceDefs = defs;
+      return true;
+    })().catch((e) => { console.warn("[export] polices d'export indisponibles :", e); return false; })
+      .then((ok) => { if (ok && !this.state.exportFacesReady) this.setState({ exportFacesReady: true }); return ok; });
+    return this._exportFacesP;
+  };
+
+  // html2canvas lays the text out again in a CLONE of the page (an iframe): the export
+  // faces must exist there too, or the clone falls back to the narrow font and the
+  // wide glyphs are drawn on top of each other.
+  _h2cOnClone = (doc) => {
+    const defs = this._exportFaceDefs;
+    const win = doc && doc.defaultView;
+    if (!defs || !win || !win.FontFace || !doc.fonts) return;
+    const faces = defs.map((d) => { const ff = new win.FontFace(d.family, d.src, d.desc); doc.fonts.add(ff); return ff; });
+    return Promise.all(faces.map((f) => f.load())).then(() => doc.fonts.ready).catch(() => {});
+  };
+
+  // build a chrome-free, native-resolution clone of the artboard for screenshotting
+  renderCleanOverlay() {
+    if (!this.state.cleanView) return null;
+    const { pageLayout, format } = this.state;
+    if (!pageLayout) return null;
+
+    const nativeW = pageLayout.fmtW;
+    const nativeH = pageLayout.fmtH;
+
+    // background image (relative to page origin)
+    const { bgImages, bgSelected, bgScale, bgRotate, bgPosX, bgPosY } = this.state;
+    const allBgPool = [...this.BUILT_IN_BG, ...bgImages];
+    const activeBgImg = allBgPool.find(b => b.id === bgSelected);
+    const bgNode = activeBgImg ? React.createElement("div", {
+      style: { position: "absolute", inset: 0, overflow: "hidden", zIndex: 0 }
+    },
+      React.createElement("img", {
+        src: activeBgImg.url, crossOrigin: "anonymous",
+        style: {
+          position: "absolute", left: bgPosX + "%", top: bgPosY + "%",
+          width: bgScale + "%", height: "auto",
+          transform: "translate(-" + bgPosX + "%, -" + bgPosY + "%) rotate(" + bgRotate + "deg)",
+          transformOrigin: "center center", maxWidth: "none",
+        }
+      })
+    ) : null;
+
+    // frames: the document is already in native px → same boxes, same text style as the editor
+    const exportFaces = !!this.state.exportFacesReady;
+    const frameNodes = this.state.frames.map((f, _fi) => {
+      if (f.type === "a-bridge") {
+        const pe = f.pe || 1, size = f.size || 90;
+        return React.createElement("div", {
+          key: "clean-" + f.id, "data-clean-id": f.id,
+          style: { position: "absolute", left: f.x + "px", top: f.y + "px", zIndex: _fi + 1 },
+        }, React.createElement("svg", { viewBox: this.aViewBox(pe), width: this.aBridgePxW(pe, size), height: size, preserveAspectRatio: "none", style: { display: "block", overflow: "visible" } },
+          React.createElement("path", { d: this.buildAPath(pe), fill: f.color || "#1a1a1a", fillRule: "evenodd" })));
+      }
+      const liveEl = this._editableRefs[f.id];
+      const html = this._cleanHtml((liveEl && liveEl.innerHTML) || f.html || this._escHtml(f.text), f);
+      return React.createElement("div", {
+        key: "clean-" + f.id, "data-clean-id": f.id,
+        style: { position: "absolute", left: f.x + "px", top: f.y + "px", width: f.w + "px", zIndex: _fi + 1 },
+      },
+        React.createElement("div", {
+          dangerouslySetInnerHTML: { __html: html },
+          style: this._textStyle(f, { exportFaces }),
+        })
+      );
+    });
+
+    // the artboard, rendered at native px
+    // animated layers — so the clean view shows the real final result
+    const cleanShader = this.state.shaderBg ? React.createElement("iframe", {
+      key: "clean-shader", ref: (el) => { this._cleanShaderFrame = el; }, className: "v2-clean-anim",
+      src: this._shaderUrl(this.state.shaderBg), scrolling: "no",
+      style: { position: "absolute", inset: 0, width: "100%", height: "100%", border: "none", pointerEvents: "none", zIndex: 0, background: "transparent" }
+    }) : null;
+    const cleanAura = this.state.auraOn ? React.createElement("iframe", {
+      key: "clean-aura", ref: (el) => { this._cleanAuraFrame = el; }, className: "v2-clean-anim",
+      src: "uploads/aura-anim.html", scrolling: "no",
+      style: { position: "absolute", inset: 0, width: "100%", height: "100%", border: "none", pointerEvents: "none", zIndex: 0, background: "transparent" }
+    }) : null;
+
+    const artboard = React.createElement("div", {
+      ref: (el) => { this._cleanArtboard = el; },
+      style: {
+        position: "absolute", top: 0, left: 0,
+        width: nativeW + "px", height: nativeH + "px",
+        background: this.state.bgColor || "#ffffff", overflow: "hidden",
+      }
+    }, bgNode, cleanShader, cleanAura, ...frameNodes);
+
+    const _recFit = this.state.screenRecording
+      ? Math.max(0.1, Math.min((window.innerWidth - 80) / nativeW, (window.innerHeight - 120) / nativeH, 1))
+      : 1;
+    const sizer = React.createElement("div", {
+      style: { position: "relative", width: nativeW + "px", height: nativeH + "px", flexShrink: 0,
+               boxShadow: "0 4px 24px rgba(0,0,0,0.25)",
+               transform: _recFit !== 1 ? "scale(" + _recFit + ")" : "none",
+               transformOrigin: "top center" }
+    }, artboard);
+
+    const fmt = this.FORMATS.find(f => f.id === format);
+
+    // top instruction bar
+    const bar = React.createElement("div", {
+      style: {
+        position: "sticky", top: 0, left: 0, right: 0, zIndex: 5,
+        display: "flex", alignItems: "center", gap: "12px",
+        padding: "10px 16px", background: "rgba(20,20,20,0.92)",
+        backdropFilter: "blur(8px)", color: "#fff",
+        fontSize: "12px", fontFamily: "-apple-system, sans-serif",
+      }
+    },
+      React.createElement("button", {
+        onClick: this.closeCleanView,
+        title: "Revenir à l'éditeur (Échap)",
+        style: {
+          display: "inline-flex", alignItems: "center", gap: "5px",
+          padding: "0 12px", height: "28px", border: "1px solid rgba(255,255,255,0.3)",
+          background: "transparent", color: "#fff", fontSize: "11px", fontWeight: 500,
+          fontFamily: "inherit", cursor: "pointer", borderRadius: "3px", whiteSpace: "nowrap",
+        }
+      },
+        React.createElement("svg", { width: 11, height: 11, viewBox: "0 0 11 11", fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round", strokeLinejoin: "round" },
+          React.createElement("path", { d: "M6.5 2L3 5.5l3.5 3.5" })),
+        "Retour"
+      ),
+      React.createElement("span", { style: { fontWeight: 600 } },
+        (fmt ? fmt.label + " · " : "") + nativeW + "×" + nativeH + " px"),
+      React.createElement("span", { style: { color: "rgba(255,255,255,0.7)" } },
+        "Capture cet écran — ⌘⇧4 (Mac) · ⊞+Maj+S (Windows). Écran Retina = 2× résolution."),
+      React.createElement("div", { style: { flex: 1 } }),
+      React.createElement("button", {
+        onClick: this.openInNewTab,
+        title: "Ouvrir le rendu dans un nouvel onglet (clic droit → Enregistrer)",
+        style: {
+          display: "inline-flex", alignItems: "center", gap: "5px",
+          padding: "0 12px", height: "28px", border: "1px solid rgba(255,255,255,0.3)",
+          background: "transparent", color: "#fff", fontSize: "11px",
+          fontFamily: "inherit", cursor: "pointer", borderRadius: "3px", whiteSpace: "nowrap",
+        }
+      },
+        React.createElement("svg", { width: 11, height: 11, viewBox: "0 0 12 12", fill: "none", stroke: "currentColor", strokeWidth: 1.4, strokeLinecap: "round", strokeLinejoin: "round" },
+          React.createElement("path", { d: "M4.5 2H2.5A0.5 0.5 0 002 2.5v7a0.5 0.5 0 00.5.5h7a0.5 0.5 0 00.5-.5v-2M7 2h3v3M10 2L5.5 6.5" })),
+        "Nouvel onglet"
+      ),
+      React.createElement("button", {
+        onClick: this.exportPng,
+        title: "Télécharger un PNG (la largeur de police peut différer légèrement)",
+        style: {
+          padding: "0 12px", height: "28px", border: "1px solid rgba(255,255,255,0.3)",
+          background: "transparent", color: "#fff", fontSize: "11px",
+          fontFamily: "inherit", cursor: "pointer", borderRadius: "3px", whiteSpace: "nowrap",
+        }
+      }, "Télécharger PNG"),
+      React.createElement("button", {
+        onClick: this.exportVideo,
+        title: "Enregistrer une vidéo de 10 s (fond animé + texte)",
+        style: {
+          padding: "0 12px", height: "28px", border: "1px solid rgba(255,255,255,0.3)",
+          background: this.state.recording ? "rgba(232,168,124,0.25)" : "transparent",
+          color: "#fff", fontSize: "11px",
+          fontFamily: "inherit", cursor: this.state.recording ? "default" : "pointer", borderRadius: "3px", whiteSpace: "nowrap",
+        }
+      }, this.state.recording ? ("Enregistrement… " + this.state.recordPct + "%") : "Vidéo 10 s"),
+      React.createElement("button", {
+        onClick: this.toggleScreenRecord,
+        title: "Enregistrer l'écran — capture la page LIVE (A-pont animé, shader, aura, vraie typo). Dans le sélecteur, choisis « Cet onglet ».",
+        style: {
+          padding: "0 12px", height: "28px", border: "1px solid rgba(255,255,255,0.3)",
+          background: this.state.screenRecording ? "rgba(232,92,92,0.30)" : "transparent",
+          color: "#fff", fontSize: "11px",
+          fontFamily: "inherit", cursor: "pointer", borderRadius: "3px", whiteSpace: "nowrap",
+        }
+      }, this.state.screenRecording ? "⏹ Stop l'enreg." : "⏺ Rec écran"),
+      React.createElement("button", {
+        onClick: this.closeCleanView,
+        style: {
+          padding: "0 14px", height: "28px", border: "none",
+          background: "#fff", color: "#1a1a1a", fontSize: "11px", fontWeight: 600,
+          fontFamily: "inherit", cursor: "pointer", borderRadius: "3px", whiteSpace: "nowrap",
+        }
+      }, "Fermer")
+    );
+
+    return React.createElement("div", {
+      onKeyDown: (e) => { if (e.key === "Escape") this.closeCleanView(); },
+      style: {
+        position: "fixed", inset: 0, zIndex: 9999,
+        background: "#5a5a5a", overflow: "auto",
+        display: "flex", flexDirection: "column",
+      }
+    },
+      bar,
+      React.createElement("div", {
+        style: { flex: 1, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px" }
+      }, sizer)
+    );
+  }
+
+  toggleScreenRecord = async () => {
+    // Screen recording captures the LIVE page (A-pont animation, WebGL shader, aura, real
+    // variable font) — everything html2canvas / drawImage cannot. No fidelity loss.
+    if (this._screenRec && this._screenRec.state === "recording") { this._screenRec.stop(); return; }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+      alert("Ton navigateur ne supporte pas l'enregistrement d'écran (getDisplayMedia).");
+      return;
+    }
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: false, preferCurrentTab: true });
+    } catch (e) { return; } // user cancelled the picker
+    // Fit the whole poster into view, then crop the self-capture to the artboard element
+    // (Region Capture) so the recorded file is JUST the poster — no window chrome / margins.
+    this.setState({ screenRecording: true });
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const track = stream.getVideoTracks()[0];
+    let cropped = false;
+    try {
+      if (window.CropTarget && track && track.cropTo && this._cleanArtboard) {
+        const ct = await window.CropTarget.fromElement(this._cleanArtboard);
+        await track.cropTo(ct);
+        cropped = true;
+      }
+    } catch (e) { cropped = false; }
+    const mime = this._pickVideoMime();
+    let rec;
+    try { rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 12000000 }); }
+    catch (e) { rec = new MediaRecorder(stream); }
+    this._screenRec = rec;
+    const chunks = [];
+    rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    rec.onstop = () => {
+      try { stream.getTracks().forEach((t) => t.stop()); } catch (e) {}
+      const ext = (mime.indexOf("mp4") >= 0) ? "mp4" : "webm";
+      this._downloadBlob(new Blob(chunks, { type: mime }), this._videoFileName(this.state.format, ext));
+      this._screenRec = null;
+      this.setState({ screenRecording: false });
+    };
+    if (track) track.addEventListener("ended", () => { if (rec.state === "recording") rec.stop(); });
+    rec.start();
+    if (!cropped) console.warn("Region Capture (cropTo) indisponible — capture plein onglet, à recadrer.");
+  };
+
+  exportPng = () => {
+    // the PNG is always rendered from the export view (native px, no editing chrome)
+    if (!this.state.cleanView) this.openCleanView();
+    this._ensureH2C()
+      .then(() => this._cleanReady())
+      .then(() => this._doExportPng())
+      .catch((err) => {
+        console.error(err);
+        alert("Impossible de charger l'outil d'export (réseau ?). Réessaie.");
+      });
+  };
+
+  _doExportPng = () => {
+    const { pageLayout, format } = this.state;
+    if (!pageLayout) { alert("Choisis un format d'abord."); return; }
+    if (!this._cleanArtboard) { alert("Vue d'export indisponible. Réessaie."); return; }
+    return window.html2canvas(this._cleanArtboard, {
+      scale: 1,
+      useCORS: true, allowTaint: true, onclone: this._h2cOnClone,
+      backgroundColor: "#ffffff", logging: false,
+      width: pageLayout.fmtW, height: pageLayout.fmtH,
+      windowWidth: pageLayout.fmtW, windowHeight: pageLayout.fmtH,
+    }).then((canvas) => this._download(canvas, format))
+      .catch((err) => { console.error("Export PNG failed:", err); alert("Export PNG impossible. Utilise une capture d'écran."); });
+  };
+
+  _download = (canvas, format) => {
+    const link = document.createElement("a");
+    const fmt  = this.FORMATS.find(f => f.id === format);
+    const name = (fmt && fmt.label ? fmt.label.replace(/[^a-z0-9]/gi, "-").toLowerCase() : "export") + "-" + Date.now() + ".png";
+    link.download = name;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  };
+
+  // ── 10s video export ──
+  // Routes to WebCodecs (real MP4/H.264, social-ready) when available,
+  // else falls back to MediaRecorder (WebM/MP4 depending on browser).
+  _pickVideoMime() {
+    const cands = ["video/mp4;codecs=h264", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
+    for (const m of cands) { try { if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m; } catch (e) {} }
+    return "video/webm";
+  }
+
+  exportVideo = () => {
+    if (this.state.recording) return;
+    const { pageLayout, format, bgColor } = this.state;
+    if (!pageLayout) { alert("Choisis un format d'abord."); return; }
+    if (!window.MediaRecorder && !window.VideoEncoder) { alert("Ton navigateur ne supporte pas l'enregistrement vidéo."); return; }
+
+    if (!this.state.cleanView) this.openCleanView();
+    this.setState({ recording: true, recordPct: 0 });
+    this._ensureH2C()
+      .then(() => this._cleanReady())
+      .then(() => this._doExportVideo(pageLayout, format, bgColor))
+      .catch((err) => { console.error(err); alert("Export vidéo impossible : " + (err && err.message)); this.setState({ recording: false }); });
+  };
+
+  _videoFileName(format, ext) {
+    const fmt = this.FORMATS.find((f) => f.id === format);
+    return (fmt && fmt.label ? fmt.label.replace(/[^a-z0-9]/gi, "-").toLowerCase() : "video") + "-" + Date.now() + "." + ext;
+  }
+  _downloadBlob(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+
+  // longest side of an exported video (H.264 levels stop around 4096 px wide; social video is
+  // 1080×1920 at most) — big poster formats are scaled down, social formats are untouched
+  VIDEO_MAX_SIDE = 2160;
+
+  _doExportVideo = (pageLayout, format, bgColor) => {
+    const outW = pageLayout.fmtW, outH = pageLayout.fmtH;
+    const vs = Math.min(1, this.VIDEO_MAX_SIDE / Math.max(outW, outH));
+    const even = (v) => Math.max(2, Math.round(v / 2) * 2);
+    const vidW = even(outW * vs), vidH = even(outH * vs);
+    const art = this._cleanArtboard;
+    if (!art) { this.setState({ recording: false }); alert("Vue d'export indisponible. Réessaie."); return Promise.resolve(); }
+
+    // STATIC layer = the export view itself (native px, export fonts), minus what moves:
+    // shader / aura iframes and the page colour are hidden, they are composited live below.
+    const anim = [...art.querySelectorAll(".v2-clean-anim")];
+    anim.forEach((el) => { el._pv = el.style.visibility; el.style.visibility = "hidden"; });
+    const prevBg = art.style.background;
+    art.style.background = "transparent";
+    const artRect = art.getBoundingClientRect();
+    const fit = (artRect.width / outW) || 1;      // 1 unless the view is shrunk to fit
+
+    // ── A-pont live layer ── reserve each ANIMATED bridge's slot (freeze it at its widest pe,
+    // hide it in the snapshot) and record its geometry, so we redraw it ANIMATED on every
+    // composite frame. Fast, one-click; the surrounding text stays put (no reflow, as agreed).
+    const aBridges = [];
+    const _bridgesHidden = [];
+    this._exportFrozenBridges = new Set();
+    try {
+      const _anims = this.state.bridgeAnims || {};
+      art.querySelectorAll(".v2-inline-bridge").forEach((b) => {
+        const id = b.dataset.bridgeId, cfg = id && _anims[id];
+        if (!cfg || !cfg.animate) return;
+        this._exportFrozenBridges.add(id);
+        const size = parseFloat(b.dataset.size) || 90;
+        this.setBridgePeVisual(b, cfg.pe1);           // reserve the slot at the widest pe
+        const svg = b.querySelector("svg") || b;
+        const r = svg.getBoundingClientRect();
+        const fr = b.closest("[data-clean-id]");
+        const txt = fr && fr.firstElementChild;
+        aBridges.push({
+          nx: (r.left - artRect.left) / fit,
+          ny: (r.top  - artRect.top)  / fit,
+          sizeNative: size,
+          drawH: r.height / fit,                      // includes the Main squish (scaleY 0.88)
+          alpha: txt ? (parseFloat(getComputedStyle(txt).opacity) || 1) : 1,
+          pe0: cfg.pe0, pe1: cfg.pe1, dur: cfg.dur,
+          color: (svg.querySelector && svg.querySelector("path") && svg.querySelector("path").getAttribute("fill")) || getComputedStyle(b).color || "#000",
+        });
+        b._pvis = b.style.visibility;
+        b.style.visibility = "hidden";
+        _bridgesHidden.push(b);
+      });
+    } catch (e) {}
+
+    const restore = () => {
+      anim.forEach((el) => { el.style.visibility = el._pv || ""; });
+      art.style.background = prevBg;
+      _bridgesHidden.forEach((b) => { b.style.visibility = b._pvis || ""; });
+      this._exportFrozenBridges = null;
+    };
+
+    return window.html2canvas(art, {
+      scale: vs, width: outW, height: outH, windowWidth: outW, windowHeight: outH,
+      backgroundColor: null, useCORS: true, allowTaint: true, logging: false, onclone: this._h2cOnClone,
+    }).catch((e) => { restore(); throw e; }).then((textCanvas) => {
+      restore();
+
+      const auraCanvas   = (this._cleanAuraFrame   || this._auraFrame)   && ((this._cleanAuraFrame   || this._auraFrame).contentDocument)   && (this._cleanAuraFrame   || this._auraFrame).contentDocument.querySelector("#c");
+      const shaderCanvas = (this._cleanShaderFrame || this._shaderFrame) && ((this._cleanShaderFrame || this._shaderFrame).contentDocument) && (this._cleanShaderFrame || this._shaderFrame).contentDocument.querySelector("#root canvas");
+
+      const comp = document.createElement("canvas");
+      comp.width = vidW; comp.height = vidH;
+      const ctx = comp.getContext("2d");
+
+      // ── Programmed virtual cursor to drive the auras during the recording ──
+      // The aura PHYSICS is left strictly untouched: we only feed it a moving
+      // cursor through the postMessage protocol it already supports, so the two
+      // auras animate for the whole clip without any real mouse movement.
+      // The cursor sweeps back-and-forth along an inclined axis. Angle (deg) and
+      // number of sweeps are tweakable live via window.__auraExportAngleDeg /
+      // window.__auraExportSweeps (defaults below).
+      const _auraFrame = this._cleanAuraFrame || this._auraFrame;
+      try { _auraFrame && _auraFrame.contentWindow && _auraFrame.contentWindow.postMessage({ type: "stage", value: 0 }, "*"); } catch (e) {}
+      const _AURA_ANGLE  = (window.__auraExportAngleDeg != null ? window.__auraExportAngleDeg : 30) * Math.PI / 180;
+      const _AURA_SWEEPS = (window.__auraExportSweeps  != null ? window.__auraExportSweeps  : 1.5);
+      let _auraT0 = null;
+      const driveAura = (nowMs) => {
+        if (!_auraFrame || !_auraFrame.contentWindow) return;
+        if (_auraT0 === null) _auraT0 = nowMs;
+        const p  = Math.min(1, (nowMs - _auraT0) / 10000);          // clip progress 0..1
+        const aw = _auraFrame.contentWindow.innerWidth  || outW;
+        const ah = _auraFrame.contentWindow.innerHeight || outH;
+        const s  = Math.sin(p * _AURA_SWEEPS * 2 * Math.PI);        // -1..1 back-and-forth
+        const L  = 0.38 * Math.min(aw, ah);
+        const x  = aw / 2 + s * L * Math.cos(_AURA_ANGLE);
+        const y  = ah / 2 + s * L * Math.sin(_AURA_ANGLE);
+        try { _auraFrame.contentWindow.postMessage({ type: "cursor", x: x, y: y }, "*"); } catch (e) {}
+      };
+
+      const draw = () => {
+        driveAura(performance.now());
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, vidW, vidH);
+        ctx.fillStyle = bgColor || "#ffffff"; ctx.fillRect(0, 0, vidW, vidH);
+        try { if (shaderCanvas) ctx.drawImage(shaderCanvas, 0, 0, vidW, vidH); } catch (e) {}
+        try { if (auraCanvas)   ctx.drawImage(auraCanvas,   0, 0, vidW, vidH); } catch (e) {}
+        ctx.drawImage(textCanvas, 0, 0, vidW, vidH);
+        // the A-ponts are positioned in native px
+        ctx.scale(vidW / outW, vidH / outH);
+        // live animated A-pont(s), redrawn into their reserved slots each frame
+        if (aBridges.length) {
+          const tSec = performance.now() / 1000;
+          for (const b of aBridges) {
+            const dur = Math.max(4, b.dur || 5);
+            const phase = (tSec % (2 * dur)) / dur;
+            const fr = phase < 1 ? phase : (2 - phase);
+            const pe = b.pe0 + (b.pe1 - b.pe0) * fr;
+            const vb = this.aViewBox(pe).split(" ").map(Number);
+            const dispW = this.aBridgePxW(pe, b.sizeNative);
+            const p2d = new Path2D(this.buildAPath(pe));
+            ctx.save();
+            ctx.globalAlpha = b.alpha != null ? b.alpha : 1;
+            ctx.translate(b.nx, b.ny);
+            ctx.scale(dispW / vb[2], (b.drawH || b.sizeNative) / 36.96);
+            ctx.translate(-vb[0], 0);
+            ctx.fillStyle = b.color;
+            ctx.fill(p2d, "evenodd");
+            ctx.restore();
+          }
+        }
+      };
+
+      if (window.VideoEncoder && window.VideoFrame) {
+        return this._encodeWebCodecs(comp, draw, vidW, vidH, format)
+          .catch((err) => { console.warn("WebCodecs failed, falling back:", err); return this._encodeMediaRecorder(comp, draw, format); });
+      }
+      return this._encodeMediaRecorder(comp, draw, format);
+    });
+  };
+
+  // ── B: WebCodecs → real MP4/H.264 ──
+  _encodeWebCodecs = async (comp, draw, outW, outH, format) => {
+    let mp4;
+    try { mp4 = await import("https://esm.sh/mp4-muxer@5.2.1"); }
+    catch (e) { return this._encodeMediaRecorder(comp, draw, format); }
+    const { Muxer, ArrayBufferTarget } = mp4;
+
+    const fps = 30, DUR = 10000, total = Math.round(fps * DUR / 1000);
+    const target = new ArrayBufferTarget();
+    const muxer = new Muxer({ target, fastStart: "in-memory", video: { codec: "avc", width: outW, height: outH } });
+    const encoder = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: (e) => console.error("VideoEncoder:", e) });
+
+    const candidates = ["avc1.640034", "avc1.4d0034", "avc1.640028", "avc1.4d0028", "avc1.42E01E"];
+    let ok = false;
+    for (const codec of candidates) {
+      try {
+        const sup = await VideoEncoder.isConfigSupported({ codec, width: outW, height: outH, bitrate: 12000000, framerate: fps });
+        if (sup && sup.supported) { encoder.configure({ codec, width: outW, height: outH, bitrate: 12000000, framerate: fps }); ok = true; break; }
+      } catch (e) {}
+    }
+    if (!ok) { return this._encodeMediaRecorder(comp, draw, format); }
+
+    let i = 0;
+    const t0 = performance.now();
+    await new Promise((resolve) => {
+      const tick = () => {
+        const elapsed = performance.now() - t0;
+        const want = Math.min(total, Math.floor(elapsed / 1000 * fps) + 1);
+        while (i < want) {
+          draw();
+          const vf = new VideoFrame(comp, { timestamp: Math.round(i * 1e6 / fps), duration: Math.round(1e6 / fps) });
+          encoder.encode(vf); vf.close();
+          i++;
+          const pct = Math.min(100, Math.round(i / total * 100));
+          if (pct !== this.state.recordPct) this.setState({ recordPct: pct });
+        }
+        if (i < total) { this._recRAF = requestAnimationFrame(tick); } else resolve();
+      };
+      this._recRAF = requestAnimationFrame(tick);
+    });
+    await encoder.flush();
+    muxer.finalize();
+    this._downloadBlob(new Blob([target.buffer], { type: "video/mp4" }), this._videoFileName(format, "mp4"));
+    this.setState({ recording: false, recordPct: 0 });
+  };
+
+  // ── A/fallback: MediaRecorder (WebM, or MP4 on Safari) ──
+  _encodeMediaRecorder = (comp, draw, format) => {
+    return new Promise((resolve) => {
+      const stream = comp.captureStream(30);
+      const mime = this._pickVideoMime();
+      const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 12000000 });
+      const chunks = [];
+      rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+      rec.onstop = () => {
+        const ext = mime.indexOf("mp4") >= 0 ? "mp4" : "webm";
+        this._downloadBlob(new Blob(chunks, { type: mime }), this._videoFileName(format, ext));
+        this.setState({ recording: false, recordPct: 0 });
+        resolve();
+      };
+      const DUR = 10000, t0 = performance.now();
+      const drawFrame = () => {
+        const elapsed = performance.now() - t0;
+        draw();
+        const pct = Math.min(100, Math.round((elapsed / DUR) * 100));
+        if (pct !== this.state.recordPct) this.setState({ recordPct: pct });
+        if (elapsed < DUR) { this._recRAF = requestAnimationFrame(drawFrame); } else { rec.stop(); }
+      };
+      rec.start();
+      this._recRAF = requestAnimationFrame(drawFrame);
+    });
+  };
+
+  // ── formats ──
+  FORMATS = [
+    { id: "ig-post",     w: 1080, h: 1350,  label: "IG Post · 4:5"  },
+    { id: "ig-square",   w: 1080, h: 1080,  label: "IG Carré · 1:1" },
+    { id: "ig-story",    w: 1080, h: 1920,  label: "Story · 9:16"   },
+    { id: "li-post",     w: 1200, h: 628,   label: "LinkedIn · 1.9:1" },
+    { id: "li-portrait", w: 1080, h: 1350,  label: "LI Portrait"    },
+    { id: "affiche-a4",  w: 2480, h: 3508,  label: "Affiche A4"     },
+    { id: "affiche-a3",  w: 3508, h: 4961,  label: "Affiche A3"     },
+    { id: "affiche-land",w: 4961, h: 3508,  label: "A3 Paysage"     },
+    { id: "carre-40",    w: 4000, h: 4000,  label: "Carré 40×40"    },
+  ];
+
+  _editableRefs = {};
+  _artboardEl   = null;
+
+  // ── Geometry ──
+  // Frames (x, y, w, h, fontSize, A-pont sizes) are stored in NATIVE px of the current
+  // format. The screen only decides the zoom (pageLayout.scale) of the .v2-doc layer, so a
+  // window resize or a panel change never touches the frames: nothing drifts, nothing reflows.
+  _fmt(id) { return this.FORMATS.find((f) => f.id === (id || this.state.format)); }
+  _layoutFor(fmt) {
+    const el = this._canvasEl;
+    const pad = 48;
+    const cw = el ? el.clientWidth : 1000, ch = el ? el.clientHeight : 800;
+    const scale = Math.max(0.02, Math.min((cw - pad * 2) / fmt.w, (ch - pad * 2) / fmt.h, 1));
+    const w = fmt.w * scale, h = fmt.h * scale;
+    return { x: (cw - w) / 2, y: (ch - h) / 2, w, h, scale, fmtW: fmt.w, fmtH: fmt.h };
+  }
+  // reference unit of the size buttons: a label "28" = 28 px when the page is shown 540 px wide
+  // (≈ what the buttons gave before, on a normal screen) → 56 px natifs on a 1080 post.
+  _sizeUnit(fmtW) { return (fmtW || (this._fmt() || { w: 1080 }).w) / 540; }
+  // inner safe zone (max of all zones) in native px
+  _safeInset(formatId) {
+    return (this.SAFE_ZONES[formatId || this.state.format] || []).reduce((a, z) => ({
+      l: Math.max(a.l, z.l), t: Math.max(a.t, z.t), r: Math.max(a.r, z.r), b: Math.max(a.b, z.b),
+    }), { l: 0, t: 0, r: 0, b: 0 });
+  }
+  // screen zoom of an element (doc layer scale, fit-to-screen of the export view…)
+  _zoomOf(el) {
+    const host = el && (el.closest(".v2-editable, [data-clean-id] > div") || el);
+    if (!host || !host.offsetWidth) return (this.state.pageLayout && this.state.pageLayout.scale) || 1;
+    return (host.getBoundingClientRect().width / host.offsetWidth) || 1;
+  }
+
+  computePageLayout() {
+    const fmt = this._fmt();
+    if (!fmt || !fmt.w) { this.setState({ pageLayout: null, safeZones: [] }); return; }
+    if (!this._canvasEl) return;
+    const pl = this._layoutFor(fmt);
+    const old = this.state.pageLayout;
+    if (old && old.fmtW === pl.fmtW && old.fmtH === pl.fmtH &&
+        Math.abs(old.x - pl.x) < 0.01 && Math.abs(old.y - pl.y) < 0.01 && Math.abs(old.scale - pl.scale) < 1e-6) return;
+    const safeZones = (this.SAFE_ZONES[this.state.format] || []).map(z => ({
+      ...z,
+      left:   z.l * pl.scale, top:    z.t * pl.scale,
+      right:  z.r * pl.scale, bottom: z.b * pl.scale,
+    }));
+    this.setState({ pageLayout: pl, safeZones });
+  }
+
+  // ── Format change ──
+  // The composition is mapped from the old safe zone onto the new one: positions follow the
+  // zone (anchored to the nearest edge or the centre), sizes scale uniformly by min(sx, sy)
+  // so the text keeps the same line breaks and nothing that was apart can end up overlapping.
+  // `_master` remembers the last composition you actually edited: switching formats back and
+  // forth without editing always maps from it, so a round trip lands exactly where it started.
+  _master = null;
+  _mapFrames(frames, from, to) {
+    // from / to: { id, w, h } (format id → its safe zone; unknown id → whole page)
+    const area = (f) => {
+      const i = f.id && this.SAFE_ZONES[f.id] ? this._safeInset(f.id) : { l: 0, t: 0, r: 0, b: 0 };
+      const w = f.w - i.l - i.r, h = f.h - i.t - i.b;
+      return (w > f.w * 0.3 && h > f.h * 0.3) ? { x: i.l, y: i.t, w, h } : { x: 0, y: 0, w: f.w, h: f.h };
+    };
+    const A = area(from), B = area(to);
+    const sx = B.w / A.w, sy = B.h / A.h, k = Math.min(sx, sy);
+    const r = (v) => Math.round(v * 100) / 100;
+    const axis = (p, size, a0, aLen, b0, s) => {
+      const q = p - a0;                               // position in the old zone
+      const c = (q + size / 2) / aLen;
+      const ns = size * k;
+      if (c < 0.4) return b0 + q * s;                       // anchored to the start edge
+      if (c > 0.6) return b0 + (q + size) * s - ns;         // anchored to the end edge
+      return b0 + (q + size / 2) * s - ns / 2;              // centred
+    };
+    return frames.map((f) => {
+      const p = { ...f };
+      if (f.type === "a-bridge") {
+        const size = f.size || 90, w = this.aBridgePxW(f.pe || 1, size);
+        p.x = r(axis(f.x, w, A.x, A.w, B.x, sx)); p.y = r(axis(f.y, size, A.y, A.h, B.y, sy)); p.size = r(size * k);
+        return p;
+      }
+      p.x = r(axis(f.x, f.w, A.x, A.w, B.x, sx));
+      p.y = r(axis(f.y, f.h, A.y, A.h, B.y, sy));
+      p.w = r(f.w * k); p.h = r(f.h * k);
+      p.fontSize = r((f.fontSize || 16) * k);
+      if (f.html) p.html = this._scaleBridgesInHtml(f.html, k);
+      return p;
+    });
+  }
+  changeFormat = (format) => {
+    const oldFmt = this._fmt(), newFmt = this._fmt(format);
+    if (!newFmt || !oldFmt || format === this.state.format) return;
+    this._pushHistory();
+    if (!this._master) this._master = { format: oldFmt.id, fmtW: oldFmt.w, fmtH: oldFmt.h, frames: this._liveFrames() };
+    const m = this._master;
+    const frames = (m.format === newFmt.id)
+      ? m.frames.map((f) => ({ ...f }))
+      : this._mapFrames(m.frames, { id: m.format, w: m.fmtW, h: m.fmtH }, newFmt);
+    this.setState({ format, frames, selectedId: null }, () => {
+      this.computePageLayout();
+      this._syncEditablesFromState(true);
+    });
+  };
+
+  // frames with the text as it is right now in the editables
+  _liveFrames() {
+    return this.state.frames.map((f) => {
+      const el = this._editableRefs[f.id];
+      return (el && f.type !== "a-bridge") ? { ...f, html: el.innerHTML } : { ...f };
+    });
+  }
+  // write the state's html back into the editables (format mapping, undo, …)
+  _syncEditablesFromState(recap) {
+    this.state.frames.forEach((f) => {
+      const el = this._editableRefs[f.id];
+      if (!el || f.type === "a-bridge") return;
+      const html = f.html || this._escHtml(f.text || "");
+      if (el.innerHTML !== html) el.innerHTML = html;
+      if (recap) el.querySelectorAll(".v2-inline-bridge").forEach((b) => this.setBridgePeVisual(b, parseFloat(b.dataset.pe) || 0.3));
+    });
+  }
+
+  // ── Undo (⌘Z outside the text, or the ↶ button) ──
+  // Snapshots are taken before every structural change (move, resize, add, delete, font,
+  // size, colour, format, template) and before each typing session in a paragraph.
+  _history = [];
+  _redo = [];
+  _snapshot() {
+    const s = {};
+    this.TEMPLATE_KEYS.forEach((k) => { s[k] = k === "frames" ? this._liveFrames() : this.state[k]; });
+    return s;
+  }
+  _pushHistory(snap) {
+    this._history.push(snap || this._snapshot());
+    if (this._history.length > 50) this._history.shift();
+    this._redo = [];
+    if (!this.state.canUndo) this.setState({ canUndo: true });
+  }
+  _restore(snap) {
+    const fmtChanged = snap.format !== this.state.format;
+    this._master = null;
+    const patch = { selectedId: null, selectedBridgeId: null };
+    this.TEMPLATE_KEYS.forEach((k) => { if (k in snap) patch[k] = k === "frames" ? snap.frames.map((f) => ({ ...f })) : snap[k]; });
+    this.setState(patch, () => {
+      if (fmtChanged) this.computePageLayout();
+      this._syncEditablesFromState(true);
+    });
+  }
+  undo = () => {
+    if (!this._history.length) return;
+    this._redo.push(this._snapshot());
+    this._restore(this._history.pop());
+    this.setState({ canUndo: this._history.length > 0 });
+  };
+  redo = () => {
+    if (!this._redo.length) return;
+    this._history.push(this._snapshot());
+    this._restore(this._redo.pop());
+    this.setState({ canUndo: true });
+  };
+
+  componentDidMount() {
+    this._ro = new ResizeObserver(() => this.computePageLayout());
+    if (this._canvasEl) this._ro.observe(this._canvasEl);
+    // global listener: drag on inline bridge handles (extension + size)
+    this._bridgeDragHandler = (e) => {
+      // select the clicked bridge → opens the animation panel
+      const anyBridge = e.target.closest(".v2-inline-bridge");
+      if (anyBridge && anyBridge.dataset.bridgeId) {
+        this.selectBridge(anyBridge);
+      }
+
+      // ── right handle → horizontal → pe (bridge extension) ──
+      const extHandle = e.target.closest(".v2-bridge-ext-handle");
+      if (extHandle) {
+        e.preventDefault();
+        const bridge  = extHandle.closest(".v2-inline-bridge");
+        if (!bridge) return;
+        const startPe = parseFloat(bridge.dataset.pe)   || 0.3;
+        const startX  = e.clientX;
+        const size    = parseFloat(bridge.dataset.size) || 20;
+        const pxPerPe = (468.15 / 36.96) * size;          // native px per unit of pe
+        const z       = this._zoomOf(bridge);             // screen px per native px
+        let snapped   = false;
+        const onMove  = (ev) => {
+          if (!snapped) { snapped = true; this._pushHistory(); }
+          const newPe = Math.max(0.02, Math.min(10, startPe + (ev.clientX - startX) / z / pxPerPe));
+          bridge.dataset.pe = newPe;
+          this.setBridgePeVisual(bridge, newPe);
+        };
+        const onUp = () => {
+          window.removeEventListener("pointermove", onMove);
+          window.removeEventListener("pointerup",   onUp);
+          const ed = bridge.closest(".v2-editable"), fd = bridge.closest("[data-frame-id]");
+          if (ed && fd) this.updateFrame(fd.getAttribute("data-frame-id"), { html: ed.innerHTML });
+        };
+        window.addEventListener("pointermove", onMove);
+        window.addEventListener("pointerup",   onUp);
+        return;
+      }
+
+    };
+    window.addEventListener("pointerdown", this._bridgeDragHandler);
+
+    // animation loop for A-pont bridges
+    this._animRAF = requestAnimationFrame(this._tickBridgeAnims);
+
+    // load saved templates (PresetStore)
+    this._loadTemplates();
+
+    this._escHandler = (e) => { if (e.key === "Escape" && this.state.cleanView) this.closeCleanView(); };
+    window.addEventListener("keydown", this._escHandler);
+
+    // Space cycles the aura stage: full → movement frozen → all frozen → full
+    this._spaceHandler = (e) => {
+      if (e.code !== "Space" && e.key !== " ") return;
+      if (!this.state.auraOn) return;
+      const a = document.activeElement;
+      if (a && (a.isContentEditable || a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.tagName === "SELECT")) return;
+      e.preventDefault();
+      const next = (this.state.auraStage + 1) % 3;
+      this.setState({ auraStage: next });
+      if (this._auraFrame && this._auraFrame.contentWindow) {
+        this._auraFrame.contentWindow.postMessage({ type: "stage", value: next }, "*");
+      }
+    };
+    window.addEventListener("keydown", this._spaceHandler);
+
+    // ⌘Z / ⌘⇧Z (Ctrl on Windows) outside the text: undo / redo the last change.
+    // Inside a paragraph the browser keeps its own text undo.
+    this._undoHandler = (e) => {
+      if (!(e.metaKey || e.ctrlKey) || (e.key !== "z" && e.key !== "Z")) return;
+      const a = document.activeElement;
+      if (a && (a.isContentEditable || a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.tagName === "SELECT")) return;
+      if (this.state.cleanView) return;
+      e.preventDefault();
+      if (e.shiftKey) this.redo(); else this.undo();
+    };
+    window.addEventListener("keydown", this._undoHandler);
+
+    // seed the welcome paragraph with an A-pont in place of the "a" of "déplacer"
+    // (once the paragraph is mounted and the fonts are there, to measure the cap height)
+    let tries = 0;
+    const seed = () => {
+      const el = this._editableRefs["f1"];
+      const f1 = this.state.frames.find(f => f.id === "f1");
+      if (!f1 || f1.html) return;
+      if (!el) { if (tries++ < 120) requestAnimationFrame(seed); return; }
+      const size = this._capHeight(el, f1.fontSize || 56);
+      const bridge = this.buildBridgeSpanHTML(0.3, size);
+      const html = "éditer. élargir. dépl" + bridge + "cer";
+      el.innerHTML = html;
+      this.setState((s) => ({ frames: s.frames.map((f) => (f.id === "f1" ? { ...f, html } : f)) }));
+    };
+    ((document.fonts && document.fonts.ready) || Promise.resolve()).then(() => requestAnimationFrame(seed));
+  }
+
+  // after each render: flag the paragraphs whose text goes past the page edge (cut in the export)
+  componentDidUpdate() {
+    if (this._ovRAF) return;
+    this._ovRAF = requestAnimationFrame(() => { this._ovRAF = null; this._checkOverflow(); });
+  }
+  _checkOverflow() {
+    const doc = this._docEl, pl = this.state.pageLayout, fmt = this._fmt();
+    if (!doc || !pl || !fmt) return;
+    const dr = doc.getBoundingClientRect();
+    const z = pl.scale || 1;
+    this.state.frames.forEach((f) => {
+      const el = this._editableRefs[f.id];
+      const fr = el && el.closest("[data-frame-id]");
+      if (!fr) return;
+      let out = false;
+      if (el.firstChild) {
+        const rg = document.createRange();
+        rg.selectNodeContents(el);
+        const r = rg.getBoundingClientRect();
+        if (r.width || r.height) {
+          const x0 = (r.left - dr.left) / z, y0 = (r.top - dr.top) / z;
+          const x1 = (r.right - dr.left) / z, y1 = (r.bottom - dr.top) / z;
+          out = x0 < -1 || y0 < -1 || x1 > fmt.w + 1 || y1 > fmt.h + 1;
+        }
+      }
+      const v = out ? "true" : "false";
+      if (fr.getAttribute("data-overflow") !== v) fr.setAttribute("data-overflow", v);
+    });
+  }
+
+  componentWillUnmount() {
+    this._ro?.disconnect();
+    if (this._bridgeDragHandler) window.removeEventListener("pointerdown", this._bridgeDragHandler);
+    if (this._animRAF) cancelAnimationFrame(this._animRAF);
+    if (this._escHandler) window.removeEventListener("keydown", this._escHandler);
+    if (this._spaceHandler) window.removeEventListener("keydown", this._spaceHandler);
+    if (this._undoHandler) window.removeEventListener("keydown", this._undoHandler);
+  }
+
+  // cap height (px, before any transform) of the font used in an editable, for A-pont sizing
+  _capHeight(el, fallbackFs) {
+    const cs = window.getComputedStyle(el);
+    const fs = parseFloat(cs.fontSize) || fallbackFs || 16;
+    let size = Math.round(fs * 0.72 * 100) / 100;
+    try {
+      const ctx = document.createElement("canvas").getContext("2d");
+      ctx.font = (cs.fontWeight || 400) + " " + fs + "px " + cs.fontFamily;
+      const m = ctx.measureText("H");
+      if (m.actualBoundingBoxAscent > 2) size = Math.round(m.actualBoundingBoxAscent * 100) / 100;
+    } catch (e) {}
+    return size;
+  }
+
+  // ── A-pont animation ──
+  // ids must stay unique across duplicates, templates and sessions (anims are keyed by id)
+  _nextBridgeId = () => "br" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + (this._bridgeSeq = (this._bridgeSeq || 0) + 1);
+  // give fresh ids to the A-ponts of an html string; returns { html, map: { oldId: newId } }
+  _rekeyBridges(html) {
+    const map = {};
+    if (!html || html.indexOf("data-bridge-id") < 0) return { html, map };
+    const tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    tmp.querySelectorAll(".v2-inline-bridge[data-bridge-id]").forEach((b) => {
+      const nid = this._nextBridgeId();
+      map[b.dataset.bridgeId] = nid;
+      b.dataset.bridgeId = nid;
+    });
+    return { html: tmp.innerHTML, map };
+  }
+
+  selectBridge = (bridgeEl) => {
+    const id = bridgeEl.dataset.bridgeId;
+    if (!id) return;
+    this.setState((s) => {
+      if (s.bridgeAnims[id]) return { selectedBridgeId: id };
+      const pe0 = parseFloat(bridgeEl.dataset.pe) || 0.3;
+      return {
+        selectedBridgeId: id,
+        bridgeAnims: { ...s.bridgeAnims, [id]: { animate: false, pe0, pe1: Math.min(1.5, pe0 + 0.6), dur: 5 } },
+      };
+    });
+  };
+
+  closeBridgePanel = () => this.setState({ selectedBridgeId: null });
+
+  setBridgeAnim = (patch) => {
+    const id = this.state.selectedBridgeId;
+    if (!id) return;
+    this.setState((s) => {
+      const next = { ...(s.bridgeAnims[id] || {}), ...patch };
+      return { bridgeAnims: { ...s.bridgeAnims, [id]: next } };
+    }, () => {
+      // when turning animation off, rest the A at its initial position
+      const cfg = this.state.bridgeAnims[id];
+      if (cfg && !cfg.animate) {
+        const el = this._findBridgeEl(id);
+        if (el) this.setBridgePeVisual(el, cfg.pe0);
+      }
+    });
+  };
+
+  _findBridgeEl(id) {
+    const refs = Object.values(this._editableRefs || {});
+    for (const el of refs) {
+      if (!el) continue;
+      const b = el.querySelector('.v2-inline-bridge[data-bridge-id="' + id + '"]');
+      if (b) return b;
+    }
+    return null;
+  }
+
+  setBridgePeVisual(el, pe) {
+    const size = parseFloat(el.dataset.size) || 90;
+    const svg = el.querySelector("svg");
+    if (!svg) return;
+    const path = svg.querySelector("path");
+    // cap so the bar never exceeds the available width on its line (no wrap, no overflow)
+    const maxW = this._bridgeMaxW(el);
+    const wantW = this.aBridgePxW(pe, size);
+    const usePe = wantW > maxW ? this._peForWidth(maxW, size) : pe;
+    svg.setAttribute("viewBox", this.aViewBox(usePe));
+    svg.setAttribute("width", String(this.aBridgePxW(usePe, size)));
+    svg.setAttribute("height", String(size));
+    if (path) path.setAttribute("d", this.buildAPath(usePe));
+  }
+
+  _tickBridgeAnims = () => {
+    try {
+      const anims = this.state.bridgeAnims || {};
+      const ids = Object.keys(anims).filter((id) => anims[id] && anims[id].animate && !(this._exportFrozenBridges && this._exportFrozenBridges.has(id)));
+      if (ids.length) {
+        const now = performance.now() / 1000;
+        const byId = {};
+        const collect = (root) => { if (!root) return; root.querySelectorAll(".v2-inline-bridge").forEach((b) => {
+          const bid = b.dataset.bridgeId; if (!bid) return;
+          (byId[bid] || (byId[bid] = [])).push(b);
+        }); };
+        Object.values(this._editableRefs || {}).forEach(collect);
+        // also drive the clean-view copies → the A animates in the export view & screen recording
+        if (this.state.cleanView) collect(this._cleanArtboard);
+        ids.forEach((id) => {
+          const cfg = anims[id], els = byId[id];
+          if (!els || !els.length) return;
+          const dur = Math.max(4, cfg.dur || 5);
+          const phase = (now % (2 * dur)) / dur;     // 0..2
+          const f = phase < 1 ? phase : (2 - phase); // linear triangle 0→1→0
+          const pe = cfg.pe0 + (cfg.pe1 - cfg.pe0) * f;
+          els.forEach((el) => this.setBridgePeVisual(el, pe));
+        });
+      }
+    } catch (err) { /* keep the loop alive */ }
+    this._animRAF = requestAnimationFrame(this._tickBridgeAnims);
+  };
+
+  renderBridgeAnimPanel() {
+    const id = this.state.selectedBridgeId;
+    if (!id) return null;
+    const cfg = this.state.bridgeAnims[id] || { animate: false, pe0: 0.3, pe1: 0.9, dur: 1.6 };
+
+    // hard limit: the largest pe that still fits on the line (the blockage)
+    const el = this._findBridgeEl(id);
+    let maxPe = 1.5;
+    if (el) {
+      const size = parseFloat(el.dataset.size) || 90;
+      maxPe = Math.max(0.1, Math.min(6, this._peForWidth(this._bridgeMaxW(el), size)));
+    }
+    const maxPeR = Math.round(maxPe * 100) / 100;
+
+    const slider = (label, value, min, max, step, onChange, fmt) =>
+      React.createElement("div", { style: { display: "grid", gap: "5px" } },
+        React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline" } },
+          React.createElement("span", { style: { fontSize: "11px", color: "rgba(0,0,0,0.6)" } }, label),
+          React.createElement("span", { style: { fontSize: "11px", color: "rgba(0,0,0,0.45)", fontWeight: 500, fontVariantNumeric: "tabular-nums" } }, fmt(value))
+        ),
+        React.createElement("input", {
+          type: "range", min, max, step, value,
+          onChange: (e) => onChange(parseFloat(e.target.value)),
+          style: { width: "100%", height: "4px", accentColor: "#1a1a1a", cursor: "pointer" },
+        })
+      );
+
+    return React.createElement("div", {
+      key: "bridge-panel",
+      style: {
+        position: "absolute", top: "16px", left: "16px", zIndex: 50,
+        width: "260px", background: "#fff", borderRadius: "7px",
+        boxShadow: "0 8px 30px rgba(0,0,0,0.2)", border: "1px solid rgba(0,0,0,0.08)",
+        padding: "14px 16px", display: "grid", gap: "13px",
+        fontFamily: "-apple-system, sans-serif",
+      }
+    },
+      // header
+      React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "8px" } },
+        React.createElement("span", { style: { fontSize: "12px", fontWeight: 600, color: "#1a1a1a", flex: 1 } }, "Animer le A pont"),
+        React.createElement("button", {
+          onClick: this.closeBridgePanel, title: "Fermer",
+          style: { width: "22px", height: "22px", border: "1px solid rgba(0,0,0,0.12)", background: "#fff", color: "rgba(0,0,0,0.45)", fontSize: "13px", cursor: "pointer", borderRadius: "3px", padding: 0, lineHeight: 1 }
+        }, "×")
+      ),
+      // animer toggle
+      React.createElement("button", {
+        onClick: () => this.setBridgeAnim({ animate: !cfg.animate }),
+        style: {
+          display: "flex", alignItems: "center", gap: "9px", width: "100%",
+          padding: "8px 10px", borderRadius: "5px", cursor: "pointer", fontFamily: "inherit",
+          border: cfg.animate ? "1.5px solid #2D7CF0" : "1px solid rgba(0,0,0,0.14)",
+          background: cfg.animate ? "rgba(45,124,240,0.06)" : "#fff",
+        }
+      },
+        React.createElement("span", { style: { flex: 1, textAlign: "left", fontSize: "11px", fontWeight: 600, color: "#1a1a1a" } }, "Animer ?"),
+        React.createElement("span", {
+          style: { width: "30px", height: "17px", borderRadius: "9px", flexShrink: 0, position: "relative", background: cfg.animate ? "#2D7CF0" : "rgba(0,0,0,0.18)", transition: "background 0.15s" }
+        },
+          React.createElement("span", { style: { position: "absolute", top: "2px", left: cfg.animate ? "15px" : "2px", width: "13px", height: "13px", borderRadius: "50%", background: "#fff", transition: "left 0.15s" } })
+        )
+      ),
+      // controls
+      slider("Position initiale", Math.min(cfg.pe0, maxPeR), 0.05, maxPeR, 0.01, (v) => this.setBridgeAnim({ pe0: Math.min(v, maxPeR) }), (v) => v.toFixed(2)),
+      slider("Position maximale", Math.min(cfg.pe1, maxPeR), 0.05, maxPeR, 0.01, (v) => this.setBridgeAnim({ pe1: Math.min(v, maxPeR) }), (v) => v.toFixed(2)),
+      slider("Temps", cfg.dur, 4, 12, 0.1, (v) => this.setBridgeAnim({ dur: v }), (v) => v.toFixed(1) + "s"),
+      React.createElement("div", { style: { fontSize: "9px", color: "rgba(0,0,0,0.4)", fontStyle: "italic", lineHeight: 1.5 } },
+        "Va-et-vient linéaire (pas d'ease). Blocage à la largeur dispo (" + maxPeR.toFixed(2) + ").")
+    );
+  }
+
+
+  insertABridgeIntoFrame = (frameId) => {
+    const el = this._editableRefs[frameId];
+    if (!el) return;
+    this._pushHistory();
+    el.focus();
+    const pe = 0.3; // sensible default; user adjusts by dragging after insert
+
+    // Measure real cap-height using canvas.measureText — this API returns
+    // actualBoundingBoxAscent = distance from baseline to top of "H" = cap-height.
+    // This is pre-transform (not affected by scaleY on the parent, nor by the doc zoom),
+    // which is exactly what we need for the SVG height attribute (native px).
+    const size = this._capHeight(el);
+    const vb   = this.aViewBox(pe);
+    const path = this.buildAPath(pe);
+    const w    = this.aBridgePxW(pe, size);
+
+    const span = document.createElement("span");
+    span.className = "v2-inline-bridge";
+    span.setAttribute("contenteditable", "false");
+    span.dataset.pe   = pe;
+    span.dataset.size = size;
+    span.dataset.bridgeId = this._nextBridgeId();
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width",  String(w));
+    svg.setAttribute("height", String(size));
+    svg.setAttribute("viewBox", vb);
+    svg.setAttribute("preserveAspectRatio", "none");
+    svg.style.cssText = "display:block;color:inherit;overflow:visible;";
+    const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pathEl.setAttribute("d", path);
+    pathEl.setAttribute("fill", "currentColor");
+    pathEl.setAttribute("fill-rule", "evenodd");
+    svg.appendChild(pathEl);
+    span.appendChild(svg);
+
+    const dragHandle = document.createElement("span");
+    dragHandle.className = "v2-bridge-ext-handle";
+    span.appendChild(dragHandle);
+
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && el.contains(sel.anchorNode)) {
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(span);
+      range.setStartAfter(span);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } else {
+      el.appendChild(span);
+    }
+    this.updateFrame(frameId, { html: el.innerHTML });
+  };
+
+  // ── A-pont helpers (ported from main.js buildPath) ──
+  buildAPath(pc) {
+    const r  = pc * 468.15;
+    const ri = pc * 467.70;
+    const xo = 234.065 * (1 - pc);
+    const f  = (v) => (xo + v).toFixed(3);
+    const g  = (v) => (xo + v + r).toFixed(3);
+    const gi = (v) => (xo + v + ri).toFixed(3);
+    return (
+      `M${f(9.79)},0 L${f(6.02)},15.99 L${f(2.29)},29.91 ` +
+      `L${f(0.21)},36.96 L${f(20.55)},36.96 L${f(21.24)},30.52 ` +
+      `L${g(45.46)},30.52 L${g(46.03)},36.96 L${g(68.40)},36.96 ` +
+      `L${g(64.42)},23.50 L${g(58.35)},0 Z ` +
+      `M${g(44.15)},21.70 L${gi(41.36)},8.82 ` +
+      `L${f(25.30)},8.82 L${f(22.52)},21.70 Z`
+    );
+  }
+  aViewBox(pc) {
+    const r = pc * 468.15;
+    const xo = 234.065 * (1 - pc);
+    const xMin = xo + 0.21;
+    const xMax = xo + 68.40 + r;
+    return `${xMin.toFixed(3)} 0 ${(xMax - xMin).toFixed(3)} 36.96`;
+  }
+  // px width for a given pe + height (px)
+  aBridgePxW(pe, h) { return ((68.19 + pe * 468.15) / 36.96) * h; }
+
+  // max bar width (native px) that fits from the bridge's left edge to the frame's right edge
+  // (works in the editor, zoomed by the doc layer, and in the export view)
+  _bridgeMaxW(bridgeEl) {
+    const ed = bridgeEl.closest(".v2-editable, [data-clean-id] > div");
+    if (!ed) return Infinity;
+    const z = this._zoomOf(ed);
+    const br = bridgeEl.getBoundingClientRect();
+    const er = ed.getBoundingClientRect();
+    const padR = parseFloat(getComputedStyle(ed).paddingRight) || 0;
+    return Math.max(20, (er.right - br.left) / z - padR);
+  }
+  // largest pe whose rendered width fits within maxW
+  _peForWidth(maxW, size) {
+    // aBridgePxW = ((68.19 + pe*468.15)/36.96)*size  →  solve for pe
+    const pe = ((maxW / size) * 36.96 - 68.19) / 468.15;
+    return Math.max(0.02, pe);
+  }
+
+  // build the inline-bridge span as an HTML string (for pre-seeding frame content)
+  buildBridgeSpanHTML(pe, size) {
+    const vb = this.aViewBox(pe);
+    const path = this.buildAPath(pe);
+    const w = this.aBridgePxW(pe, size);
+    return '<span class="v2-inline-bridge" contenteditable="false" data-bridge-id="' + this._nextBridgeId() + '" data-pe="' + pe + '" data-size="' + size + '">' +
+      '<svg width="' + w + '" height="' + size + '" viewBox="' + vb + '" preserveAspectRatio="none" style="display:block;color:inherit;overflow:visible;">' +
+      '<path d="' + path + '" fill="currentColor" fill-rule="evenodd"></path></svg>' +
+      '<span class="v2-bridge-ext-handle"></span></span>';
+  }
+
+  // font presets — variation-settings + squish + line height, no size, no color.
+  // The squish is anchored top-left: the text starts at the top of its frame in the editor
+  // AND in the export, whatever the frame height (with "bottom left" the two differed).
+  // lineHeight is shared by the editor and the export (it was 1.4 on screen / 1.05 in the PNG).
+  FONTS = {
+    main1: {
+      fontFamily: '"obviously-variable", sans-serif',
+      fontVariationSettings: '"ital" 0, "wght" 803, "wdth" 121',
+      fontWeight: 800,
+      transform: "scaleY(0.88)",
+      transformOrigin: "top left",
+      lineHeight: 1.05,
+    },
+    main2: {
+      fontFamily: '"obviously-variable", sans-serif',
+      fontVariationSettings: '"ital" 0, "wght" 699, "wdth" 121',
+      fontWeight: 700,
+      transform: "scaleY(0.88)",
+      transformOrigin: "top left",
+      lineHeight: 1.05,
+    },
+    corps1: {
+      fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+      fontVariationSettings: "normal",
+      fontWeight: 300,
+      transform: "none",
+      transformOrigin: "initial",
+      lineHeight: 1.2,
+    },
+    corps2: {
+      fontFamily: 'Arial, "Helvetica Neue", Helvetica, sans-serif',
+      fontVariationSettings: "normal",
+      fontWeight: 400,
+      transform: "none",
+      transformOrigin: "initial",
+      lineHeight: 1.2,
+    },
+    corps3: {
+      fontFamily: 'Arial, "Helvetica Neue", Helvetica, sans-serif',
+      fontVariationSettings: "normal",
+      fontWeight: 700,
+      transform: "none",
+      transformOrigin: "initial",
+      lineHeight: 1.2,
+    },
+    none: {
+      fontFamily: "-apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif",
+      fontVariationSettings: "normal",
+      fontWeight: 400,
+      transform: "none",
+      transformOrigin: "initial",
+      lineHeight: 1.2,
+    },
+  };
+
+  // frames are in NATIVE px of the format (here IG post 1080×1350), placed in the safe zone
+  state = {
+    frames: [
+      { id: "f1", x: 80, y: 162, w: 600, h: 220, text: "éditer. élargir. déplacer", font: "main1", type: "text", html: "", fontSize: 56, color: "#000000", opacity: 100 },
+      { id: "f2", x: 80, y: 412, w: 600, h: 160, text: "éditer. élargir. déplacer", font: "corps3", type: "text", html: "", fontSize: 36, color: "#000000", opacity: 100 },
+    ],
+    selectedId: "f1",
+    nextId: 3,
+    inlinePe: 0.20,
+    defaultFontSize: 28,     // size-button label (× _sizeUnit → native px)
+    canUndo: false,
+    exportFacesReady: false,
+    templatesStatus: "",     // "serveur" | "local" | "" — where "Mes modèles" are stored
+    format: "ig-post",
+    pageLayout: null,
+    safeZones: [],
+    showSafeZone: true,
+    cleanView: false,
+    bgOrient: {},
+    panelCollapsed: false,
+    panelWidthStep: 0,   // 0 = 220 (S), 1 = 280 (M), 2 = 340 (L)
+    backMode: "fix",     // "fix" | "move"
+    bgColor: null,       // solid background color (Move mode)
+    dessousOpen: { couleurs: false, animmix: true },  // accordion sections in "Dessous"
+    auraOn: false,       // cursor-following aura animation overlay
+    auraStage: 0,        // 0 = full · 1 = movement frozen · 2 = all frozen
+    shaderBg: null,      // selected mesh-gradient preset (Anim mix) or null
+    recording: false,
+    recordPct: 0,
+    savedTemplates: [],
+    templatesManagerOpen: false,
+    selectedBridgeId: null,  // currently selected inline A-pont
+    bridgeAnims: {},     // { bridgeId: { animate, pe0, pe1, dur } }
+    // panels
+    activePanel: "type", // "type" | "fonds"
+    // background image
+    bgImages: [],        // [{id, url, name}]
+    bgSelected: null,    // id of selected bg
+    bgScale: 100,        // %
+    bgRotate: 0,         // degrees
+    bgPosX: 50,          // % center
+    bgPosY: 50,
+  };
+
+  canvasRef = (el) => {
+    this._canvasEl = el;
+    if (el && this._ro) this._ro.observe(el);
+    if (el) requestAnimationFrame(() => this.computePageLayout());
+  };
+
+  addABridge = () => {
+    const id = "f" + this.state.nextId;
+    const U = this._sizeUnit();
+    const ins = this._safeInset();
+    const offset = (this.state.nextId % 6) * 24 * U;
+    this._pushHistory();
+    this.setState((s) => ({
+      frames: [...s.frames, {
+        id,
+        type: "a-bridge",
+        x: ins.l + offset,
+        y: ins.t + 120 * U + offset,
+        pe: 1.0,          // bridge extension
+        size: 45 * U,     // height in native px
+        color: "#1a1a1a",
+      }],
+      selectedId: id,
+      nextId: s.nextId + 1,
+    }));
+  };
+
+  startBridgeExtDrag = (e, id) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const frame = this.state.frames.find((f) => f.id === id);
+    if (!frame) return;
+    const startPe = frame.pe;
+    const startX  = e.clientX;
+    const pxPerPe = (468.15 / 36.96) * frame.size;
+    const z = (this.state.pageLayout && this.state.pageLayout.scale) || 1;
+    let snapped = false;
+    const onMove  = (ev) => {
+      if (!snapped) { snapped = true; this._pushHistory(); }
+      const newPe = Math.max(0.05, Math.min(10, startPe + (ev.clientX - startX) / z / pxPerPe));
+      this.updateFrame(id, { pe: newPe });
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
+  setPe = (id, val) => {
+    const v = parseFloat(val);
+    if (!isNaN(v)) this.updateFrame(id, { pe: Math.max(0.05, Math.min(10, v)) });
+  };
+
+  setASize = (id, val) => {
+    const v = parseInt(val, 10);
+    if (!isNaN(v) && v > 10) this.updateFrame(id, { size: v });
+  };
+
+  renderABridgeFrame(f, _fi) {
+    const isSelected = f.id === this.state.selectedId;
+    const pe    = f.pe   || 1;
+    const size  = f.size || 90;
+    const color = f.color || "#1a1a1a";
+    const vb    = this.aViewBox(pe);
+    const path  = this.buildAPath(pe);
+    const w     = this.aBridgePxW(pe, size);
+    const h     = size;
+
+    return React.createElement("div", {
+      key: f.id,
+      "data-frame-id": f.id,
+      "data-selected": isSelected ? "true" : "false",
+      className: "v2-frame",
+      onMouseDown: (e) => this.selectFrame(f.id, e),
+      style: { left: f.x + "px", top: f.y + "px", width: w + "px", height: h + "px", zIndex: isSelected ? 1000 : ((_fi || 0) + 1) },
+    },
+      // drag bar
+      React.createElement("div", {
+        className: "v2-frame-drag",
+        onPointerDown: (e) => this.startDrag(e, f.id),
+        style: { display: "flex", alignItems: "center", justifyContent: "space-between" },
+      },
+        React.createElement("span", null, "A pont  pe=" + pe.toFixed(2)),
+        isSelected ? React.createElement("button", {
+          onPointerDown: (e) => e.stopPropagation(),
+          onClick: (e) => { e.stopPropagation(); this.deleteFrame(f.id); },
+          style: { width: "16px", height: "16px", border: "none", background: "rgba(200,50,30,0.85)", color: "#fff", borderRadius: "3px", cursor: "pointer", fontSize: "11px", lineHeight: 1, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }
+        }, "×") : null
+      ),
+
+      // SVG A with bridge
+      React.createElement("svg", {
+        viewBox: vb,
+        width: w,
+        height: h,
+        style: { display: "block", color, overflow: "visible" },
+        preserveAspectRatio: "none",
+      },
+        React.createElement("path", { d: path, fill: "currentColor", fillRule: "evenodd" })
+      ),
+
+      // (selection outline: the frame's ::after)
+
+      // bridge-extension drag handle (right edge) — sizes in screen px (var(--u))
+      isSelected ? React.createElement("div", {
+        onPointerDown: (e) => this.startBridgeExtDrag(e, f.id),
+        title: "Drag to extend/shrink bridge",
+        style: {
+          position: "absolute",
+          right: "calc(-8 * var(--u, 1px))", top: "50%", marginTop: "calc(-14 * var(--u, 1px))",
+          width: "calc(16 * var(--u, 1px))", height: "calc(28 * var(--u, 1px))",
+          background: "#2D7CF0",
+          borderRadius: "calc(4 * var(--u, 1px))",
+          cursor: "ew-resize",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
+          zIndex: 5,
+        }
+      },
+        React.createElement("div", { style: { display: "flex", gap: "calc(2 * var(--u, 1px))" } },
+          React.createElement("div", { style: { width: "calc(2 * var(--u, 1px))", height: "calc(12 * var(--u, 1px))", background: "rgba(255,255,255,0.8)", borderRadius: "1px" } }),
+          React.createElement("div", { style: { width: "calc(2 * var(--u, 1px))", height: "calc(12 * var(--u, 1px))", background: "rgba(255,255,255,0.8)", borderRadius: "1px" } })
+        )
+      ) : null
+    );
+  }
+
+  // ── built-in background presets ──
+  BUILT_IN_BG = [
+    { id: "fond-01",    url: "uploads/FOND.01.png",              name: "01" },
+    { id: "fond-01s",   url: "uploads/FOND.01.S.center.0.png",   name: "01·S" },
+    { id: "fond-02",    url: "uploads/FOND.02.png",              name: "02" },
+    { id: "fond-02s",   url: "uploads/FOND.02.S.center.22.png",  name: "02·S" },
+    { id: "fond-03",    url: "uploads/FOND.3.png",               name: "03" },
+    { id: "fond-03s",   url: "uploads/FOND.03.S.center.m28.png", name: "03·S" },
+    { id: "fond-04",    url: "uploads/FOND.4.png",               name: "04" },
+    { id: "fond-04s",   url: "uploads/FOND.04.S.topleft.12.png", name: "04·S" },
+    { id: "fond-05",    url: "uploads/FOND.5.png",               name: "05" },
+    { id: "fond-05s",   url: "uploads/FOND.05.S.topright.m18.png",name:"05·S" },
+    { id: "fond-14",    url: "uploads/14.png",                   name: "14" },
+    { id: "fond-15",    url: "uploads/15.png",                   name: "15" },
+    { id: "fond-16",    url: "uploads/16.png",                   name: "16" },
+    { id: "fond-17",    url: "uploads/17.png",                   name: "17" },
+    { id: "fond-19",    url: "uploads/19.png",                   name: "19" },
+    { id: "fond-20",    url: "uploads/20.png",                   name: "20" },
+    { id: "fond-21",    url: "uploads/21.png",                   name: "21" },
+    { id: "fond-22",    url: "uploads/22.png",                   name: "22" },
+    { id: "fond-23",    url: "uploads/23.png",                   name: "23" },
+    { id: "fond-24",    url: "uploads/24.png",                   name: "24" },
+    { id: "fond-25",    url: "uploads/25.png",                   name: "25" },
+  ];
+
+  // ── panel navigation ──
+  showTypePanel  = () => this.setState({ activePanel: "type"  });
+  showFondsPanel = () => this.setState({ activePanel: "fonds" });
+  showLayersPanel = () => this.setState({ activePanel: "layers" });
+  togglePanel    = () => this.setState((s) => ({ panelCollapsed: !s.panelCollapsed }));
+  cyclePanelWidth = () => this.setState((s) => ({ panelWidthStep: (s.panelWidthStep + 1) % 3, panelCollapsed: false }));
+  PANEL_WIDTHS = [220, 282, 344];
+
+  // ── background images ──
+  onFolderPick = (e) => {
+    const files = Array.from(e.target.files).filter(f => f.type.startsWith("image/"));
+    if (!files.length) return;
+    const existing = this.state.bgImages;
+    let added = 0;
+    const load = (file) => new Promise((res) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => res({ id: "bg" + Date.now() + Math.random(), url: ev.target.result, name: file.name });
+      reader.readAsDataURL(file);
+    });
+    Promise.all(files.map(load)).then((imgs) => {
+      this.setState((s) => ({ bgImages: [...s.bgImages, ...imgs] }));
+    });
+    // reset input so same folder can be re-picked
+    e.target.value = "";
+  };
+
+  selectBg = (id) => this.setState({ bgSelected: id });
+  clearBg  = ()  => this.setState({ bgSelected: null });
+
+  // record a background's orientation once its thumbnail loads
+  _recordBgOrient = (id, imgEl) => {
+    if (!imgEl || !imgEl.naturalWidth) return;
+    const orient = imgEl.naturalWidth >= imgEl.naturalHeight ? "h" : "v";
+    if (this.state.bgOrient[id] === orient) return;
+    this.setState((s) => ({ bgOrient: { ...s.bgOrient, [id]: orient } }));
+  };
+
+  _bgThumb = (b, ratio) => {
+    const isSel = b.id === this.state.bgSelected;
+    return React.createElement("div", {
+      key: b.id,
+      onClick: () => this.selectBg(b.id),
+      style: {
+        position: "relative",
+        aspectRatio: ratio || "3/4",
+        borderRadius: "3px",
+        overflow: "hidden",
+        cursor: "pointer",
+        outline: isSel ? "2px solid #2D7CF0" : "1.5px solid transparent",
+        outlineOffset: "1px",
+        background: "#ddd",
+      }
+    },
+      React.createElement("img", {
+        src: b.url,
+        loading: "lazy",
+        onLoad: (e) => this._recordBgOrient(b.id, e.currentTarget),
+        style: { width: "100%", height: "100%", objectFit: "cover", display: "block" }
+      }),
+      React.createElement("div", {
+        style: {
+          position: "absolute", bottom: 0, left: 0, right: 0,
+          padding: "2px 4px",
+          background: "rgba(0,0,0,0.3)",
+          color: "#fff", fontSize: "8px", letterSpacing: "0.04em",
+          fontFamily: "-apple-system, sans-serif",
+        }
+      }, b.name)
+    );
+  };
+
+  _bgSectionHeader = (label, count) =>
+    React.createElement("div", {
+      style: {
+        display: "flex", alignItems: "center", gap: "6px",
+        margin: "0 0 6px",
+      }
+    },
+      React.createElement("span", {
+        style: { fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(0,0,0,0.45)", fontWeight: 600 }
+      }, label),
+      React.createElement("span", { style: { fontSize: "9px", color: "rgba(0,0,0,0.28)" } }, count),
+      React.createElement("div", { style: { flex: 1, height: "1px", background: "rgba(0,0,0,0.08)" } })
+    );
+
+  renderFondsPanel() {
+    const { bgImages, bgSelected, bgScale, bgRotate, bgPosX, bgPosY, bgOrient } = this.state;
+    const allBgs = [...this.BUILT_IN_BG, ...bgImages];
+    const activeBg = allBgs.find(b => b.id === bgSelected);
+
+    // split by measured orientation; unmeasured default to vertical
+    const verticals   = allBgs.filter(b => (bgOrient[b.id] || "v") === "v");
+    const horizontals = allBgs.filter(b => bgOrient[b.id] === "h");
+
+    return React.createElement("div", { style: { display: this.state.activePanel === "fonds" ? "block" : "none", padding: "12px 12px 24px" } },
+
+      // ── Fix / Move sub-toggle ──
+      React.createElement("div", {
+        style: { display: "flex", gap: "0", marginBottom: "14px", border: "1px solid rgba(0,0,0,0.12)", borderRadius: "5px", overflow: "hidden", padding: "2px", background: "rgba(0,0,0,0.03)" }
+      },
+        React.createElement("button", {
+          onClick: () => this.setState({ backMode: "fix" }),
+          style: {
+            flex: 1, padding: "5px 0", border: "none", borderRadius: "3px", cursor: "pointer",
+            fontSize: "10px", fontWeight: 600, fontFamily: "inherit", letterSpacing: "0.04em",
+            background: (this.state.backMode || "fix") === "fix" ? "#1a1a1a" : "transparent",
+            color: (this.state.backMode || "fix") === "fix" ? "#fff" : "rgba(0,0,0,0.5)",
+          }
+        }, "Fix"),
+        React.createElement("button", {
+          onClick: () => this.setState({ backMode: "move" }),
+          style: {
+            flex: 1, padding: "5px 0", border: "none", borderRadius: "3px", cursor: "pointer",
+            fontSize: "10px", fontWeight: 600, fontFamily: "inherit", letterSpacing: "0.04em",
+            background: this.state.backMode === "move" ? "#1a1a1a" : "transparent",
+            color: this.state.backMode === "move" ? "#fff" : "rgba(0,0,0,0.5)",
+          }
+        }, "Move")
+      ),
+
+      // ── FIX: image grids ──
+      this.state.backMode !== "move" ? this._bgSectionHeader("Verticaux", verticals.length) : null,
+      this.state.backMode !== "move" ? React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "3px", marginBottom: "16px" } },
+        verticals.map((b) => this._bgThumb(b, "3/4"))
+      ) : null,
+
+      (this.state.backMode !== "move" && horizontals.length > 0) ? this._bgSectionHeader("Horizontaux", horizontals.length) : null,
+      (this.state.backMode !== "move" && horizontals.length > 0) ? React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px", marginBottom: "16px" } },
+        horizontals.map((b) => this._bgThumb(b, "16/9"))
+      ) : null,
+
+      // add custom images (Fix only)
+      this.state.backMode !== "move" ? React.createElement("label", {
+        style: {
+          display: "flex", alignItems: "center", gap: "5px",
+          padding: "0 10px", height: "26px", width: "100%",
+          border: "1px dashed rgba(0,0,0,0.2)", background: "transparent",
+          color: "rgba(0,0,0,0.45)", fontSize: "10px", fontFamily: "inherit",
+          cursor: "pointer", borderRadius: "3px", marginBottom: "14px",
+          boxSizing: "border-box", justifyContent: "center",
+        }
+      },
+        "+ Ajouter",
+        React.createElement("input", {
+          type: "file", accept: "image/*", multiple: true,
+          onChange: this.onFolderPick,
+          style: { display: "none" },
+        })
+      ) : null,
+
+      // hint when a bg image is active (Fix only)
+      (this.state.backMode !== "move" && activeBg) ? React.createElement("div", {
+        style: { fontSize: "10px", color: "rgba(0,0,0,0.4)", fontStyle: "italic", lineHeight: 1.5, borderTop: "1px solid rgba(0,0,0,0.07)", paddingTop: "10px" }
+      }, "Réglages → panneau flottant à gauche.") : null,
+
+      // ── MOVE: solid color swatches ──
+      this.state.backMode === "move" ? this.renderColorSwatches() : null
+    );
+  }
+
+  BG_SOLIDS = [
+    { c: "#FFFFFF", name: "Blanc" },
+    { c: "#ECEFF2", name: "Blanc froid" },
+    { c: "#D5DCE3", name: "Brume" },
+    { c: "#B3C4D4", name: "Bleu pâle" },
+    { c: "#8AA6C0", name: "Bleu" },
+    { c: "#4F6B86", name: "Bleu ardoise" },
+    { c: "#2A3A4C", name: "Navy" },
+    // pales / in-between
+    { c: "#E4ECE8", name: "Menthe pâle" },
+    { c: "#C5D6CE", name: "Menthe" },
+    { c: "#9BBAA9", name: "Sauge" },
+    { c: "#5E8474", name: "Vert froid" },
+    { c: "#ECEBF3", name: "Lavande pâle" },
+    { c: "#CBCDE4", name: "Lavande" },
+    { c: "#9AA0C9", name: "Périwinkle" },
+    { c: "#EAEBED", name: "Gris pâle" },
+    { c: "#BFC2C6", name: "Gris froid" },
+    { c: "#6E747A", name: "Gris ardoise" },
+    { c: "#1B1E23", name: "Noir froid" },
+    // pâles tièdes (doux, jamais saturés)
+    { c: "#F6EDE6", name: "Crème" },
+    { c: "#F4E2D6", name: "Pêche pâle" },
+    { c: "#EFCDBC", name: "Pêche" },
+    { c: "#F0E2D0", name: "Sable" },
+    { c: "#EEE4D2", name: "Lin" },
+    { c: "#E8D6CE", name: "Argile pâle" },
+  ];
+
+  setSolidBg = (c) => this.setState({ bgColor: c, bgSelected: null });
+  clearSolidBg = () => this.setState({ bgColor: null });
+
+  toggleAura = () => this.setState((s) => ({ auraOn: !s.auraOn }));
+
+  // cool mesh-gradient presets (support the warm auras on top — no warm hues)
+  SHADER_PRESETS = [
+    { id: "gap2", name: "GAP 2", type: "waterPlane", c1: "#d6d3e2", c2: "#CCB0A8", c3: "#f0ece4", uSpeed: 0.1, uStrength: 1.5, uDensity: 1.5, uTime: 0.1, fov: 45, cDistance: 2.1 },
+    { id: "gap3", name: "GAP 3", type: "waterPlane", c1: "#F4C4B8", c2: "#CCB0A8", c3: "#f0ece4", uSpeed: 0.1, uStrength: 1.5, uDensity: 1.5, uTime: 0.1, fov: 45, cDistance: 2.1 },
+  ];
+  // ── Modèles (templates) ────────────────────────────────────────────────────────
+  // A template is the WHOLE composition. Format v2 (Oct. 2026):
+  //   { v: 2, format, fmtW, fmtH, frames: [...native px...], bgColor, shaderBg, auraOn,
+  //     bridgeAnims, bgSelected, bgScale, bgRotate, bgPosX, bgPosY, bgCustom? }
+  // Everything is in native px of the format → a template looks the same whatever the
+  // window it is saved or opened in. v1 templates (screen px) are converted on the fly.
+  // Sources: "Modèles de base" (modeles-base.js, read-only, shipped with the site) +
+  // "Mes modèles" (PresetStore: shared server library, or this browser as a fallback).
+  TEMPLATE_KEYS = ["frames", "format", "bgColor", "shaderBg", "auraOn", "bridgeAnims", "bgSelected", "bgScale", "bgRotate", "bgPosX", "bgPosY"];
+  TEMPLATE_VERSION = 2;
+
+  _baseTemplates() {
+    const arr = Array.isArray(window.GAP_MODELES_BASE) ? window.GAP_MODELES_BASE : [];
+    return arr.filter((p) => p && p.data).map((p) => ({ ...p, kind: "template", base: true }));
+  }
+
+  _loadTemplates = () => {
+    const base = this._baseTemplates();
+    const PS = window.GAP && window.GAP.PresetStore;
+    if (!PS) { this.setState({ savedTemplates: base, templatesStatus: "" }); return Promise.resolve(); }
+    return PS.list("template")
+      .then((arr) => this.setState({ savedTemplates: [...base, ...(arr || [])], templatesStatus: PS.status || "" }))
+      .catch(() => this.setState({ savedTemplates: base, templatesStatus: "local" }));
+  };
+
+  _captureState = () => {
+    const fmt = this._fmt();
+    const data = { v: this.TEMPLATE_VERSION, fmtW: fmt.w, fmtH: fmt.h };
+    this.TEMPLATE_KEYS.forEach((k) => { data[k] = k === "frames" ? this._liveFrames() : this.state[k]; });
+    // only keep the animations of A-ponts that are really in the frames
+    const ids = new Set();
+    data.frames.forEach((f) => (f.html || "").replace(/data-bridge-id="([^"]+)"/g, (_, id) => { ids.add(id); return ""; }));
+    data.bridgeAnims = Object.fromEntries(Object.entries(data.bridgeAnims || {}).filter(([id]) => ids.has(id)));
+    // a background picked from the computer is not on the server: embed it if it is reasonable
+    const custom = (this.state.bgImages || []).find((b) => b.id === this.state.bgSelected);
+    if (custom && custom.url && custom.url.length < 1500000) data.bgCustom = { id: custom.id, url: custom.url, name: custom.name };
+    return data;
+  };
+
+  // any template (v1 or v2, any format) → v2 in native px of its own format
+  _normalizeTemplate(data) {
+    if (!data) return null;
+    this._normCache = this._normCache || new WeakMap();
+    if (typeof data === "object" && this._normCache.has(data)) return this._normCache.get(data);
+    const fmt = this._fmt(data.format) || this._fmt();
+    let frames = (data.frames || []).map((f) => ({ ...f }));
+    if (!(data.v >= 2)) {
+      // v1: frames were in screen px of the canvas area, at the window size of the save.
+      // Best guess: that window was like this one → undo the page position / zoom it had.
+      const pl = this._layoutFor(fmt);
+      const s = pl.scale || 1;
+      const r = (v) => Math.round(v * 100) / 100;
+      frames = frames.map((f) => {
+        const p = { ...f };
+        p.x = r(((f.x || 0) - pl.x) / s); p.y = r(((f.y || 0) - pl.y) / s);
+        if (f.type === "a-bridge") { p.size = r((f.size || 90) / s); return p; }
+        p.w = r((f.w || 300) / s); p.h = r((f.h || 100) / s); p.fontSize = r((f.fontSize || 16) / s);
+        if (f.html) p.html = this._scaleBridgesInHtml(f.html, 1 / s);
+        return p;
+      });
+    } else if (data.fmtW && data.fmtH && (data.fmtW !== fmt.w || data.fmtH !== fmt.h)) {
+      frames = this._mapFrames(frames, { id: data.format, w: data.fmtW, h: data.fmtH }, fmt);
+    }
+    const out = { ...data, v: this.TEMPLATE_VERSION, format: fmt.id, fmtW: fmt.w, fmtH: fmt.h, frames };
+    if (typeof data === "object") this._normCache.set(data, out);
+    return out;
+  }
+
+  _applyState = (data) => {
+    const tpl = this._normalizeTemplate(data);
+    if (!tpl) return;
+    this._pushHistory();
+    // fresh frame ids (the editables re-mount from the template html) and fresh A-pont ids
+    // (their animations follow)
+    const anims = {};
+    const frames = tpl.frames.map((f, i) => {
+      const nid = "f" + (this.state.nextId + i);
+      if (f.type === "a-bridge") return { ...f, id: nid };
+      const { html, map } = this._rekeyBridges(f.html || "");
+      Object.keys(map).forEach((old) => { if (tpl.bridgeAnims && tpl.bridgeAnims[old]) anims[map[old]] = { ...tpl.bridgeAnims[old] }; });
+      return { ...f, id: nid, html: html || f.html || "" };
+    });
+    this._master = null;
+    const patch = { frames, selectedId: null, selectedBridgeId: null, nextId: this.state.nextId + frames.length + 1, bridgeAnims: anims };
+    ["format", "bgColor", "shaderBg", "auraOn", "bgSelected", "bgScale", "bgRotate", "bgPosX", "bgPosY"].forEach((k) => { if (k in tpl) patch[k] = tpl[k]; });
+    if (tpl.bgCustom && tpl.bgCustom.id && !(this.state.bgImages || []).some((b) => b.id === tpl.bgCustom.id)) {
+      patch.bgImages = [...(this.state.bgImages || []), tpl.bgCustom];
+    }
+    this.setState(patch, () => this.computePageLayout());
+  };
+
+  // the store asks for the team key when the server requires one (HTTP 401)
+  _withTeamKey(run) {
+    const PS = window.GAP && window.GAP.PresetStore;
+    return run().catch((e) => {
+      if (!(e && e.status === 401) || !PS || !PS.setTeamKey) throw e;
+      const k = window.prompt("Clé d'équipe pour enregistrer sur le serveur partagé :", "");
+      if (!k) throw e;
+      PS.setTeamKey(k.trim());
+      return run();
+    });
+  }
+
+  saveTemplate = () => {
+    const PS = window.GAP && window.GAP.PresetStore;
+    if (!PS) { alert("PresetStore introuvable (preset-store.js non chargé)."); return; }
+    const name = window.prompt("Nom du modèle :", "");
+    if (!name || !name.trim()) return;
+    const nm = name.trim();
+    const same = this.state.savedTemplates.find((p) => !p.base && p.name === nm);
+    const replace = same ? window.confirm("Un modèle « " + nm + " » existe déjà. Le remplacer ?\n(Annuler = en créer un nouveau)") : false;
+    const preset = { kind: "template", name: nm, data: this._captureState() };
+    if (replace) { preset.id = same.id; preset.local = same.local; preset.createdAt = same.createdAt; }
+    return this._withTeamKey(() => PS.save(preset))
+      .then((saved) => {
+        this._loadTemplates();
+        this._templateNotice(saved && saved.local
+          ? "« " + nm + " » enregistré dans ce navigateur (serveur partagé injoignable)."
+          : "« " + nm + " » enregistré.");
+      })
+      .catch((e) => alert("Échec : " + (e && e.message)));
+  };
+
+  _templateNotice(msg) {
+    this.setState({ templateNotice: msg });
+    clearTimeout(this._noticeT);
+    this._noticeT = setTimeout(() => this.setState({ templateNotice: "" }), 5000);
+  }
+
+  applyTemplate = (id) => {
+    if (!id) return;
+    const t = this.state.savedTemplates.find((p) => p.id === id);
+    if (t) this._applyState(t.data);
+  };
+
+  renderTemplatesBar() {
+    const mine = this.state.savedTemplates.filter((p) => !p.base).length;
+    return React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "5px" } },
+      React.createElement("button", {
+        onClick: () => this.setState((s) => ({ templatesManagerOpen: !s.templatesManagerOpen })),
+        title: "Modèles (de base et enregistrés)",
+        style: { display: "inline-flex", alignItems: "center", gap: "5px", padding: "0 10px", height: "28px", border: "1px solid rgba(0,0,0,0.15)", background: this.state.templatesManagerOpen ? "#1a1a1a" : "#fff", color: this.state.templatesManagerOpen ? "#fff" : "#1a1a1a", fontSize: "12px", fontFamily: "inherit", cursor: "pointer", borderRadius: "3px" }
+      },
+        React.createElement("svg", { width: 12, height: 12, viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: 1.4, strokeLinecap: "round", strokeLinejoin: "round" },
+          React.createElement("rect", { x: 2, y: 2, width: 10, height: 4, rx: 1 }), React.createElement("rect", { x: 2, y: 8, width: 10, height: 4, rx: 1 })),
+        "Modèles", mine ? React.createElement("span", { style: { opacity: 0.55 } }, mine) : null
+      ),
+      React.createElement("button", {
+        onClick: this.saveTemplate, title: "Enregistrer la composition actuelle comme modèle",
+        style: { display: "inline-flex", alignItems: "center", padding: "0 10px", height: "28px", border: "1px solid rgba(0,0,0,0.15)", background: "#fff", color: "#1a1a1a", fontSize: "12px", fontFamily: "inherit", cursor: "pointer", borderRadius: "3px" }
+      }, "+ Modèle")
+    );
+  }
+
+  // small, faithful preview of a template (same text style as the editor / export)
+  _renderMini(data, boxW) {
+    let tpl;
+    try { tpl = this._normalizeTemplate(data); } catch (e) { tpl = null; }
+    if (!tpl) return null;
+    const s = boxW / tpl.fmtW;
+    const boxH = Math.round(tpl.fmtH * s);
+    const kids = [];
+    const pool = [...this.BUILT_IN_BG, ...(this.state.bgImages || []), ...(tpl.bgCustom ? [tpl.bgCustom] : [])];
+    const bg = tpl.bgSelected && pool.find((b) => b.id === tpl.bgSelected);
+    if (bg) {
+      const px = tpl.bgPosX != null ? tpl.bgPosX : 50, py = tpl.bgPosY != null ? tpl.bgPosY : 50;
+      kids.push(React.createElement("img", { key: "bg", src: bg.url, loading: "lazy", style: {
+        position: "absolute", left: px + "%", top: py + "%", width: (tpl.bgScale || 100) + "%", height: "auto", maxWidth: "none",
+        transform: "translate(-" + px + "%, -" + py + "%) rotate(" + (tpl.bgRotate || 0) + "deg)", transformOrigin: "center center" } }));
+    } else if (tpl.shaderBg) {
+      const p = tpl.shaderBg;
+      kids.push(React.createElement("div", { key: "sh", style: { position: "absolute", inset: 0, background: "radial-gradient(circle at 30% 30%, " + p.c2 + " 0%, " + p.c1 + " 45%, " + p.c3 + " 100%)" } }));
+    }
+    (tpl.frames || []).forEach((f, i) => {
+      if (f.type === "a-bridge") return;
+      kids.push(React.createElement("div", { key: "m" + i, style: { position: "absolute", left: f.x + "px", top: f.y + "px", width: f.w + "px" } },
+        React.createElement("div", { style: this._textStyle(f), dangerouslySetInnerHTML: { __html: this._cleanHtml(f.html || this._escHtml(f.text || ""), f) } })));
+    });
+    return React.createElement("div", { style: { position: "relative", width: boxW + "px", height: boxH + "px", overflow: "hidden", flexShrink: 0, background: tpl.bgColor || "#fff", border: "1px solid rgba(0,0,0,0.12)", borderRadius: "2px", pointerEvents: "none" } },
+      React.createElement("div", { style: { position: "absolute", left: 0, top: 0, width: tpl.fmtW + "px", height: tpl.fmtH + "px", transform: "scale(" + s + ")", transformOrigin: "0 0" } }, ...kids));
+  }
+
+  _templateRow(p) {
+    const fmt = this._fmt(p.data && p.data.format);
+    const btn = { border: "1px solid rgba(0,0,0,0.12)", background: "#fff", borderRadius: "3px", cursor: "pointer", padding: "3px 6px", fontSize: "9px", flexShrink: 0 };
+    return React.createElement("div", {
+      key: p.id, style: { display: "flex", alignItems: "center", gap: "8px", padding: "6px 4px", borderTop: "1px solid rgba(0,0,0,0.06)" }
+    },
+      React.createElement("button", {
+        onClick: () => { this.applyTemplate(p.id); this.setState({ templatesManagerOpen: false }); },
+        title: "Appliquer (⌘Z pour revenir en arrière)",
+        style: { flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: "9px", textAlign: "left", border: "none", background: "transparent", cursor: "pointer", padding: 0, fontFamily: "inherit" }
+      },
+        this._renderMini(p.data, 44),
+        React.createElement("span", { style: { display: "grid", gap: "2px", minWidth: 0 } },
+          React.createElement("span", { style: { fontSize: "11px", color: "#1a1a1a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, p.name),
+          React.createElement("span", { style: { fontSize: "9px", color: "rgba(0,0,0,0.4)" } },
+            (fmt ? fmt.label : "") + (p.local ? " · ce navigateur" : "") + (p.data && !(p.data.v >= 2) ? " · ancien format" : ""))
+        )
+      ),
+      p.local && !p.base ? React.createElement("button", { onClick: () => this.pushTemplate(p.id), title: "Envoyer sur le serveur partagé", style: btn }, "⇪") : null,
+      React.createElement("button", { onClick: () => this.downloadTemplate(p.id), title: "Télécharger (partager)", style: btn }, "↓"),
+      p.base ? null : React.createElement("button", { onClick: () => this.deleteTemplate(p.id), title: "Supprimer", style: { ...btn, border: "1px solid rgba(200,50,30,0.25)", color: "rgba(200,50,30,0.85)" } }, "✕")
+    );
+  }
+
+  renderTemplatesManager() {
+    if (!this.state.templatesManagerOpen) return null;
+    const items = this.state.savedTemplates;
+    const base = items.filter((p) => p.base), mine = items.filter((p) => !p.base);
+    const head = (label, note) => React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: "6px", margin: "10px 0 2px" } },
+      React.createElement("span", { style: { fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(0,0,0,0.45)", fontWeight: 600 } }, label),
+      note ? React.createElement("span", { style: { fontSize: "9px", color: "rgba(0,0,0,0.35)" } }, note) : null);
+    const st = this.state.templatesStatus;
+    return React.createElement("div", {
+      style: { position: "absolute", top: "44px", left: "12px", zIndex: 60, width: "320px", maxHeight: "70vh", overflowY: "auto", background: "#fff", border: "1px solid rgba(0,0,0,0.12)", borderRadius: "8px", boxShadow: "0 10px 34px rgba(0,0,0,0.2)", padding: "10px" }
+    },
+      React.createElement("div", { style: { display: "flex", alignItems: "center" } },
+        React.createElement("span", { style: { flex: 1, fontSize: "11px", fontWeight: 600 } }, "Modèles"),
+        React.createElement("button", { onClick: () => this.setState({ templatesManagerOpen: false }), style: { border: "none", background: "transparent", cursor: "pointer", fontSize: "14px", color: "rgba(0,0,0,0.4)" } }, "×")
+      ),
+      this.state.templateNotice ? React.createElement("div", { style: { fontSize: "10px", color: "#1a1a1a", background: "rgba(45,124,240,0.08)", borderRadius: "4px", padding: "6px 8px", marginTop: "6px" } }, this.state.templateNotice) : null,
+      base.length ? head("Modèles de base", base.length) : null,
+      base.map((p) => this._templateRow(p)),
+      head("Mes modèles", st === "serveur" ? "· bibliothèque partagée" : (st === "local" ? "· ce navigateur (serveur injoignable)" : "")),
+      mine.length === 0 ? React.createElement("div", { style: { fontSize: "10px", color: "rgba(0,0,0,0.4)", fontStyle: "italic", padding: "4px" } }, "Aucun modèle enregistré — « + Modèle » enregistre la composition actuelle.") : null,
+      mine.map((p) => this._templateRow(p)),
+      // footer: import a teammate's file (fallback while there is no server)
+      React.createElement("label", {
+        style: { display: "flex", alignItems: "center", justifyContent: "center", gap: "5px", marginTop: "10px", padding: "7px", border: "1px dashed rgba(0,0,0,0.18)", borderRadius: "4px", cursor: "pointer", fontSize: "10px", color: "rgba(0,0,0,0.5)" }
+      },
+        "Importer un fichier .json",
+        React.createElement("input", { type: "file", accept: "application/json,.json", onChange: this.importTemplateFile, style: { display: "none" } })
+      )
+    );
+  }
+
+  deleteTemplate = (id) => {
+    const PS = window.GAP && window.GAP.PresetStore;
+    const t = this.state.savedTemplates.find((p) => p.id === id);
+    if (!PS || !t || t.base) return;
+    if (!window.confirm("Supprimer le modèle « " + t.name + " »" + (t.local ? "" : " pour toute l'équipe") + " ?")) return;
+    this._withTeamKey(() => PS.remove(id, !!t.local)).then(() => this._loadTemplates())
+      .catch((e) => alert("Échec : " + (e && e.message)));
+  };
+
+  // send a template kept in this browser to the shared server library
+  pushTemplate = (id) => {
+    const PS = window.GAP && window.GAP.PresetStore;
+    const t = this.state.savedTemplates.find((p) => p.id === id);
+    if (!PS || !t || !PS.push) return;
+    this._withTeamKey(() => PS.push(id)).then((ok) => {
+      this._loadTemplates();
+      this._templateNotice(ok ? "« " + t.name + " » est maintenant sur le serveur partagé." : "Serveur toujours injoignable — le modèle reste dans ce navigateur.");
+    }).catch((e) => alert("Échec : " + (e && e.message)));
+  };
+
+  // share one template as a .json file (give it to a teammate)
+  downloadTemplate = (id) => {
+    const PS = window.GAP && window.GAP.PresetStore;
+    const t = this.state.savedTemplates.find((p) => p.id === id);
+    if (PS && t) PS.download({ kind: "template", name: t.name, data: t.data, author: t.author || "" });
+  };
+  // import a .json template from a teammate
+  importTemplateFile = (e) => {
+    const PS = window.GAP && window.GAP.PresetStore;
+    const file = e.target.files && e.target.files[0];
+    if (!PS || !file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      // one preset, or a list of them (outils/recuperer-modeles.js)
+      let list;
+      try { const obj = JSON.parse(String(ev.target.result)); list = Array.isArray(obj) ? obj : [obj]; }
+      catch (err) { alert("Fichier invalide : " + (err && err.message)); return; }
+      list = list.filter((p) => p && p.name && p.data);
+      if (!list.length) { alert("Aucun modèle dans ce fichier."); return; }
+      let local = 0;
+      list.reduce((prev, p) => prev.then(() => this._withTeamKey(() => PS.importFrom(p)).then((saved) => { if (saved && saved.local) local++; })), Promise.resolve())
+        .then(() => {
+          this._loadTemplates();
+          this._templateNotice((list.length > 1 ? list.length + " modèles importés" : "Modèle importé") + (local ? " (dans ce navigateur)." : "."));
+        })
+        .catch((err) => alert("Import interrompu : " + (err && err.message)));
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  setShaderBg = (preset) => this.setState({ shaderBg: preset });
+  clearShaderBg = () => this.setState({ shaderBg: null });
+  _shaderUrl(p) {
+    const q = new URLSearchParams({
+      type: p.type, color1: p.c1, color2: p.c2, color3: p.c3,
+      uSpeed: p.uSpeed, uStrength: p.uStrength, uDensity: p.uDensity,
+      uTime: p.uTime != null ? p.uTime : 8,
+      fov: p.fov != null ? p.fov : 45,
+      cDistance: p.cDistance != null ? p.cDistance : 2.8,
+      grainAmt: p.grainAmt != null ? p.grainAmt : 0.06,
+    });
+    return "uploads/shader-gradient.html?" + q.toString();
+  }
+  toggleDessous = (k) => this.setState((s) => {
+    const next = { couleurs: false, animmix: false };
+    next[k] = !s.dessousOpen[k];   // exclusive: opening one retracts the other
+    return { dessousOpen: next };
+  });
+
+  _accordionSection(key, label, badge, contentNode) {
+    const open = !!this.state.dessousOpen[key];
+    return React.createElement("div", {
+      style: { border: "1px solid rgba(0,0,0,0.10)", borderRadius: "6px", overflow: "hidden", marginBottom: "8px", background: "#fff" }
+    },
+      React.createElement("button", {
+        onClick: () => this.toggleDessous(key),
+        style: {
+          width: "100%", display: "flex", alignItems: "center", gap: "8px",
+          padding: "9px 11px", border: "none", background: open ? "rgba(0,0,0,0.025)" : "#fff",
+          cursor: "pointer", fontFamily: "inherit",
+        }
+      },
+        React.createElement("span", {
+          style: { fontSize: "10px", color: "rgba(0,0,0,0.4)", transform: open ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s", display: "inline-block", width: "8px" }
+        }, "\u203A"),
+        React.createElement("span", { style: { flex: 1, textAlign: "left", fontSize: "11px", fontWeight: 600, letterSpacing: "0.04em", color: "#1a1a1a" } }, label),
+        badge != null ? React.createElement("span", { style: { fontSize: "9px", color: "rgba(0,0,0,0.35)" } }, badge) : null
+      ),
+      open ? React.createElement("div", { style: { padding: "12px 11px 14px", borderTop: "1px solid rgba(0,0,0,0.07)" } }, contentNode) : null
+    );
+  }
+
+  renderAuraToast() {
+    if (!this.state.auraOn) return null;
+    const stage = this.state.auraStage;
+    const playing = stage === 0;
+    const labels = ["Auras animées", "Mouvement figé", "Tout figé"];
+    const hints  = ["Espace pour figer le mouvement", "Espace pour figer le pulse", "Espace pour relancer"];
+    return React.createElement("div", {
+      key: "aura-toast",
+      style: {
+        position: "absolute", bottom: "20px", left: "50%", transform: "translateX(-50%)",
+        zIndex: 50, pointerEvents: "none",
+        display: "flex", alignItems: "center", gap: "9px",
+        padding: "9px 15px", borderRadius: "999px",
+        background: "rgba(18,17,16,0.82)", backdropFilter: "blur(8px)",
+        boxShadow: "0 6px 24px rgba(0,0,0,0.3)",
+        color: "#f0ece4", fontSize: "12px", fontFamily: "-apple-system, sans-serif",
+        whiteSpace: "nowrap",
+      }
+    },
+      React.createElement("span", {
+        style: {
+          width: "16px", height: "16px", borderRadius: "50%",
+          background: playing ? "rgba(255,255,255,0.18)" : "#E8A87C",
+          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+        }
+      }, playing
+        ? React.createElement("svg", { width: 7, height: 7, viewBox: "0 0 8 8", fill: "#f0ece4" }, React.createElement("rect", { x: 1.5, y: 1, width: 2, height: 6 }), React.createElement("rect", { x: 4.5, y: 1, width: 2, height: 6 }))
+        : React.createElement("svg", { width: 7, height: 7, viewBox: "0 0 8 8", fill: "#1a1a1a" }, React.createElement("path", { d: "M1.5 1L7 4 1.5 7z" }))
+      ),
+      React.createElement("span", null, labels[stage]),
+      // stage dots
+      React.createElement("span", { style: { display: "flex", gap: "3px", alignItems: "center" } },
+        [0, 1, 2].map((i) => React.createElement("span", {
+          key: i,
+          style: { width: "5px", height: "5px", borderRadius: "50%", background: i <= stage ? "#E8A87C" : "rgba(255,255,255,0.22)" }
+        }))
+      ),
+      React.createElement("span", {
+        style: {
+          fontSize: "10px", letterSpacing: "0.04em",
+          padding: "2px 7px", borderRadius: "4px",
+          background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.85)",
+        }
+      }, hints[stage])
+    );
+  }
+
+  // forward the cursor position (relative to the artboard) into the aura iframe
+  onCanvasMouseMove = (e) => {
+    if (!this.state.auraOn || !this._auraFrame || !this._artboardEl) return;
+    const r = this._artboardEl.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    const win = this._auraFrame.contentWindow;
+    if (!win) return;
+    if (x < 0 || y < 0 || x > r.width || y > r.height) {
+      win.postMessage({ type: "cursor", x: null, y: null }, "*");
+    } else {
+      win.postMessage({ type: "cursor", x, y }, "*");
+    }
+  };
+
+  renderColorSwatches() {
+    const cur = this.state.bgColor;
+
+    // ── content: Couleurs unies ──
+    const couleursContent = React.createElement("div", null,
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "6px", marginBottom: cur ? "12px" : "0" } },
+        this.BG_SOLIDS.map((s) =>
+          React.createElement("button", {
+            key: s.c,
+            onClick: () => this.setSolidBg(s.c),
+            title: s.name,
+            style: {
+              aspectRatio: "1", borderRadius: "5px", cursor: "pointer", padding: 0,
+              background: s.c,
+              border: s.c.toUpperCase() === "#FFFFFF" ? "1px solid rgba(0,0,0,0.15)" : "1px solid rgba(0,0,0,0.06)",
+              outline: cur === s.c ? "2px solid #2D7CF0" : "none",
+              outlineOffset: "2px",
+            }
+          })
+        )
+      ),
+      cur ? React.createElement("button", {
+        onClick: this.clearSolidBg,
+        style: {
+          width: "100%", padding: "7px", border: "1px solid rgba(0,0,0,0.12)",
+          background: "#fff", color: "rgba(0,0,0,0.45)", fontSize: "10px",
+          fontFamily: "inherit", cursor: "pointer", borderRadius: "3px", letterSpacing: "0.03em",
+        }
+      }, "Retirer la couleur") : null
+    );
+
+    // ── content: Anim mix (cool mesh gradients) ──
+    const sb = this.state.shaderBg;
+    const swatch = (c1, c2, c3) => "radial-gradient(circle at 30% 30%, " + c2 + " 0%, " + c1 + " 45%, " + c3 + " 100%)";
+    const animContent = React.createElement("div", null,
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: sb ? "12px" : "0" } },
+        this.SHADER_PRESETS.map((p) =>
+          React.createElement("button", {
+            key: p.id, onClick: () => this.setShaderBg(p), title: p.name,
+            style: {
+              position: "relative", aspectRatio: "16/10", borderRadius: "5px", cursor: "pointer", padding: 0, overflow: "hidden",
+              border: "1px solid rgba(0,0,0,0.08)",
+              outline: sb && sb.id === p.id ? "2px solid #2D7CF0" : "none", outlineOffset: "1px",
+              background: swatch(p.c1, p.c2, p.c3),
+            }
+          }, React.createElement("span", { style: { position: "absolute", left: 0, right: 0, bottom: 0, padding: "2px 5px", fontSize: "8px", color: "#fff", background: "rgba(0,0,0,0.28)", textAlign: "left" } }, p.name))
+        )
+      ),
+      sb ? React.createElement("button", {
+        onClick: this.clearShaderBg,
+        style: { width: "100%", padding: "7px", border: "1px solid rgba(0,0,0,0.12)", background: "#fff", color: "rgba(0,0,0,0.45)", fontSize: "10px", fontFamily: "inherit", cursor: "pointer", borderRadius: "3px" }
+      }, "Retirer le fond animé") : null
+    );
+
+    // ── auras toggle — OUTSIDE the Dessous drawer ──
+    const aurasToggle = React.createElement("div", { style: { marginTop: "16px", borderTop: "1px solid rgba(0,0,0,0.08)", paddingTop: "14px" } },
+      this._bgSectionHeader("Animation", ""),
+      React.createElement("button", {
+        onClick: this.toggleAura,
+        style: {
+          width: "100%", display: "flex", alignItems: "center", gap: "9px",
+          padding: "9px 11px", borderRadius: "5px", cursor: "pointer",
+          border: this.state.auraOn ? "1.5px solid #2D7CF0" : "1px solid rgba(0,0,0,0.14)",
+          background: this.state.auraOn ? "rgba(45,124,240,0.06)" : "#fff",
+          fontFamily: "inherit",
+        }
+      },
+        React.createElement("span", {
+          style: {
+            width: "26px", height: "26px", borderRadius: "5px", flexShrink: 0,
+            background: "radial-gradient(circle at 38% 42%, #F0A888 0%, rgba(240,144,112,0.5) 38%, transparent 62%), radial-gradient(circle at 66% 64%, #E87050 0%, rgba(232,112,80,0.5) 34%, transparent 60%), #ECE8E3",
+          }
+        }),
+        React.createElement("span", { style: { flex: 1, textAlign: "left" } },
+          React.createElement("div", { style: { fontSize: "11px", fontWeight: 600, color: "#1a1a1a" } }, "Deux auras"),
+          React.createElement("div", { style: { fontSize: "9px", color: "rgba(0,0,0,0.45)", marginTop: "1px" } },
+            this.state.auraOn ? ["Suit le curseur", "Mouvement figé", "Tout figé"][this.state.auraStage] : "Suit le curseur")
+        ),
+        React.createElement("span", {
+          style: { width: "30px", height: "17px", borderRadius: "9px", flexShrink: 0, position: "relative", background: this.state.auraOn ? "#2D7CF0" : "rgba(0,0,0,0.18)", transition: "background 0.15s" }
+        },
+          React.createElement("span", { style: { position: "absolute", top: "2px", left: this.state.auraOn ? "15px" : "2px", width: "13px", height: "13px", borderRadius: "50%", background: "#fff", transition: "left 0.15s" } })
+        )
+      ),
+      React.createElement("div", { style: { fontSize: "9px", color: "rgba(0,0,0,0.4)", fontStyle: "italic", lineHeight: 1.5, marginTop: "8px" } },
+        "Espace : 1\u00D7 fige le mouvement \u00B7 2\u00D7 fige le pulse \u00B7 3\u00D7 relance.")
+    );
+
+    return React.createElement("div", null,
+      React.createElement("div", { style: { fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(0,0,0,0.4)", margin: "2px 0 10px" } }, "Dessous"),
+      this._accordionSection("couleurs", "Couleurs unies", this.BG_SOLIDS.length, couleursContent),
+      this._accordionSection("animmix", "Anim mix", null, animContent),
+      aurasToggle
+    );
+  }
+
+  // floating controls card — overflows LEFT of the panel, over the canvas
+  renderBgControls() {
+    if (this.state.activePanel !== "fonds") return null;
+    const { bgImages, bgSelected, bgScale, bgRotate, bgPosX, bgPosY } = this.state;
+    const allBgs = [...this.BUILT_IN_BG, ...bgImages];
+    const activeBg = allBgs.find(b => b.id === bgSelected);
+    if (!activeBg) return null;
+
+    return React.createElement("div", {
+      style: {
+        position: "absolute",
+        right: "100%",          // sit just to the left of the panel
+        bottom: "16px",         // anchored to the bottom
+        marginRight: "12px",
+        width: "380px",
+        background: "#fff",
+        borderRadius: "6px",
+        boxShadow: "0 6px 28px rgba(0,0,0,0.18)",
+        border: "1px solid rgba(0,0,0,0.08)",
+        padding: "14px 16px",
+        zIndex: 30,
+        display: "grid",
+        gap: "12px",
+      }
+    },
+      React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "8px" } },
+        React.createElement("div", { style: { width: "26px", height: "32px", borderRadius: "3px", overflow: "hidden", flexShrink: 0, background: "#eee" } },
+          React.createElement("img", { src: activeBg.url, style: { width: "100%", height: "100%", objectFit: "cover", display: "block" } })
+        ),
+        React.createElement("span", { style: { fontSize: "11px", fontWeight: 600, color: "#1a1a1a", letterSpacing: "0.04em", flex: 1 } }, "Fond " + activeBg.name),
+        React.createElement("button", {
+          onClick: this.clearBg,
+          title: "Retirer le fond",
+          style: {
+            width: "22px", height: "22px", border: "1px solid rgba(0,0,0,0.12)",
+            background: "#fff", color: "rgba(0,0,0,0.45)", fontSize: "13px", lineHeight: 1,
+            fontFamily: "inherit", cursor: "pointer", borderRadius: "3px", flexShrink: 0,
+            display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+          }
+        }, "×")
+      ),
+      // sliders in 2 columns
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 20px" } },
+        this.bgSlider("Scale",    bgScale,  100,  500, 1,  (v) => this.setState({ bgScale: v }),  (v) => v + "%"),
+        this.bgSlider("Rotation", bgRotate, -180, 180, 1, (v) => this.setState({ bgRotate: v }), (v) => v + "°"),
+        this.bgSlider("Pos X",    bgPosX,   0,   100, 1,  (v) => this.setState({ bgPosX: v }),   (v) => v + "%"),
+        this.bgSlider("Pos Y",    bgPosY,   0,   100, 1,  (v) => this.setState({ bgPosY: v }),   (v) => v + "%")
+      )
+    );
+  }
+
+  bgSlider(label, value, min, max, step, onChange, fmt) {
+    return React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr", gap: "5px" } },
+      React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline" } },
+        React.createElement("span", { style: { fontSize: "11px", color: "rgba(0,0,0,0.6)" } }, label),
+        React.createElement("span", { style: { fontSize: "11px", color: "rgba(0,0,0,0.45)", fontVariantNumeric: "tabular-nums", fontWeight: 500 } }, fmt(value))
+      ),
+      React.createElement("input", {
+        type: "range", min, max, step, value,
+        onChange: (e) => onChange(parseFloat(e.target.value)),
+        style: { width: "100%", height: "4px", accentColor: "#1a1a1a", cursor: "pointer" },
+      })
+    );
+  }
+
+  applyFont = (fontKey) => {
+    const id = this.state.selectedId;
+    if (!id) return;
+    this._pushHistory();
+    const isMain = fontKey === "main1" || fontKey === "main2";
+    // A-pont bridges only live in Main fonts — strip them when switching to a Corps font
+    if (!isMain) {
+      const el = this._editableRefs[id];
+      if (el) {
+        const bridges = el.querySelectorAll(".v2-inline-bridge");
+        if (bridges.length) {
+          bridges.forEach((b) => b.remove());
+          this.updateFrame(id, { font: fontKey, html: el.innerHTML });
+          return;
+        }
+      }
+    }
+    this.updateFrame(id, { font: fontKey });
+  };
+
+  // size in native px (the size buttons pass label × _sizeUnit())
+  setFrameFontSize = (id, size) => {
+    const s = Math.max(4, Math.min(4000, Math.round(size * 10) / 10));
+    this._pushHistory();
+    this.updateFrame(id, { fontSize: s });
+    // update inline bridge sizes after the DOM repaint
+    requestAnimationFrame(() => {
+      const el = this._editableRefs[id];
+      if (!el) return;
+      const bridges = el.querySelectorAll(".v2-inline-bridge");
+      if (!bridges.length) return;
+      const newSize = this._capHeight(el, s);
+      bridges.forEach((bridge) => {
+        bridge.dataset.size = newSize;
+        this.setBridgePeVisual(bridge, parseFloat(bridge.dataset.pe) || 0.3);
+      });
+      // persist html
+      this.updateFrame(id, { html: el.innerHTML });
+    });
+  };
+
+  // first free spot inside the safe zone, so new paragraphs never land off the page or on
+  // top of another one (cascade as a last resort)
+  _freeSpot(w, h) {
+    const fmt = this._fmt();
+    const ins = this._safeInset();
+    const U = this._sizeUnit();
+    const step = 24 * U;
+    const boxes = this.state.frames.map((f) => (f.type === "a-bridge"
+      ? [f.x, f.y, this.aBridgePxW(f.pe || 1, f.size || 90), f.size || 90]
+      : [f.x, f.y, f.w, f.h]));
+    const hit = (x, y) => boxes.some(([bx, by, bw, bh]) => x < bx + bw && bx < x + w && y < by + bh && by < y + h);
+    const maxX = Math.max(ins.l, fmt.w - ins.r - w), maxY = Math.max(ins.t, fmt.h - ins.b - h);
+    for (let x = ins.l; x <= maxX + 0.5; x += Math.max(step, w / 2)) {
+      for (let y = ins.t; y <= maxY + 0.5; y += step) {
+        if (!hit(x, y)) return { x, y };
+      }
+    }
+    const n = this.state.frames.length % 8;
+    return { x: Math.min(ins.l + n * step, maxX), y: Math.min(ins.t + n * step, maxY) };
+  }
+
+  addParagraph = () => {
+    const id = "f" + this.state.nextId;
+    const fmt = this._fmt();
+    const ins = this._safeInset();
+    const U = this._sizeUnit();
+    const w = Math.round(Math.min(300 * U, fmt.w - ins.l - ins.r));
+    const fontSize = Math.round(this.state.defaultFontSize * U * 10) / 10;
+    const h = Math.round(Math.max(fontSize * 2.2, 60 * U));
+    const spot = this._freeSpot(w, h);
+    this._pushHistory();
+    this._master = null;
+    this.setState((s) => ({
+      frames: [...s.frames, {
+        id,
+        x: Math.round(spot.x),
+        y: Math.round(spot.y),
+        w, h,
+        text: "",
+        font: "main1",
+        fontSize,
+        color: "#000000",
+        opacity: 100,
+      }],
+      selectedId: id,
+      nextId: s.nextId + 1,
+    }), () => {
+      // put the caret in the new paragraph
+      requestAnimationFrame(() => {
+        const el = this._editableRefs[id];
+        if (el) el.focus();
+      });
+    });
+  };
+
+  selectFrame = (id, e) => {
+    if (e) e.stopPropagation();
+    this.setState({ selectedId: id });
+  };
+
+  deselectAll = (e) => {
+    // only deselect if user clicked the empty canvas itself
+    if (e.target === this._canvasEl) this.setState({ selectedId: null });
+  };
+
+  // every change of the composition goes through here → it becomes the new "master"
+  // for format changes
+  updateFrame = (id, patch) => {
+    this._master = null;
+    this.setState((s) => ({
+      frames: s.frames.map((f) => (f.id === id ? { ...f, ...patch } : f)),
+    }));
+  };
+
+  // keep at least ~40 screen px of a frame on the page, so it can always be grabbed back
+  _clampPos(f, x, y) {
+    const pl = this.state.pageLayout;
+    const fmt = this._fmt();
+    if (!pl || !fmt) return { x, y };
+    const keep = 40 / pl.scale;
+    const w = f.type === "a-bridge" ? this.aBridgePxW(f.pe || 1, f.size || 90) : (f.w || 100);
+    const h = f.type === "a-bridge" ? (f.size || 90) : (f.h || 60);
+    return {
+      x: Math.round(Math.max(-(w - keep), Math.min(fmt.w - keep, x)) * 100) / 100,
+      y: Math.round(Math.max(-(h - keep), Math.min(fmt.h - keep, y)) * 100) / 100,
+    };
+  }
+
+  // shared move logic for the drag bar, the frame body and the touch handle
+  _beginMove(e, id, threshold) {
+    const frame = this.state.frames.find((f) => f.id === id);
+    if (!frame) return null;
+    const z = (this.state.pageLayout && this.state.pageLayout.scale) || 1;
+    const startX = e.clientX, startY = e.clientY, origX = frame.x, origY = frame.y;
+    let moved = false;
+    const onMove = (ev) => {
+      const dx = ev.clientX - startX, dy = ev.clientY - startY;
+      if (!moved) {
+        if (Math.hypot(dx, dy) <= threshold) return;
+        moved = true;
+        this._pushHistory();
+      }
+      ev.preventDefault();
+      this.updateFrame(id, this._clampPos(frame, origX + dx / z, origY + dy / z));
+    };
+    return { onMove, moved: () => moved };
+  }
+
+  startDrag = (e, id) => {
+    e.preventDefault();
+    e.stopPropagation();
+    this.setState({ selectedId: id });
+    const m = this._beginMove(e, id, 0);
+    if (!m) return;
+    const onUp = () => {
+      window.removeEventListener("pointermove", m.onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", m.onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
+  // tap-vs-drag detection for the frame body (desktop: drag anywhere)
+  startFramePointer = (e, id) => {
+    if (e.target.closest(".v2-editable") || e.target.closest(".v2-frame-handle") ||
+        e.target.closest(".v2-frame-handle-l") || e.target.closest(".v2-frame-handle-r") ||
+        e.target.closest(".v2-frame-handle-t") || e.target.closest(".v2-frame-handle-b") ||
+        e.target.closest(".v2-move-handle") ||
+        e.target.closest(".v2-inline-bridge")) return;
+    const m = this._beginMove(e, id, 6);
+    if (!m) return;
+    const onUp = () => {
+      window.removeEventListener("pointermove", m.onMove);
+      window.removeEventListener("pointerup", onUp);
+      if (!m.moved()) this.selectFrame(id);
+    };
+    window.addEventListener("pointermove", m.onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
+  // dedicated move-handle drag — touch-action:none set in CSS, preventDefault fires immediately
+  startMoveHandle = (e, id) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const m = this._beginMove(e, id, 0);
+    if (!m) return;
+    const onUp = () => {
+      window.removeEventListener("pointermove", m.onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", m.onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
+  startResize = (e, id, edge) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const frame = this.state.frames.find((f) => f.id === id);
+    if (!frame) return;
+    const z = (this.state.pageLayout && this.state.pageLayout.scale) || 1;
+    const minW = 60 / z, minH = 40 / z;         // same on-screen minimum as before
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const o = { ...frame };
+    let snapped = false;
+    const onMove = (ev) => {
+      if (!snapped) { snapped = true; this._pushHistory(); }
+      const dx = (ev.clientX - startX) / z;
+      const dy = (ev.clientY - startY) / z;
+      const patch = {};
+      if (edge.includes("r")) patch.w = Math.max(minW, o.w + dx);
+      if (edge.includes("b")) patch.h = Math.max(minH, o.h + dy);
+      if (edge.includes("l")) {
+        const newW = Math.max(minW, o.w - dx);
+        patch.w = newW;
+        patch.x = o.x + (o.w - newW);
+      }
+      if (edge.includes("t")) {
+        const newH = Math.max(minH, o.h - dy);
+        patch.h = newH;
+        patch.y = o.y + (o.h - newH);
+      }
+      Object.keys(patch).forEach((k) => { patch[k] = Math.round(patch[k] * 100) / 100; });
+      this.updateFrame(id, patch);
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
+  deleteFrame = (id) => {
+    this._pushHistory();
+    this._master = null;
+    this.setState((s) => ({
+      frames: s.frames.filter((f) => f.id !== id),
+      selectedId: s.selectedId === id ? null : s.selectedId,
+    }));
+  };
+
+  // ── z-order: frame array order = stacking order (later = on top) ──
+  moveFrameOrder = (id, dir) => {  // dir: +1 forward (up), -1 backward (down)
+    const i = this.state.frames.findIndex((f) => f.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= this.state.frames.length) return;
+    this._pushHistory();
+    this._master = null;
+    this.setState((s) => {
+      const arr = [...s.frames];
+      const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+      return { frames: arr };
+    });
+  };
+  frameToFront = (id) => { this._pushHistory(); this._master = null; this.setState((s) => {
+    const arr = s.frames.filter((f) => f.id !== id);
+    const f = s.frames.find((f) => f.id === id);
+    return f ? { frames: [...arr, f] } : null;
+  }); };
+  frameToBack = (id) => { this._pushHistory(); this._master = null; this.setState((s) => {
+    const arr = s.frames.filter((f) => f.id !== id);
+    const f = s.frames.find((f) => f.id === id);
+    return f ? { frames: [f, ...arr] } : null;
+  }); };
+
+  // drag-reorder in the layers list. Indices are in DISPLAY order (top-first = reversed array).
+  _onLayerDragStart = (e, id) => {
+    this._dragLayerId = id;
+    e.dataTransfer.effectAllowed = "move";
+    try { e.dataTransfer.setData("text/plain", id); } catch (err) {}
+    this.setState({ dragLayerId: id });
+  };
+  _onLayerDragOver = (e, overId) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (this.state.dragOverId !== overId) this.setState({ dragOverId: overId });
+  };
+  _onLayerDrop = (e, targetId) => {
+    e.preventDefault();
+    const dragId = this._dragLayerId;
+    this._dragLayerId = null;
+    if (!dragId || dragId === targetId) { this.setState({ dragLayerId: null, dragOverId: null }); return; }
+    this._pushHistory();
+    this._master = null;
+    this.setState((s) => {
+      // work in display order (top-first), then store back reversed
+      const disp = [...s.frames].reverse();
+      const from = disp.findIndex((f) => f.id === dragId);
+      const to   = disp.findIndex((f) => f.id === targetId);
+      if (from < 0 || to < 0) return { dragLayerId: null, dragOverId: null };
+      const [moved] = disp.splice(from, 1);
+      disp.splice(to, 0, moved);
+      return { frames: disp.reverse(), dragLayerId: null, dragOverId: null };
+    });
+  };
+  _onLayerDragEnd = () => { this._dragLayerId = null; this.setState({ dragLayerId: null, dragOverId: null }); };
+
+  duplicateFrame = (id) => {
+    const i = this.state.frames.findIndex((f) => f.id === id);
+    if (i < 0) return;
+    this._pushHistory();
+    this._master = null;
+    const src = this.state.frames[i];
+    const newId = "f" + this.state.nextId;
+    // pull the live edited HTML so the copy matches what's on screen; its A-ponts get new
+    // ids (otherwise the two copies share one animation / selection), animations are copied
+    const liveEl = this._editableRefs[id];
+    const { html, map } = this._rekeyBridges((liveEl && liveEl.innerHTML) || src.html || "");
+    const anims = { ...this.state.bridgeAnims };
+    Object.keys(map).forEach((old) => { if (anims[old]) anims[map[old]] = { ...anims[old] }; });
+    const off = 24 / ((this.state.pageLayout && this.state.pageLayout.scale) || 1);
+    const pos = this._clampPos(src, src.x + off, src.y + off);
+    const copy = { ...src, id: newId, x: pos.x, y: pos.y, html };
+    const arr = [...this.state.frames];
+    arr.splice(i + 1, 0, copy);   // insert just above the source in stack
+    this.setState({ frames: arr, selectedId: newId, nextId: this.state.nextId + 1, bridgeAnims: anims });
+  };
+
+  _frameLabel(f) {
+    const el = this._editableRefs[f.id];
+    const txt = ((el && el.textContent) || f.text || "").trim().replace(/\s+/g, " ");
+    return txt ? txt.slice(0, 22) : "Paragraphe " + f.id;
+  }
+
+  renderLayersPanel() {
+    if (this.state.activePanel !== "layers") return null;
+    const frames = this.state.frames;
+    // topmost (last in array) shown first
+    const ordered = [...frames].reverse();
+
+    return React.createElement("div", { style: { padding: "14px 12px 24px" } },
+      React.createElement("div", { style: { fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(0,0,0,0.4)", marginBottom: "10px" } }, "Layer"),
+      frames.length === 0
+        ? React.createElement("div", { style: { fontSize: "10px", color: "rgba(0,0,0,0.3)", fontStyle: "italic" } }, "Aucun paragraphe.")
+        : React.createElement("div", { style: { display: "grid", gap: "4px" } },
+            ordered.map((f, idx) => {
+              const isSel = f.id === this.state.selectedId;
+              const isTop = idx === 0;
+              const isBottom = idx === ordered.length - 1;
+              const isDragging = this.state.dragLayerId === f.id;
+              const isDropTarget = this.state.dragOverId === f.id && this.state.dragLayerId && this.state.dragLayerId !== f.id;
+              return React.createElement("div", {
+                key: f.id,
+                draggable: true,
+                onDragStart: (e) => this._onLayerDragStart(e, f.id),
+                onDragOver: (e) => this._onLayerDragOver(e, f.id),
+                onDrop: (e) => this._onLayerDrop(e, f.id),
+                onDragEnd: this._onLayerDragEnd,
+                onClick: () => this.selectFrame(f.id),
+                style: {
+                  display: "flex", alignItems: "center", gap: "4px",
+                  padding: "6px 5px 6px 5px", borderRadius: "4px", cursor: "pointer",
+                  border: isSel ? "1.5px solid #2D7CF0" : "1px solid rgba(0,0,0,0.10)",
+                  background: isSel ? "rgba(45,124,240,0.06)" : "#fff",
+                  opacity: isDragging ? 0.4 : 1,
+                  boxShadow: isDropTarget ? "inset 0 2px 0 #2D7CF0" : "none",
+                  transition: "box-shadow 0.1s",
+                }
+              },
+                // grip handle
+                React.createElement("span", {
+                  title: "Glisser pour réordonner",
+                  style: { flexShrink: 0, cursor: "grab", color: "rgba(0,0,0,0.3)", fontSize: "10px", lineHeight: 1, letterSpacing: "-1px", userSelect: "none" }
+                }, "⠿"),
+                React.createElement("span", {
+                  style: { flex: 1, fontSize: "11px", color: "#1a1a1a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }
+                }, this._frameLabel(f)),
+                // up = bring forward
+                React.createElement("button", {
+                  onClick: (e) => { e.stopPropagation(); this.moveFrameOrder(f.id, +1); },
+                  disabled: isTop, title: "Monter",
+                  style: this._layerBtnStyle(isTop),
+                }, "▲"),
+                // down = send backward
+                React.createElement("button", {
+                  onClick: (e) => { e.stopPropagation(); this.moveFrameOrder(f.id, -1); },
+                  disabled: isBottom, title: "Descendre",
+                  style: this._layerBtnStyle(isBottom),
+                }, "▼"),
+                // duplicate
+                React.createElement("button", {
+                  onClick: (e) => { e.stopPropagation(); this.duplicateFrame(f.id); },
+                  title: "Dupliquer",
+                  style: this._layerBtnStyle(false),
+                },
+                  React.createElement("svg", { width: 9, height: 9, viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: 1.1 },
+                    React.createElement("rect", { x: 1, y: 1, width: 6, height: 6, rx: 1 }),
+                    React.createElement("path", { d: "M3.5 3.5H9V9H3.5z", fill: "#fff" }),
+                    React.createElement("rect", { x: 3.5, y: 3.5, width: 5.5, height: 5.5, rx: 1 })
+                  )
+                ),
+                // delete
+                React.createElement("button", {
+                  onClick: (e) => { e.stopPropagation(); this.deleteFrame(f.id); },
+                  title: "Supprimer",
+                  style: { ...this._layerBtnStyle(false), color: "rgba(200,50,30,0.85)", borderColor: "rgba(200,50,30,0.25)" },
+                },
+                  React.createElement("svg", { width: 9, height: 9, viewBox: "0 0 10 10", fill: "none", stroke: "currentColor", strokeWidth: 1.2, strokeLinecap: "round" },
+                    React.createElement("path", { d: "M2 2.5h6M3.5 2.5V1.5h3v1M3 2.5l.4 6h3.2l.4-6" })
+                  )
+                )
+              );
+            })
+          ),
+      frames.length > 1 ? React.createElement("div", { style: { display: "flex", gap: "5px", marginTop: "10px" } },
+        React.createElement("button", {
+          onClick: () => { if (this.state.selectedId) this.frameToFront(this.state.selectedId); },
+          style: this._layerActionStyle(),
+        }, "Premier plan"),
+        React.createElement("button", {
+          onClick: () => { if (this.state.selectedId) this.frameToBack(this.state.selectedId); },
+          style: this._layerActionStyle(),
+        }, "Arrière-plan")
+      ) : null
+    );
+  }
+
+  _layerBtnStyle(disabled) {
+    return {
+      width: "19px", height: "19px", flexShrink: 0, padding: 0,
+      border: "1px solid rgba(0,0,0,0.10)", borderRadius: "3px",
+      background: "#fff", cursor: disabled ? "default" : "pointer",
+      color: disabled ? "rgba(0,0,0,0.18)" : "rgba(0,0,0,0.55)",
+      fontSize: "8px", lineHeight: 1,
+      display: "flex", alignItems: "center", justifyContent: "center",
+    };
+  }
+  _layerActionStyle() {
+    return {
+      flex: 1, padding: "6px 4px", border: "1px solid rgba(0,0,0,0.12)",
+      borderRadius: "3px", background: "#fff", cursor: "pointer",
+      fontSize: "10px", color: "rgba(0,0,0,0.6)", fontFamily: "inherit",
+    };
+  }
+
+  // ⌘⌫ is "delete to the start of the line" on a Mac: it must not wipe the whole paragraph.
+  // It only removes the frame when the paragraph is already empty.
+  onKeyDown = (e, id) => {
+    if ((e.key === "Backspace" || e.key === "Delete") && (e.metaKey || e.ctrlKey)) {
+      const el = this._editableRefs[id];
+      const empty = el && !el.textContent.trim() && !el.querySelector(".v2-inline-bridge");
+      if (empty) { e.preventDefault(); this.deleteFrame(id); }
+    }
+  };
+
+  // Pasted / dropped content: plain text only. HTML from a web page or a document brings
+  // its own fonts, sizes, colours and boxes into the paragraph (layout breaks, the export
+  // differs). A-ponts copied from another paragraph of the editor are kept (new ids).
+  _sanitizeHtml(html) {
+    const tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    const out = document.createElement("div");
+    const walk = (node, into) => {
+      node.childNodes.forEach((n) => {
+        if (n.nodeType === 3) { into.appendChild(document.createTextNode(n.nodeValue)); return; }
+        if (n.nodeType !== 1) return;
+        if (n.classList && n.classList.contains("v2-inline-bridge")) {
+          const b = n.cloneNode(true);
+          b.setAttribute("contenteditable", "false");
+          b.dataset.bridgeId = this._nextBridgeId();
+          into.appendChild(b);
+          return;
+        }
+        const tag = n.tagName;
+        if (tag === "BR") { into.appendChild(document.createElement("br")); return; }
+        if (tag === "STYLE" || tag === "SCRIPT" || tag === "META" || tag === "TITLE") return;
+        const block = /^(DIV|P|LI|H[1-6]|TR|BLOCKQUOTE)$/.test(tag);
+        if (block && into.lastChild && !(into.lastChild.nodeName === "BR")) into.appendChild(document.createElement("br"));
+        walk(n, into);
+      });
+    };
+    walk(tmp, out);
+    return out.innerHTML;
+  }
+  onEditablePaste = (e) => {
+    const cd = e.clipboardData;
+    if (!cd) return;
+    e.preventDefault();
+    const html = cd.getData("text/html");
+    if (html && html.indexOf("v2-inline-bridge") >= 0) document.execCommand("insertHTML", false, this._sanitizeHtml(html));
+    else document.execCommand("insertText", false, cd.getData("text/plain") || "");
+  };
+  onEditableDrop = (e) => {
+    const dt = e.dataTransfer;
+    if (!dt) return;
+    // files (images…) never go inside a paragraph; outside text is inserted as plain text
+    if ((dt.files && dt.files.length) || (dt.types && Array.prototype.indexOf.call(dt.types, "text/html") >= 0)) {
+      e.preventDefault();
+      const txt = dt.getData("text/plain");
+      if (!txt) return;
+      const r = document.caretRangeFromPoint ? document.caretRangeFromPoint(e.clientX, e.clientY) : null;
+      if (r) { const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+      document.execCommand("insertText", false, txt);
+    }
+  };
+
+  // one undo step per typing session: the state before the first keystroke
+  onEditableFocus = (id) => {
+    this.selectFrame(id);
+    this._typingSnap = this._snapshot();
+    this._typingPushed = false;
+  };
+  onEditableInput = (id, el) => {
+    if (!this._typingPushed && this._typingSnap) { this._pushHistory(this._typingSnap); this._typingPushed = true; }
+    this.updateFrame(id, { html: el.innerHTML });
+  };
+
+  renderFrames() {
+    const { pageLayout, bgImages, bgSelected, bgScale, bgRotate, bgPosX, bgPosY } = this.state;
+    const allBgPool = [...this.BUILT_IN_BG, ...bgImages];
+    const activeBgImg = allBgPool.find(b => b.id === bgSelected);
+
+    // background image layer (clipped to page)
+    const bgImgNode = (activeBgImg && pageLayout) ? React.createElement("div", {
+      key: "bg-img",
+      style: {
+        position: "absolute",
+        left: pageLayout.x + "px", top: pageLayout.y + "px",
+        width: pageLayout.w + "px", height: pageLayout.h + "px",
+        overflow: "hidden", pointerEvents: "none", zIndex: 0,
+      }
+    },
+      React.createElement("img", {
+        src: activeBgImg.url,
+        style: {
+          position: "absolute",
+          left: bgPosX + "%", top: bgPosY + "%",
+          width: bgScale + "%", height: "auto",
+          transform: "translate(-" + bgPosX + "%, -" + bgPosY + "%) rotate(" + bgRotate + "deg)",
+          transformOrigin: "center center",
+          maxWidth: "none",
+        }
+      })
+    ) : null;
+
+    // page backdrop — white artboard, pointer-events:none so frames stay clickable
+    const pageEl = pageLayout ? React.createElement("div", {
+      key: "page-bg",
+      ref: (el) => { this._artboardEl = el; },
+      style: {
+        position: "absolute",
+        left: pageLayout.x + "px",
+        top:  pageLayout.y + "px",
+        width:  pageLayout.w + "px",
+        height: pageLayout.h + "px",
+        background: this.state.bgColor || "#fff",
+        boxShadow: "0 4px 32px -8px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.08)",
+        pointerEvents: "none",
+        zIndex: 0,
+      }
+    }) : null;
+
+    // safe zone overlays — dashed border + subtle tinted fill
+    const safeZoneEls = (this.state.showSafeZone && pageLayout && this.state.safeZones.length > 0)
+      ? this.state.safeZones.map((z, i) => {
+          const sx = pageLayout.x + z.left;
+          const sy = pageLayout.y + z.top;
+          const sw = pageLayout.w - z.left - z.right;
+          const sh = pageLayout.h - z.top  - z.bottom;
+          // subtle color: same hue but much lower opacity
+          const subtleColor = z.color.replace(/[\d.]+\)$/, "0.25)");
+          const labelColor  = z.color.replace(/[\d.]+\)$/, "0.55)");
+          return React.createElement("div", {
+            key: "sz" + i,
+            className: "v2-safe-zone-overlay",
+            style: {
+              position: "absolute",
+              left:   sx + "px",
+              top:    sy + "px",
+              width:  sw + "px",
+              height: sh + "px",
+              border: "1px dashed " + subtleColor,
+              background: "transparent",
+              pointerEvents: "none",
+              zIndex: 2,
+              boxSizing: "border-box",
+            }
+          },
+            // no label — just the quiet dashed border
+          );
+        })
+      : [];
+
+    // page dimensions label (bottom-left of artboard)
+    const pageLabelEl = pageLayout ? React.createElement("div", {
+      key: "page-label",
+      className: "v2-page-label",
+      style: {
+        position: "absolute",
+        left: pageLayout.x + "px",
+        top: (pageLayout.y + pageLayout.h + 8) + "px",
+        fontSize: "10px",
+        color: "rgba(0,0,0,0.35)",
+        letterSpacing: "0.04em",
+        fontVariantNumeric: "tabular-nums",
+        pointerEvents: "none",
+        whiteSpace: "nowrap",
+      }
+    }, pageLayout.fmtW + " × " + pageLayout.fmtH + " px") : null;
+
+    // aura animation overlay — iframe layer over the artboard, behind frames
+    const auraNode = (this.state.auraOn && pageLayout) ? React.createElement("iframe", {
+      key: "aura-frame",
+      ref: (el) => { this._auraFrame = el; },
+      src: "uploads/aura-anim.html",
+      scrolling: "no",
+      style: {
+        position: "absolute",
+        left: pageLayout.x + "px", top: pageLayout.y + "px",
+        width: pageLayout.w + "px", height: pageLayout.h + "px",
+        border: "none", pointerEvents: "none", zIndex: 0, background: "transparent",
+      }
+    }) : null;
+
+    // mesh-gradient (shader) layer — under the auras, over the solid color
+    const shaderNode = (this.state.shaderBg && pageLayout) ? React.createElement("iframe", {
+      key: "shader-frame",
+      ref: (el) => { this._shaderFrame = el; },
+      src: this._shaderUrl(this.state.shaderBg),
+      scrolling: "no",
+      style: {
+        position: "absolute",
+        left: pageLayout.x + "px", top: pageLayout.y + "px",
+        width: pageLayout.w + "px", height: pageLayout.h + "px",
+        border: "none", pointerEvents: "none", zIndex: 0, background: "transparent",
+      }
+    }) : null;
+
+    // ── the document: frames in native px, zoomed to the screen as one block ──
+    const frameEls = this.state.frames.map((f, _fi) => {
+        if (f.type === "a-bridge") return this.renderABridgeFrame(f, _fi);
+        const isSelected = f.id === this.state.selectedId;
+        return React.createElement("div", {
+          key: f.id,
+          "data-frame-id": f.id,
+          "data-selected": isSelected ? "true" : "false",
+          className: "v2-frame",
+          onPointerDown: (e) => this.startFramePointer(e, f.id),
+          style: { left: f.x + "px", top: f.y + "px", width: f.w + "px", height: f.h + "px", touchAction: "none", zIndex: isSelected ? 1000 : (_fi + 1) },
+        },
+          // mobile move handle — large tap target, touch-action:none in CSS
+          React.createElement("div", {
+            className: "v2-move-handle",
+            onPointerDown: (e) => this.startMoveHandle(e, f.id),
+          },
+            React.createElement("svg", { width: 16, height: 10, viewBox: "0 0 16 10", fill: "none" },
+              React.createElement("rect", { x: 0, y: 0, width: 16, height: 2, rx: 1, fill: "rgba(255,255,255,0.7)" }),
+              React.createElement("rect", { x: 0, y: 4, width: 16, height: 2, rx: 1, fill: "rgba(255,255,255,0.7)" }),
+              React.createElement("rect", { x: 0, y: 8, width: 16, height: 2, rx: 1, fill: "rgba(255,255,255,0.7)" })
+            )
+          ),
+
+          // desktop drag bar + delete
+          React.createElement("div", {
+            className: "v2-frame-drag",
+            onPointerDown: (e) => this.startDrag(e, f.id),
+            style: { display: "flex", alignItems: "center", justifyContent: "space-between" },
+          },
+            React.createElement("span", null, "paragraph · " + f.id),
+            isSelected ? React.createElement("button", {
+              onPointerDown: (e) => e.stopPropagation(),
+              onClick: (e) => { e.stopPropagation(); this.deleteFrame(f.id); },
+              title: "Supprimer le paragraphe",
+              style: {
+                border: "none",
+                background: "rgba(200,50,30,0.85)",
+                color: "#fff",
+                cursor: "pointer",
+                lineHeight: 1,
+                padding: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }
+            }, "×") : null
+          ),
+
+          // contenteditable div — supports inline A-pont
+          React.createElement("div", {
+            className: "v2-frame-content v2-editable",
+            contentEditable: true,
+            suppressContentEditableWarning: true,
+            "data-placeholder": "Type here…",
+            ref: (this._editRefFns || (this._editRefFns = {}))[f.id] ||
+                 (this._editRefFns[f.id] = (el) => {
+                   // Stable per-frame ref (memoized): React keeps the same function identity
+                   // across re-renders, so it is NOT re-invoked on every keystroke. innerHTML is
+                   // therefore written ONCE on mount — the caret is never reset while typing.
+                   if (el) {
+                     this._editableRefs[f.id] = el;
+                     if (!(this._inited || (this._inited = new Set())).has(f.id)) {
+                       const fr = this.state.frames.find((x) => x.id === f.id);
+                       el.innerHTML = (fr && fr.html)
+                         || (fr && (fr.text || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"))
+                         || "";
+                       this._inited.add(f.id);
+                     }
+                   } else {
+                     // true unmount only (stable ref → not called on re-render) → allow re-init on remount
+                     delete this._editableRefs[f.id];
+                     if (this._inited) this._inited.delete(f.id);
+                   }
+                 }),
+            onInput: (e) => this.onEditableInput(f.id, e.currentTarget),
+            onFocus: () => this.onEditableFocus(f.id),
+            onKeyDown: (e) => this.onKeyDown(e, f.id),
+            onPaste: this.onEditablePaste,
+            onDrop: this.onEditableDrop,
+            // exactly the export's text style (font, size, line height, wrapping, squish)
+            style: this._textStyle(f),
+          }),
+
+          // resize handles
+          isSelected ? React.createElement("div", { className: "v2-frame-handle-l", onPointerDown: (e) => this.startResize(e, f.id, "l") }) : null,
+          isSelected ? React.createElement("div", { className: "v2-frame-handle-r", onPointerDown: (e) => this.startResize(e, f.id, "r") }) : null,
+          isSelected ? React.createElement("div", { className: "v2-frame-handle-t", onPointerDown: (e) => this.startResize(e, f.id, "t") }) : null,
+          isSelected ? React.createElement("div", { className: "v2-frame-handle-b", onPointerDown: (e) => this.startResize(e, f.id, "b") }) : null,
+          isSelected ? React.createElement("div", { className: "v2-frame-handle", onPointerDown: (e) => this.startResize(e, f.id, "br") }) : null
+        );
+      });
+
+    const z = pageLayout ? pageLayout.scale : 1;
+    const docLayer = pageLayout ? React.createElement("div", {
+      key: "doc",
+      className: "v2-doc",
+      ref: (el) => { this._docEl = el; },
+      style: {
+        left: pageLayout.x + "px", top: pageLayout.y + "px",
+        width: pageLayout.fmtW + "px", height: pageLayout.fmtH + "px",
+        transform: "scale(" + z + ")",
+        "--z": z,
+      },
+    }, frameEls) : null;
+
+    return React.createElement("div", { style: { position: "absolute", inset: 0 } },
+      pageEl, bgImgNode, shaderNode, auraNode, ...safeZoneEls, pageLabelEl, docLayer);
+  }
+
+  renderVals() {
+    const sel = this.state.frames.find((f) => f.id === this.state.selectedId);
+    const selFont = sel ? (sel.font || "none") : null;
+    const hasSelection = !!sel;
+    // size buttons: label × unit of the format (native px); highlight with a tolerance
+    const U = this._sizeUnit();
+    const isSz = (label) => !!(sel && sel.type !== "a-bridge" && Math.abs((sel.fontSize || 0) - label * U) < 0.6);
+    const setSz = (label) => () => { if (sel) this.setFrameFontSize(sel.id, label * U); };
+    const colorOf = (c) => () => { if (sel && (sel.color || "#000000") !== c) { this._pushHistory(); this.updateFrame(sel.id, { color: c }); } };
+
+    return {
+      addParagraph: this.addParagraph,
+      undo: this.undo,
+      undoDisabled: !this.state.canUndo,
+      undoTitle: "Annuler (⌘Z)",
+      exportPng: this.exportPng,
+      openCleanView: this.openCleanView,
+      cleanOverlay: this.renderCleanOverlay(),
+      deselectAll: (e) => this.deselectAll(e),
+      onCanvasMouseMove: this.onCanvasMouseMove,
+      canvasRef: this.canvasRef,
+      frameCount: this.state.frames.length,
+      framesMount: this.renderFrames(),
+      templatesBar: this.renderTemplatesBar(),
+      templatesManager: this.renderTemplatesManager(),
+      auraToast: this.renderAuraToast(),
+      bridgeAnimPanel: this.renderBridgeAnimPanel(),
+
+      addABridge: this.addABridge,
+      applyMain1:  () => this.applyFont("main1"),
+      applyMain2:  () => this.applyFont("main2"),
+      applyCorps1: () => this.applyFont("corps1"),
+      applyCorps2: () => this.applyFont("corps2"),
+      applyCorps3: () => this.applyFont("corps3"),
+
+      main1Bg:     selFont === "main1"  ? "#EBF2FF" : "#fff",
+      main1Border: selFont === "main1"  ? "1.5px solid #2D7CF0" : "1px solid rgba(0,0,0,0.12)",
+      main2Bg:     selFont === "main2"  ? "#EBF2FF" : "#fff",
+      main2Border: selFont === "main2"  ? "1.5px solid #2D7CF0" : "1px solid rgba(0,0,0,0.12)",
+      corps1Bg:    selFont === "corps1" ? "#EBF2FF" : "#fff",
+      corps1Border:selFont === "corps1" ? "1.5px solid #2D7CF0" : "1px solid rgba(0,0,0,0.12)",
+      corps2Bg:    selFont === "corps2" ? "#EBF2FF" : "#fff",
+      corps2Border:selFont === "corps2" ? "1.5px solid #2D7CF0" : "1px solid rgba(0,0,0,0.12)",
+      corps3Bg:    selFont === "corps3" ? "#EBF2FF" : "#fff",
+      corps3Border:selFont === "corps3" ? "1.5px solid #2D7CF0" : "1px solid rgba(0,0,0,0.12)",
+
+      fontHint: hasSelection ? "" : "Select a frame to apply a font.",
+
+      // format + safe zone toggle
+      format: this.state.format,
+      onFormatChange: (e) => this.changeFormat(e.target.value),
+      showSafeZone: this.state.showSafeZone,
+      toggleSafeZone: () => this.setState((s) => ({ showSafeZone: !s.showSafeZone })),
+      hasSafeZone: !!(this.SAFE_ZONES[this.state.format] && this.SAFE_ZONES[this.state.format].length),
+
+      // A-pont panel state
+      selIsABridge:    sel && sel.type === "a-bridge",
+      selIsText:       sel && sel.type !== "a-bridge",
+      selIsNotText:    !sel || sel.type === "a-bridge",
+      // A pont: only when frame has Main1 or Main2
+      selHasMainFont:  sel && (sel.font === "main1" || sel.font === "main2"),
+      selNeedsMain:    sel && sel.type !== "a-bridge" && sel.font !== "main1" && sel.font !== "main2",
+      activeFont: sel ? (sel.font || "none") : "none",
+      selFontSize: sel ? (sel.fontSize || 16) : 16,
+      onFontSizeChange: (e) => { if (sel) this.setFrameFontSize(sel.id, parseFloat(e.target.value)); },
+
+      // panel tabs
+      activePanel: this.state.activePanel,
+      typePanelDisplay: this.state.activePanel === "type"  ? "block" : "none",
+      typePanelFg:     this.state.activePanel === "type"  ? "#1a1a1a" : "rgba(0,0,0,0.4)",
+      typePanelBorder: this.state.activePanel === "type"  ? "#1a1a1a" : "transparent",
+      fondsPanelFg:    this.state.activePanel === "fonds" ? "#1a1a1a" : "rgba(0,0,0,0.4)",
+      fondsPanelBorder:this.state.activePanel === "fonds" ? "#1a1a1a" : "transparent",
+      showTypePanel:  this.showTypePanel,
+      showFondsPanel: this.showFondsPanel,
+      showLayersPanel: this.showLayersPanel,
+      layersPanelFg:     this.state.activePanel === "layers" ? "#1a1a1a" : "rgba(0,0,0,0.4)",
+      layersPanelBorder: this.state.activePanel === "layers" ? "#1a1a1a" : "transparent",
+      layersPanel: this.renderLayersPanel(),
+      togglePanel: this.togglePanel,
+      cyclePanelWidth: this.cyclePanelWidth,
+      panelWidth: this.PANEL_WIDTHS[this.state.panelWidthStep] + "px",
+      panelWidthLabel: ["S", "M", "L"][this.state.panelWidthStep],
+      panelCollapsedClass: this.state.panelCollapsed ? "is-collapsed" : "",
+      panelInnerDisplay: this.state.panelCollapsed ? "none" : "flex",
+      panelToggleIcon: this.state.panelCollapsed ? "‹" : "›",
+      panelToggleTitle: this.state.panelCollapsed ? "Afficher les panneaux" : "Masquer les panneaux",
+      fondsPanel: this.renderFondsPanel(),
+      bgControls: this.renderBgControls(),
+
+      // color + opacity
+      selColor:   sel ? (sel.color   || "#000000") : "#000000",
+      selOpacity: sel ? (sel.opacity !== undefined ? sel.opacity : 100) : 100,
+      setBlack:   colorOf("#000000"),
+      setWhite:   colorOf("#ffffff"),
+      onOpacityChange: (e) => {
+        if (!sel) return;
+        // one undo step per slider gesture
+        const now = Date.now();
+        if (!this._opacityT || now - this._opacityT > 1200) this._pushHistory();
+        this._opacityT = now;
+        this.updateFrame(sel.id, { opacity: parseFloat(e.target.value) });
+      },
+      isBlack: !sel || (sel.color || "#000000") === "#000000",
+      isWhite:  sel && sel.color === "#ffffff",
+
+      // preset size buttons (labels × format unit → native px)
+      sz11Bg: isSz(11) ? "#1a1a1a" : "#fff",
+      sz14Bg: isSz(14) ? "#1a1a1a" : "#fff",
+      sz18Bg: isSz(18) ? "#1a1a1a" : "#fff",
+      sz28Bg: isSz(28) ? "#1a1a1a" : "#fff",
+      sz36Bg: isSz(36) ? "#1a1a1a" : "#fff",
+      sz48Bg: isSz(48) ? "#1a1a1a" : "#fff",
+      sz72Bg: isSz(72) ? "#1a1a1a" : "#fff",
+      sz96Bg: isSz(96) ? "#1a1a1a" : "#fff",
+      sz128Bg: isSz(128) ? "#1a1a1a" : "#fff",
+      sz11Fg: isSz(11) ? "#fff" : "#1a1a1a",
+      sz11Title: Math.round(11 * U) + " px sur le visuel",
+      sz14Fg: isSz(14) ? "#fff" : "#1a1a1a",
+      sz14Title: Math.round(14 * U) + " px sur le visuel",
+      sz18Fg: isSz(18) ? "#fff" : "#1a1a1a",
+      sz18Title: Math.round(18 * U) + " px sur le visuel",
+      sz28Fg: isSz(28) ? "#fff" : "#1a1a1a",
+      sz28Title: Math.round(28 * U) + " px sur le visuel",
+      sz36Fg: isSz(36) ? "#fff" : "#1a1a1a",
+      sz36Title: Math.round(36 * U) + " px sur le visuel",
+      sz48Fg: isSz(48) ? "#fff" : "#1a1a1a",
+      sz48Title: Math.round(48 * U) + " px sur le visuel",
+      sz72Fg: isSz(72) ? "#fff" : "#1a1a1a",
+      sz72Title: Math.round(72 * U) + " px sur le visuel",
+      sz96Fg: isSz(96) ? "#fff" : "#1a1a1a",
+      sz96Title: Math.round(96 * U) + " px sur le visuel",
+      sz128Fg: isSz(128) ? "#fff" : "#1a1a1a",
+      sz128Title: Math.round(128 * U) + " px sur le visuel",
+      sz11Border: isSz(11) ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
+      sz14Border: isSz(14) ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
+      sz18Border: isSz(18) ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
+      sz28Border: isSz(28) ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
+      sz36Border: isSz(36) ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
+      sz48Border: isSz(48) ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
+      sz72Border: isSz(72) ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
+      sz96Border: isSz(96) ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
+      sz128Border: isSz(128) ? "1.5px solid #1a1a1a" : "1px solid rgba(0,0,0,0.12)",
+      setSize11: setSz(11),
+      setSize14: setSz(14),
+      setSize18: setSz(18),
+      setSize28: setSz(28),
+      setSize36: setSz(36),
+      setSize48: setSz(48),
+      setSize72: setSz(72),
+      setSize96: setSz(96),
+      setSize128: setSz(128),
+      selPe:   (sel && sel.type === "a-bridge") ? sel.pe.toFixed(2) : "",
+      selSize: (sel && sel.type === "a-bridge") ? sel.size : "",
+      onPeChange:   (e) => { if (sel && sel.type === "a-bridge") this.setPe(sel.id, e.target.value); },
+      onSizeChange: (e) => { if (sel && sel.type === "a-bridge") this.setASize(sel.id, e.target.value); },
+      // inline insert
+      inlinePe: this.state.inlinePe.toFixed(2),
+      onInlinePeChange: (e) => this.setState({ inlinePe: parseFloat(e.target.value) }),
+      insertInlineA: () => { if (sel && sel.type !== "a-bridge") this.insertABridgeIntoFrame(sel.id); },
+    };
+  }
+}
+</script>
+</body>
+</html>

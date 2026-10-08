@@ -8,6 +8,10 @@
  *   POST   /api/presets        → create one  (body = preset JSON) → returns it
  *   PUT    /api/presets/:id     → update one  (body = preset JSON) → returns it
  *   DELETE /api/presets/:id     → delete one
+ *   /editor/                   → the editor (EDITOR/Editor v2.dc.html), at a
+ *                                short address to share; /editor/x serves EDITOR/x.
+ *                                /editor and /EDITOR/ lead there; the old
+ *                                /EDITOR/Editor%20v2.dc.html link still works.
  *   everything else            → static file (your existing site)
  *
  * DEPLOY (one time)
@@ -40,6 +44,10 @@
 
 const MAX_BODY = 1800000;   // bytes — D1 rows are limited to ~2 MB
 
+// the editor's short address: /editor/ ↔ the files of EDITOR/
+const EDITOR_DIR = "/EDITOR/";
+const EDITOR_PAGE = "Editor%20v2.dc.html";
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -52,9 +60,40 @@ export default {
         return json({ error: String(e && e.message || e) }, 500);
       }
     }
+    // /editor, /Editor, /EDITOR, /EDITOR/ … → /editor/
+    const low = path.toLowerCase();
+    if (low === "/editor" || (low === "/editor/" && path !== "/editor/")) {
+      return Response.redirect(url.origin + "/editor/" + url.search, 301);
+    }
+    if (path.startsWith("/editor/")) {
+      return serveEditorFile(request, env, url, EDITOR_DIR + (path.slice("/editor/".length) || EDITOR_PAGE));
+    }
     return env.ASSETS.fetch(request);
   },
 };
+
+// Serves a file of EDITOR/ while the browser stays on /editor/… (so the address
+// people copy is the short one, and the editor's relative links — support.js,
+// modeles-base.js, uploads/… — resolve under /editor/ too).
+// The static-file server answers "x.html" with a redirect to "x": that hop is
+// followed here; any other redirect inside EDITOR/ is passed on under /editor/.
+async function serveEditorFile(request, env, url, target) {
+  let res = await env.ASSETS.fetch(new Request(url.origin + target + url.search, request));
+  for (let hop = 0; hop < 2 && res.status >= 300 && res.status < 400; hop++) {
+    const loc = res.headers.get("Location");
+    if (!loc) break;                                   // e.g. 304 Not Modified
+    const to = new URL(loc, url.origin + target);
+    if (to.origin !== url.origin || !to.pathname.startsWith(EDITOR_DIR)) break;
+    if (plain(to.pathname) === plain(target).replace(/\.html$/, "")) {
+      res = await env.ASSETS.fetch(new Request(to.href, request));
+      continue;
+    }
+    return Response.redirect(url.origin + "/editor/" + to.pathname.slice(EDITOR_DIR.length) + to.search, res.status);
+  }
+  return res;
+}
+
+function plain(p) { try { return decodeURIComponent(p); } catch (e) { return p; } }
 
 // the table is created once per Worker instance, the first time the API is used
 let tableReady = null;

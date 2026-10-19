@@ -12,6 +12,7 @@
  *                                short address to share; /editor/x serves EDITOR/x.
  *                                /editor and /EDITOR/ lead there; the old
  *                                /EDITOR/Editor%20v2.dc.html link still works.
+ *   /editor/catalogue          → the editor, opened on the catalogue of templates
  *   everything else            → static file (your existing site)
  *
  * DEPLOY (one time)
@@ -65,8 +66,11 @@ export default {
     if (low === "/editor" || (low === "/editor/" && path !== "/editor/")) {
       return Response.redirect(url.origin + "/editor/" + url.search, 301);
     }
+    // the catalogue of templates is the editor opened on it
+    if (path === "/editor/catalogue/") return Response.redirect(url.origin + "/editor/catalogue" + url.search, 301);
     if (path.startsWith("/editor/")) {
-      return serveEditorFile(request, env, url, EDITOR_DIR + (path.slice("/editor/".length) || EDITOR_PAGE));
+      const rest = path.slice("/editor/".length);
+      return serveEditorFile(request, env, url, EDITOR_DIR + (rest === "" || rest === "catalogue" ? EDITOR_PAGE : rest));
     }
     return env.ASSETS.fetch(request);
   },

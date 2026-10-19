@@ -1466,9 +1466,13 @@ class Component extends DCLogic {
     this._animRAF = requestAnimationFrame(this._tickBridgeAnims);
 
     // load saved templates (PresetStore)
-    this._loadTemplates();
+    this._loadTemplates().then(() => this._openFromUrl());
 
-    this._escHandler = (e) => { if (e.key === "Escape" && this.state.cleanView) this.closeCleanView(); };
+    this._escHandler = (e) => {
+      if (e.key !== "Escape") return;
+      if (this.state.catalogueOpen) this.setState({ catalogueOpen: false });
+      else if (this.state.cleanView) this.closeCleanView();
+    };
     window.addEventListener("keydown", this._escHandler);
 
     // Space cycles the aura stage: full → movement frozen → all frozen → full
@@ -1939,6 +1943,12 @@ class Component extends DCLogic {
     savedTemplates: [],
     templatesManagerOpen: false,
     templateGroupsOpen: {},  // base-template groups unfolded in the "Modèles" panel
+    catalogueOpen: false,    // full-screen catalogue of every template
+    catBg: null,             // background shown behind every template in the catalogue
+    catKeepOwn: true,        // templates that carry their own background keep it
+    catSize: 1,              // 0 small · 1 medium · 2 large thumbnails
+    catQuery: "",
+    catNotice: "",
     selectedBridgeId: null,  // currently selected inline A-pont
     bridgeAnims: {},     // { bridgeId: { animate, pe0, pe1, dur } }
     // panels
@@ -2132,7 +2142,8 @@ class Component extends DCLogic {
     e.target.value = "";
   };
 
-  selectBg = (id) => this.setState({ bgSelected: id });
+  // picking an image (Fix) or a colour replaces the animated background, which would stay on top of it
+  selectBg = (id) => this.setState({ bgSelected: id, shaderBg: null });
   clearBg  = ()  => this.setState({ bgSelected: null });
 
   // record a background's orientation once its thumbnail loads
@@ -2295,7 +2306,7 @@ class Component extends DCLogic {
     { c: "#E8D6CE", name: "Argile pâle" },
   ];
 
-  setSolidBg = (c) => this.setState({ bgColor: c, bgSelected: null });
+  setSolidBg = (c) => this.setState({ bgColor: c, bgSelected: null, shaderBg: null });
   clearSolidBg = () => this.setState({ bgColor: null });
 
   toggleAura = () => this.setState((s) => ({ auraOn: !s.auraOn }));
@@ -2437,7 +2448,7 @@ class Component extends DCLogic {
   applyTemplate = (id) => {
     if (!id) return;
     const t = this.state.savedTemplates.find((p) => p.id === id);
-    if (t) this._applyState(t.data);
+    if (t) this._applyState(this._withBg(t, null));
   };
 
   renderTemplatesBar() {
@@ -2453,6 +2464,14 @@ class Component extends DCLogic {
         "Modèles", mine ? React.createElement("span", { style: { opacity: 0.55 } }, mine) : null
       ),
       React.createElement("button", {
+        onClick: () => this.openCatalogue(), title: "Tous les modèles en grand, sur le fond de ton choix",
+        style: { display: "inline-flex", alignItems: "center", gap: "5px", padding: "0 10px", height: "28px", border: "1px solid rgba(0,0,0,0.15)", background: "#fff", color: "#1a1a1a", fontSize: "12px", fontFamily: "inherit", cursor: "pointer", borderRadius: "3px" }
+      },
+        React.createElement("svg", { width: 12, height: 12, viewBox: "0 0 14 14", fill: "none", stroke: "currentColor", strokeWidth: 1.4, strokeLinejoin: "round" },
+          React.createElement("rect", { x: 1.5, y: 1.5, width: 4.5, height: 5.5, rx: 0.8 }), React.createElement("rect", { x: 8, y: 1.5, width: 4.5, height: 5.5, rx: 0.8 }),
+          React.createElement("rect", { x: 1.5, y: 8.5, width: 4.5, height: 4, rx: 0.8 }), React.createElement("rect", { x: 8, y: 8.5, width: 4.5, height: 4, rx: 0.8 })),
+        "Catalogue"),
+      React.createElement("button", {
         onClick: this.saveTemplate, title: "Enregistrer la composition actuelle comme modèle",
         style: { display: "inline-flex", alignItems: "center", padding: "0 10px", height: "28px", border: "1px solid rgba(0,0,0,0.15)", background: "#fff", color: "#1a1a1a", fontSize: "12px", fontFamily: "inherit", cursor: "pointer", borderRadius: "3px" }
       }, "+ Modèle")
@@ -2460,10 +2479,11 @@ class Component extends DCLogic {
   }
 
   // small, faithful preview of a template (same text style as the editor / export)
-  _renderMini(data, boxW) {
+  _renderMini(data, boxW, bgPatch) {
     let tpl;
     try { tpl = this._normalizeTemplate(data); } catch (e) { tpl = null; }
     if (!tpl) return null;
+    if (bgPatch) tpl = { ...tpl, ...bgPatch };
     const s = boxW / tpl.fmtW;
     const boxH = Math.round(tpl.fmtH * s);
     const kids = [];
@@ -2489,7 +2509,7 @@ class Component extends DCLogic {
       kids.push(React.createElement("div", { key: "m" + i, style: { position: "absolute", left: f.x + "px", top: f.y + "px", width: f.w + "px" } },
         React.createElement("div", { style: this._textStyle(f), dangerouslySetInnerHTML: { __html: this._cleanHtml(f.html || this._escHtml(f.text || ""), f) } })));
     });
-    return React.createElement("div", { style: { position: "relative", width: boxW + "px", height: boxH + "px", overflow: "hidden", flexShrink: 0, background: tpl.bgColor || "#fff", border: "1px solid rgba(0,0,0,0.12)", borderRadius: "2px", pointerEvents: "none" } },
+    return React.createElement("div", { style: { position: "relative", width: boxW + "px", height: boxH + "px", overflow: "hidden", flexShrink: 0, textAlign: "left", background: tpl.bgColor || "#fff", border: "1px solid rgba(0,0,0,0.12)", borderRadius: "2px", pointerEvents: "none" } },
       React.createElement("div", { style: { position: "absolute", left: 0, top: 0, width: tpl.fmtW + "px", height: tpl.fmtH + "px", transform: "scale(" + s + ")", transformOrigin: "0 0" } }, ...kids));
   }
 
@@ -2546,6 +2566,7 @@ class Component extends DCLogic {
     },
       React.createElement("div", { style: { display: "flex", alignItems: "center" } },
         React.createElement("span", { style: { flex: 1, fontSize: "11px", fontWeight: 600 } }, "Modèles"),
+        React.createElement("button", { onClick: () => this.openCatalogue(), title: "Tous les modèles en grand", style: { border: "1px solid rgba(0,0,0,0.12)", background: "#fff", borderRadius: "3px", cursor: "pointer", fontSize: "10px", padding: "3px 7px", fontFamily: "inherit", marginRight: "4px" } }, "Tout voir en grand ⤢"),
         React.createElement("button", { onClick: () => this.setState({ templatesManagerOpen: false }), style: { border: "none", background: "transparent", cursor: "pointer", fontSize: "14px", color: "rgba(0,0,0,0.4)" } }, "×")
       ),
       this.state.templateNotice ? React.createElement("div", { style: { fontSize: "10px", color: "#1a1a1a", background: "rgba(45,124,240,0.08)", borderRadius: "4px", padding: "6px 8px", marginTop: "6px" } }, this.state.templateNotice) : null,
@@ -2565,6 +2586,215 @@ class Component extends DCLogic {
         React.createElement("input", { type: "file", accept: "application/json,.json", onChange: this.importTemplateFile, style: { display: "none" } })
       )
     );
+  }
+
+  // ── Catalogue: every template, big, on the background of your choice ────────
+  // Opens from « Catalogue » (toolbar), from the Modèles panel, or straight from a link:
+  //   /editor/catalogue  (or …?catalogue)            → the editor, catalogue open
+  //   /editor/?modele=base-p2-04&fond=fond-03          → the editor with that template on that background
+  // A background is { k: "img", id, scale, rot, x, y } | { k: "color", c } | { k: "anim", p }.
+  FOND3 = { k: "img", id: "fond-03", scale: 140, rot: 0, x: 50, y: 0 };   // like the hand-made posts A/B/C
+
+  _hasOwnBg(d) { return !!(d && (d.bgSelected || d.bgColor || d.shaderBg)); }
+
+  // the background in use in the editor — FOND.3 when there is none
+  _bgFromState() {
+    const s = this.state;
+    if (s.shaderBg) return { k: "anim", p: s.shaderBg };
+    if (s.bgSelected) return { k: "img", id: s.bgSelected, scale: s.bgScale, rot: s.bgRotate, x: s.bgPosX, y: s.bgPosY };
+    if (s.bgColor) return { k: "color", c: s.bgColor };
+    return this.FOND3;
+  }
+
+  _bgPatch(bg) {
+    if (!bg) return null;
+    if (bg.k === "img") return { bgSelected: bg.id, bgScale: bg.scale, bgRotate: bg.rot, bgPosX: bg.x, bgPosY: bg.y, bgColor: null, shaderBg: null };
+    if (bg.k === "color") return { bgColor: bg.c, bgSelected: null, shaderBg: null };
+    if (bg.k === "anim") return { shaderBg: bg.p, bgSelected: null, bgColor: null };
+    return null;
+  }
+
+  // an image picked in the catalogue: its current settings if it is the editor's one, else its usual framing
+  _catImg(id) {
+    const s = this.state;
+    if (id === s.bgSelected) return { k: "img", id, scale: s.bgScale, rot: s.bgRotate, x: s.bgPosX, y: s.bgPosY };
+    if (id === this.FOND3.id) return this.FOND3;
+    return { k: "img", id, scale: 100, rot: 0, x: 50, y: 50 };
+  }
+
+  _bgCode(bg) {
+    if (!bg) return "";
+    if (bg.k === "img") return bg.id;
+    if (bg.k === "color") return "c-" + bg.c.replace("#", "");
+    if (bg.k === "anim") return "a-" + bg.p.id;
+    return "";
+  }
+
+  _bgFromCode(code) {
+    if (!code) return null;
+    if (/^c-[0-9a-f]{6}$/i.test(code)) return { k: "color", c: "#" + code.slice(2).toUpperCase() };
+    if (code.startsWith("a-")) { const p = this.SHADER_PRESETS.find((q) => q.id === code.slice(2)); return p ? { k: "anim", p } : null; }
+    const pool = [...this.BUILT_IN_BG, ...(this.state.bgImages || [])];
+    return pool.some((b) => b.id === code) ? this._catImg(code) : null;
+  }
+
+  // the data to apply: with the catalogue background (unless the template keeps its own),
+  // or — from the panel — FOND.3 for a base template when the page would end up without background
+  _withBg(t, bg, keepOwn) {
+    const d = t.data;
+    if (bg) return (keepOwn && this._hasOwnBg(d)) ? d : { ...d, ...this._bgPatch(bg) };
+    if (!t.base || this._hasOwnBg(d)) return d;
+    const s = this.state;
+    const after = (k) => (k in d ? d[k] : s[k]);
+    return (after("bgSelected") || after("bgColor") || after("shaderBg")) ? d : { ...d, ...this._bgPatch(this.FOND3) };
+  }
+
+  openCatalogue = (bg) => this.setState({ catalogueOpen: true, templatesManagerOpen: false, catBg: bg || this._bgFromState(), catNotice: "" });
+
+  applyFromCatalogue = (id) => {
+    const t = this.state.savedTemplates.find((p) => p.id === id);
+    if (!t) return;
+    this._applyState(this._withBg(t, this.state.catBg, this.state.catKeepOwn));
+    this.setState({ catalogueOpen: false });
+  };
+
+  // link to the editor opened on one template + background (or to the catalogue)
+  _editorLink(id, bg) {
+    const base = location.origin + location.pathname.replace(/\/catalogue\/?$/, "/");
+    const q = new URLSearchParams();
+    if (id) q.set("modele", id); else q.set("catalogue", "");
+    if (bg) q.set("fond", this._bgCode(bg));
+    return base + "?" + q.toString().replace(/catalogue=(&|$)/, "catalogue$1");
+  }
+
+  copyLink = (url, what) => {
+    const done = () => this._catNotice("Lien copié — " + what + ".");
+    const fail = () => this._catNotice("Copie impossible ici — le lien : " + url);
+    try { navigator.clipboard.writeText(url).then(done, fail); } catch (e) { fail(); }
+  };
+
+  _catNotice(msg) {
+    this.setState({ catNotice: msg });
+    clearTimeout(this._catNoticeT);
+    this._catNoticeT = setTimeout(() => this.setState({ catNotice: "" }), 6000);
+  }
+
+  _openFromUrl() {
+    let q;
+    try { q = new URLSearchParams(location.search); } catch (e) { return; }
+    const fond = this._bgFromCode(q.get("fond"));
+    const id = q.get("modele");
+    if (id) {
+      const t = this.state.savedTemplates.find((p) => p.id === id);
+      if (t) this._applyState(this._withBg(t, fond, true));
+    } else if (fond) {
+      this.setState(this._bgPatch(fond));
+    }
+    if (/\/catalogue\/?$/.test(location.pathname) || q.has("catalogue")) this.openCatalogue(fond || null);
+  }
+
+  renderCatalogue() {
+    if (!this.state.catalogueOpen) return null;
+    const S = this.state;
+    const bg = S.catBg || this.FOND3;
+    const W = [170, 230, 320][S.catSize] || 230;
+    const query = S.catQuery.trim().toLowerCase();
+    const match = (p) => !query || (p.name || "").toLowerCase().includes(query);
+    const items = S.savedTemplates.filter(match);
+    const sections = [];
+    const add = (name, list, note) => { if (list.length) sections.push({ name, list, note }); };
+    add("Mes modèles", items.filter((p) => !p.base), S.templatesStatus === "serveur" ? "bibliothèque partagée" : (S.templatesStatus === "local" ? "ce navigateur" : ""));
+    add("Modèles de base", items.filter((p) => p.base && !p.group));
+    const groups = [];
+    items.filter((p) => p.base && p.group).forEach((p) => { if (!groups.includes(p.group)) groups.push(p.group); });
+    groups.forEach((g) => add(g, items.filter((p) => p.base && p.group === g)));
+    const total = items.length;
+
+    const ink = "#1a1a1a", mute = "rgba(0,0,0,0.45)", line = "rgba(0,0,0,0.1)", blue = "#2D7CF0";
+    const chip = (on) => ({ height: "28px", padding: "0 10px", border: "1px solid " + (on ? ink : "rgba(0,0,0,0.15)"), background: on ? ink : "#fff", color: on ? "#fff" : ink, fontSize: "11px", fontFamily: "inherit", cursor: "pointer", borderRadius: "3px" });
+    const same = (a, b) => this._bgCode(a) === this._bgCode(b);
+    const pick = (b) => this.setState({ catBg: b });
+
+    // ── background strip ──
+    const imgs = [...this.BUILT_IN_BG, ...(S.bgImages || [])];
+    const sel = (on) => ({ outline: on ? "2px solid " + blue : "none", outlineOffset: "2px" });
+    const strip = React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "8px", overflowX: "auto", padding: "10px 24px 12px", borderBottom: "1px solid " + line, background: "#f7f6f4", flexShrink: 0 } },
+      React.createElement("span", { style: { fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", color: mute, fontWeight: 600, flexShrink: 0, marginRight: "4px" } }, "Fond"),
+      ...imgs.map((b) => React.createElement("button", {
+        key: "i" + b.id, onClick: () => pick(this._catImg(b.id)), title: "Fond " + b.name,
+        style: { width: "34px", height: "42px", padding: 0, border: "1px solid " + line, borderRadius: "2px", cursor: "pointer", flexShrink: 0, background: "#fff center / cover no-repeat url(\"" + b.url + "\")", ...sel(bg.k === "img" && bg.id === b.id) }
+      })),
+      React.createElement("span", { style: { width: "1px", alignSelf: "stretch", background: line, margin: "0 4px", flexShrink: 0 } }),
+      ...this.BG_SOLIDS.map((c) => React.createElement("button", {
+        key: "c" + c.c, onClick: () => pick({ k: "color", c: c.c }), title: c.name,
+        style: { width: "22px", height: "22px", padding: 0, borderRadius: "50%", border: "1px solid rgba(0,0,0,0.15)", background: c.c, cursor: "pointer", flexShrink: 0, ...sel(bg.k === "color" && bg.c.toUpperCase() === c.c.toUpperCase()) }
+      })),
+      React.createElement("span", { style: { width: "1px", alignSelf: "stretch", background: line, margin: "0 4px", flexShrink: 0 } }),
+      ...this.SHADER_PRESETS.map((p) => React.createElement("button", {
+        key: "a" + p.id, onClick: () => pick({ k: "anim", p }), title: "Fond animé " + p.name + " (aperçu fixe ici)",
+        style: { height: "28px", padding: "0 10px", borderRadius: "3px", border: "1px solid " + line, cursor: "pointer", flexShrink: 0, fontSize: "10px", color: "#fff", fontFamily: "inherit",
+          background: "radial-gradient(circle at 30% 30%, " + p.c2 + " 0%, " + p.c1 + " 45%, " + p.c3 + " 100%)", textShadow: "0 0 3px rgba(0,0,0,0.35)", ...sel(bg.k === "anim" && bg.p.id === p.id) }
+      }, p.name))
+    );
+
+    // ── top bar ──
+    const bar = React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "10px", padding: "12px 24px", borderBottom: "1px solid " + line, background: "#fff", flexShrink: 0, flexWrap: "wrap" } },
+      React.createElement("span", { style: { fontSize: "14px", fontWeight: 600, color: ink } }, "Catalogue des modèles"),
+      React.createElement("span", { style: { fontSize: "11px", color: mute } }, total + (total > 1 ? " modèles" : " modèle")),
+      React.createElement("input", {
+        value: S.catQuery, placeholder: "Chercher…", onChange: (e) => this.setState({ catQuery: e.target.value }),
+        style: { height: "28px", width: "180px", padding: "0 9px", border: "1px solid rgba(0,0,0,0.15)", borderRadius: "3px", fontSize: "12px", fontFamily: "inherit", marginLeft: "8px" }
+      }),
+      React.createElement("div", { style: { flex: 1 } }),
+      React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11px", color: ink, cursor: "pointer" }, title: "Les modèles qui ont leur propre fond (nuit, posts A/B/C) le gardent" },
+        React.createElement("input", { type: "checkbox", checked: S.catKeepOwn, onChange: (e) => this.setState({ catKeepOwn: e.target.checked }) }),
+        "Garder les fonds propres aux modèles"),
+      React.createElement("div", { style: { display: "inline-flex", gap: "3px" } },
+        ["S", "M", "L"].map((l, i) => React.createElement("button", { key: l, onClick: () => this.setState({ catSize: i }), title: "Taille des vignettes", style: chip(S.catSize === i) }, l))),
+      React.createElement("button", { onClick: () => this.copyLink(this._editorLink(null, bg), "catalogue sur ce fond"), title: "Copier le lien de ce catalogue (avec ce fond)", style: chip(false) }, "Copier le lien"),
+      React.createElement("button", { onClick: () => this.setState({ catalogueOpen: false }), title: "Fermer (Échap)", style: { ...chip(true), padding: "0 12px" } }, "Fermer ✕")
+    );
+
+    // ── cards ──
+    const card = (p) => {
+      const own = S.catKeepOwn && this._hasOwnBg(p.data);
+      const patch = own ? null : this._bgPatch(bg);
+      return React.createElement("div", { key: p.id, style: { display: "grid", gap: "7px", justifyItems: "start" } },
+        React.createElement("button", {
+          onClick: () => this.applyFromCatalogue(p.id), title: "Ouvrir ce modèle dans l'éditeur (⌘Z pour revenir)",
+          className: "v2-cat-card",
+          style: { padding: 0, border: "none", background: "transparent", cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,0.12)", borderRadius: "2px", transition: "transform 0.12s, box-shadow 0.12s" }
+        }, this._renderMini(p.data, W, patch)),
+        React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: "6px", width: W + "px" } },
+          React.createElement("span", { style: { flex: 1, minWidth: 0, fontSize: "11px", color: ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, title: p.name }, p.name),
+          own ? React.createElement("span", { style: { fontSize: "9px", color: mute, flexShrink: 0 }, title: "Ce modèle garde son propre fond" }, "fond propre") : null,
+          React.createElement("button", {
+            onClick: () => this.copyLink(this._editorLink(p.id, own ? null : bg), "« " + p.name + " »"), title: "Copier le lien de ce modèle",
+            style: { border: "none", background: "transparent", color: mute, cursor: "pointer", fontSize: "10px", padding: 0, flexShrink: 0, fontFamily: "inherit" }
+          }, "lien"))
+      );
+    };
+
+    const body = React.createElement("div", { style: { flex: 1, minHeight: 0, overflowY: "auto", padding: "8px 24px 48px" } },
+      sections.length === 0 ? React.createElement("div", { style: { padding: "40px 0", fontSize: "12px", color: mute } }, "Aucun modèle ne correspond.") : null,
+      ...sections.map((sec) => React.createElement("section", { key: sec.name, style: { marginTop: "22px" } },
+        React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "12px" } },
+          React.createElement("span", { style: { fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: mute, fontWeight: 600 } }, sec.name),
+          React.createElement("span", { style: { fontSize: "10px", color: "rgba(0,0,0,0.35)" } }, sec.list.length + (sec.note ? " · " + sec.note : ""))),
+        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(" + W + "px, 1fr))", gap: "26px 22px" } },
+          ...sec.list.map(card))
+      ))
+    );
+
+    const notice = S.catNotice ? React.createElement("div", {
+      style: { position: "absolute", left: "50%", bottom: "24px", transform: "translateX(-50%)", maxWidth: "80%", padding: "9px 14px", background: ink, color: "#fff", fontSize: "11px", borderRadius: "4px", boxShadow: "0 6px 20px rgba(0,0,0,0.25)", wordBreak: "break-all" }
+    }, S.catNotice) : null;
+
+    return React.createElement("div", {
+      style: { position: "fixed", inset: 0, zIndex: 400, display: "flex", flexDirection: "column", background: "#efeeec", fontFamily: "inherit" }
+    },
+      React.createElement("style", null, ".v2-cat-card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,0.18)!important}"),
+      bar, strip, body, notice);
   }
 
   deleteTemplate = (id) => {
@@ -3646,7 +3876,7 @@ class Component extends DCLogic {
       frameCount: this.state.frames.length,
       framesMount: this.renderFrames(),
       templatesBar: this.renderTemplatesBar(),
-      templatesManager: this.renderTemplatesManager(),
+      templatesManager: React.createElement(React.Fragment, null, this.renderTemplatesManager(), this.renderCatalogue()),
       auraToast: this.renderAuraToast(),
       bridgeAnimPanel: this.renderBridgeAnimPanel(),
 

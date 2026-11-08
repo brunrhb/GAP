@@ -583,18 +583,14 @@ class Component extends DCLogic {
     this._ensureH2C()
       .then(() => this._cleanReady())
       .then(() => {
-        const { pageLayout } = this.state;
+        const { pageLayout, format } = this.state;
         if (!pageLayout || !this._cleanArtboard) return;
-        return window.html2canvas(this._cleanArtboard, {
-          scale: 1, useCORS: true, allowTaint: true, onclone: this._h2cOnClone,
-          backgroundColor: "#ffffff", logging: false,
-          width: pageLayout.fmtW, height: pageLayout.fmtH,
-          windowWidth: pageLayout.fmtW, windowHeight: pageLayout.fmtH,
-        }).then((canvas) => {
+        return this._renderPng().then((canvas) => {
           canvas.toBlob((blob) => {
             if (!blob) return;
             const url = URL.createObjectURL(blob);
-            window.open(url, "_blank");
+            // the render can outlast the click: if the popup blocker refuses the tab, download
+            if (!window.open(url, "_blank")) this._download(canvas, format);
           }, "image/png");
         });
       })
@@ -752,6 +748,7 @@ class Component extends DCLogic {
     const allBgPool = [...this.BUILT_IN_BG, ...bgImages];
     const activeBgImg = allBgPool.find(b => b.id === bgSelected);
     const bgNode = activeBgImg ? React.createElement("div", {
+      className: "v2-clean-bg",
       style: { position: "absolute", inset: 0, overflow: "hidden", zIndex: 0 }
     },
       React.createElement("img", {
@@ -798,7 +795,7 @@ class Component extends DCLogic {
     }) : null;
     const cleanAura = this.state.auraOn ? React.createElement("iframe", {
       key: "clean-aura", ref: (el) => { this._cleanAuraFrame = el; }, className: "v2-clean-anim",
-      src: "uploads/aura-anim.html", scrolling: "no",
+      src: "uploads/aura-anim.html", scrolling: "no", onLoad: this._linkCleanAura,
       style: { position: "absolute", inset: 0, width: "100%", height: "100%", border: "none", pointerEvents: "none", zIndex: 0, background: "transparent" }
     }) : null;
 
@@ -980,14 +977,85 @@ class Component extends DCLogic {
     const { pageLayout, format } = this.state;
     if (!pageLayout) { alert("Choisis un format d'abord."); return; }
     if (!this._cleanArtboard) { alert("Vue d'export indisponible. Réessaie."); return; }
-    return window.html2canvas(this._cleanArtboard, {
-      scale: 1,
-      useCORS: true, allowTaint: true, onclone: this._h2cOnClone,
-      backgroundColor: "#ffffff", logging: false,
-      width: pageLayout.fmtW, height: pageLayout.fmtH,
-      windowWidth: pageLayout.fmtW, windowHeight: pageLayout.fmtH,
-    }).then((canvas) => this._download(canvas, format))
+    return this._renderPng().then((canvas) => this._download(canvas, format))
       .catch((err) => { console.error("Export PNG failed:", err); alert("Export PNG impossible. Utilise une capture d'écran."); });
+  };
+
+  // The still image of the export view. html2canvas does not see inside the shader / aura
+  // iframes (it sizes an iframe from its HTML attributes and reloads it in its clone), so
+  // with those layers on, the PNG is composited like the video:
+  // page colour → background image → shader → auras → text.
+  _renderPng = () => {
+    const { pageLayout, bgColor, shaderBg, auraOn } = this.state;
+    const art = this._cleanArtboard;
+    const outW = pageLayout.fmtW, outH = pageLayout.fmtH;
+    const shot = (opts, prep) => window.html2canvas(art, {
+      scale: 1, useCORS: true, allowTaint: true, logging: false,
+      width: outW, height: outH, windowWidth: outW, windowHeight: outH,
+      ...opts,
+      onclone: (doc, el) => { if (prep && el) prep(el); return this._h2cOnClone(doc); },
+    });
+    const auraWin = auraOn ? this._liveAuraWin() : null;
+    const shaderCanvas = shaderBg ? this._liveShaderCanvas() : null;
+    const auraCanvas = auraOn && !auraWin ? this._liveAuraCanvas() : null;   // page still cached in its old version
+    if (!auraWin && !auraCanvas && !shaderCanvas) return shot({ backgroundColor: "#ffffff" });
+
+    // the layers are hidden in html2canvas' CLONE only: nothing flickers on screen
+    const bare = (el) => {
+      el.style.background = "transparent";
+      el.querySelectorAll(".v2-clean-anim").forEach((n) => { n.style.display = "none"; });
+    };
+    const hasBgImg = !!art.querySelector(".v2-clean-bg");
+    const bgShot = hasBgImg
+      ? shot({ backgroundColor: null }, (el) => { bare(el); el.querySelectorAll("[data-clean-id]").forEach((n) => { n.style.display = "none"; }); })
+      : Promise.resolve(null);
+    return bgShot.then((bgCanvas) => shot({ backgroundColor: null }, (el) => {
+      bare(el);
+      el.querySelectorAll(".v2-clean-bg").forEach((n) => { n.style.display = "none"; });
+    }).then((textCanvas) => {
+      const comp = document.createElement("canvas");
+      comp.width = outW; comp.height = outH;
+      const ctx = comp.getContext("2d");
+      ctx.fillStyle = bgColor || "#ffffff";
+      ctx.fillRect(0, 0, outW, outH);
+      if (bgCanvas) ctx.drawImage(bgCanvas, 0, 0, outW, outH);
+      try { if (shaderCanvas) ctx.drawImage(shaderCanvas, 0, 0, outW, outH); } catch (e) { console.warn("[export] shader :", e); }
+      try {
+        if (auraWin) ctx.drawImage(auraWin.__auraSnapshot(outW, outH), 0, 0, outW, outH);
+        else if (auraCanvas) { ctx.globalAlpha = 0.75; ctx.drawImage(auraCanvas, 0, 0, outW, outH); ctx.globalAlpha = 1; }
+      } catch (e) { console.warn("[export] auras :", e); }
+      ctx.drawImage(textCanvas, 0, 0, outW, outH);
+      return comp;
+    }));
+  };
+
+  // the aura page to capture: the export view's (it mirrors the editor's), else the editor's
+  _liveAuraWin = () => {
+    for (const f of [this._cleanAuraFrame, this._auraFrame]) {
+      try { const w = f && f.contentWindow; if (w && typeof w.__auraSnapshot === "function") return w; } catch (e) {}
+    }
+    return null;
+  };
+  _liveAuraCanvas = () => {
+    for (const f of [this._cleanAuraFrame, this._auraFrame]) {
+      try { const c = f && f.contentDocument && f.contentDocument.querySelector("#c"); if (c && c.width) return c; } catch (e) {}
+    }
+    return null;
+  };
+  _liveShaderCanvas = () => {
+    for (const f of [this._cleanShaderFrame, this._shaderFrame]) {
+      try { const c = f && f.contentDocument && f.contentDocument.querySelector("#root canvas"); if (c && c.width) return c; } catch (e) {}
+    }
+    return null;
+  };
+
+  // the export view's auras mirror the editor's (positions, clock, freeze) — see aura-anim.html
+  _linkCleanAura = () => {
+    try {
+      const cw = this._cleanAuraFrame && this._cleanAuraFrame.contentWindow;
+      const ew = this._auraFrame && this._auraFrame.contentWindow;
+      if (cw && cw.__auraFollow && ew && ew.__auraState) cw.__auraFollow(ew);
+    } catch (e) {}
   };
 
   _download = (canvas, format) => {
@@ -1019,7 +1087,8 @@ class Component extends DCLogic {
     this._ensureH2C()
       .then(() => this._cleanReady())
       .then(() => this._doExportVideo(pageLayout, format, bgColor))
-      .catch((err) => { console.error(err); alert("Export vidéo impossible : " + (err && err.message)); this.setState({ recording: false }); });
+      .catch((err) => { console.error(err); alert("Export vidéo impossible : " + (err && err.message)); this.setState({ recording: false }); })
+      .then(() => this._linkCleanAura());
   };
 
   _videoFileName(format, ext) {
@@ -1115,6 +1184,8 @@ class Component extends DCLogic {
       // number of sweeps are tweakable live via window.__auraExportAngleDeg /
       // window.__auraExportSweeps (defaults below).
       const _auraFrame = this._cleanAuraFrame || this._auraFrame;
+      // the export view's aura stops mirroring the editor for the clip (re-linked after)
+      try { _auraFrame && _auraFrame.contentWindow && _auraFrame.contentWindow.__auraFollow && _auraFrame.contentWindow.__auraFollow(null); } catch (e) {}
       try { _auraFrame && _auraFrame.contentWindow && _auraFrame.contentWindow.postMessage({ type: "stage", value: 0 }, "*"); } catch (e) {}
       const _AURA_ANGLE  = (window.__auraExportAngleDeg != null ? window.__auraExportAngleDeg : 30) * Math.PI / 180;
       const _AURA_SWEEPS = (window.__auraExportSweeps  != null ? window.__auraExportSweeps  : 1.5);

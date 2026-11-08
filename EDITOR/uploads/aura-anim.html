@@ -56,13 +56,13 @@ function hexToRgba(hex, alpha, darken=1) {
   const b=Math.round(parseInt(hex.slice(5,7),16)*darken);
   return `rgba(${r},${g},${b},${alpha})`;
 }
-function makeAuraFill(layer, ptsOrR, cx, cy, dark){
+function makeAuraFill(layer, ptsOrR, cx, cy, dark, gc=ctx){
   const s1=layer.gStop1??0, s2=Math.max((layer.gStop1??0)+0.001, layer.gStop2??1);
   const c1=hexToRgba(layer.color, layer.opacity, dark);
   const c2=hexToRgba(layer.color2||layer.color, layer.op2??layer.opacity, dark);
   if(s1===0 && s2>=1 && (layer.op2??layer.opacity)===layer.opacity && (layer.color2||layer.color)===layer.color) return c1;
   const r=typeof ptsOrR==='number' ? ptsOrR : (Math.max(...ptsOrR.map(pt=>Math.hypot(pt.x-cx,pt.y-cy)))||1);
-  const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+  const g=gc.createRadialGradient(cx,cy,0,cx,cy,r);
   if(s1>0) g.addColorStop(0,c1);
   g.addColorStop(s1,c1);
   g.addColorStop(s2,c2);
@@ -129,13 +129,20 @@ function updateBlobKeyframes(){
   _blobs[1].style.setProperty('--kf-name', n1);
 }
 
+// sizes follow RS (1 unless this page mirrors / keeps the proportions of a smaller aura)
+function sizeBlobs(){
+  _blobs.forEach(el=>{
+    el.style.width  = (CSS.scale*RS)+'px';
+    el.style.height = (CSS.scale*RS)+'px';
+    el.style.filter = CSS.blur>0?`blur(${CSS.blur*RS}px)`:'none';
+  });
+}
+
 function applyBlobStyles(){
   updateBlobKeyframes();
+  sizeBlobs();
   _blobs.forEach((el,i)=>{
-    el.style.width        = CSS.scale+'px';
-    el.style.height       = CSS.scale+'px';
     el.style.opacity      = CSS.opacity;
-    el.style.filter       = CSS.blur>0?`blur(${CSS.blur}px)`:'none';
     el.style.mixBlendMode = CSS.blendMode;
     el.style.setProperty('--blob-color', CSS.color);
     el.style.setProperty('--dur', (CSS.speed*(i===0?1:1.44)).toFixed(1)+'s');
@@ -150,7 +157,7 @@ function updateBlobs(dt){
     _blobAngles[i]+= spd * (i===0?1:-1) * dt;
     const vx = W/2 + (p.x - W/2) * GLOBAL_SCALES[i];
     const vy = H/2 + (p.y - H/2) * GLOBAL_SCALES[i];
-    _blobs[i].style.transform=`translate(${vx}px,${vy}px) translate(-50%,-50%) rotate(${_blobAngles[i].toFixed(2)}deg) scaleX(${(CSS.scaleX??100)/100}) scaleY(${(CSS.scaleY??100)/100})`;
+    _blobs[i].style.transform=`translate(${vx*RS}px,${vy*RS}px) translate(-50%,-50%) rotate(${_blobAngles[i].toFixed(2)}deg) scaleX(${(CSS.scaleX??100)/100}) scaleY(${(CSS.scaleY??100)/100})`;
   });
 }
 
@@ -162,24 +169,33 @@ function buildPhases(n){
   return Array.from({length:n},(_,i)=>i*phi*Math.PI*2);
 }
 let phases0=buildPhases(M.nbPts), phases1=buildPhases(M.nbPts);
-let W=0, H=0, U=1, cursor=null, smoothCursor=null, lastTs=null, elapsed=0;
+// W×H = the space the auras live in. RS = canvas px per unit of that space: 1 normally;
+// in the export view (native px) the page mirrors the editor's aura, so it keeps the
+// editor's W×H and is drawn RS× larger — same proportions as on screen.
+let W=0, H=0, U=1, RS=1, cursor=null, smoothCursor=null, lastTs=null, elapsed=0;
+let _follow=null, _pinned=false, _drawnAt=null;
 const particles=[{x:0,y:0,vx:0,vy:0},{x:0,y:0,vx:0,vy:0}];
 
 function resize(){
-  W=canvas.width=window.innerWidth;
-  H=canvas.height=window.innerHeight;
-  U=Math.min(Math.max(Math.min(W/1280,H/900),0.5),1.5);
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
+  if(_pinned){ RS=canvas.width/W; }
+  else {
+    W=canvas.width; H=canvas.height; RS=1;
+    U=Math.min(Math.max(Math.min(W/1280,H/900),0.5),1.5);
+  }
+  _drawnAt=null;
   if(!particles[0].x){ particles[0].x=W/2-110*U; particles[0].y=H/2; particles[1].x=W/2+110*U; particles[1].y=H/2; }
 }
-window.addEventListener('resize',resize); resize();
+window.addEventListener('resize',()=>{ resize(); sizeBlobs(); }); resize();
 
-window.addEventListener('mousemove',e=>{ cursor={x:e.clientX,y:e.clientY}; smoothCursor=cursor; });
+window.addEventListener('mousemove',e=>{ cursor={x:e.clientX/RS,y:e.clientY/RS}; smoothCursor=cursor; });
 document.addEventListener('mouseleave',()=>{cursor=null;});
 window.addEventListener('blur',()=>{cursor=null;});
 window.addEventListener('message',e=>{
   if(e.data&&e.data.type==='cursor'){
     if(e.data.x===null){ cursor=null; }
-    else { cursor={x:e.data.x,y:e.data.y}; smoothCursor=cursor; }
+    else { cursor={x:e.data.x/RS,y:e.data.y/RS}; smoothCursor=cursor; }
   } else if(e.data&&e.data.type==='stage'){
     setStage(e.data.value|0);
   }
@@ -288,16 +304,21 @@ function auraPoints(basePts, center, scale, ellipseStr, compressStr, axisAngle){
   });
 }
 
-function drawSmoothClosed(pts){
+function drawSmoothClosed(pts, g=ctx){
   const n=pts.length;if(n<3)return;
-  ctx.beginPath();
-  ctx.moveTo((pts[n-1].x+pts[0].x)/2,(pts[n-1].y+pts[0].y)/2);
-  for(let i=0;i<n;i++){const p=pts[i],nx=pts[(i+1)%n];ctx.quadraticCurveTo(p.x,p.y,(p.x+nx.x)/2,(p.y+nx.y)/2);}
-  ctx.closePath();
+  g.beginPath();
+  g.moveTo((pts[n-1].x+pts[0].x)/2,(pts[n-1].y+pts[0].y)/2);
+  for(let i=0;i<n;i++){const p=pts[i],nx=pts[(i+1)%n];g.quadraticCurveTo(p.x,p.y,(p.x+nx.x)/2,(p.y+nx.y)/2);}
+  g.closePath();
 }
 
-function draw(t){
-  ctx.clearRect(0,0,W,H);
+// g = target context, s = its px per unit of W×H. A canvas blur ignores the transform,
+// so every blur radius is multiplied by s by hand.
+function draw(t, g=ctx, s=RS){
+  g.setTransform(1,0,0,1,0,0);
+  g.clearRect(0,0,g.canvas.width,g.canvas.height);
+  g.setTransform(s,0,0,s,0,0);
+  const blur=(b)=>b>0?`blur(${b*s}px)`:'none';
   const phaseList=[phases0,phases1];
 
   const geom=particles.map((p,i)=>{
@@ -310,38 +331,175 @@ function draw(t){
     return {p,pts,a3,a4,a5,dark:1,gs:GLOBAL_SCALES[i]};
   });
 
-  const sc=(gs)=>{ctx.save();ctx.translate(W/2,H/2);ctx.scale(gs,gs);ctx.translate(-W/2,-H/2);};
-  const rs=()=>ctx.restore();
+  const sc=(gs)=>{g.save();g.translate(W/2,H/2);g.scale(gs,gs);g.translate(-W/2,-H/2);};
+  const rs=()=>g.restore();
 
-  ctx.filter=L5.blur>0?`blur(${L5.blur}px)`:'none';
-  geom.forEach(({p,a5,dark,gs})=>{sc(gs);drawSmoothClosed(a5);ctx.fillStyle=makeAuraFill(L5,a5,p.x,p.y,dark);ctx.fill();rs();});
+  g.filter=blur(L5.blur);
+  geom.forEach(({p,a5,dark,gs})=>{sc(gs);drawSmoothClosed(a5,g);g.fillStyle=makeAuraFill(L5,a5,p.x,p.y,dark,g);g.fill();rs();});
 
-  ctx.filter=L4.blur>0?`blur(${L4.blur}px)`:'none';
-  geom.forEach(({p,a4,dark,gs})=>{sc(gs);drawSmoothClosed(a4);ctx.fillStyle=makeAuraFill(L4,a4,p.x,p.y,dark);ctx.fill();rs();});
+  g.filter=blur(L4.blur);
+  geom.forEach(({p,a4,dark,gs})=>{sc(gs);drawSmoothClosed(a4,g);g.fillStyle=makeAuraFill(L4,a4,p.x,p.y,dark,g);g.fill();rs();});
 
-  ctx.filter=L3.blur>0?`blur(${L3.blur}px)`:'none';
-  geom.forEach(({p,a3,dark,gs})=>{sc(gs);drawSmoothClosed(a3);ctx.fillStyle=makeAuraFill(L3,a3,p.x,p.y,dark);ctx.fill();rs();});
+  g.filter=blur(L3.blur);
+  geom.forEach(({p,a3,dark,gs})=>{sc(gs);drawSmoothClosed(a3,g);g.fillStyle=makeAuraFill(L3,a3,p.x,p.y,dark,g);g.fill();rs();});
 
-  ctx.filter=M.blur>0?`blur(${M.blur}px)`:'none';
-  geom.forEach(({p,pts,dark,gs})=>{sc(gs);drawSmoothClosed(pts);ctx.fillStyle=makeAuraFill(M,pts,p.x,p.y,dark);ctx.fill();rs();});
-  ctx.filter='none';
+  g.filter=blur(M.blur);
+  geom.forEach(({p,pts,dark,gs})=>{sc(gs);drawSmoothClosed(pts,g);g.fillStyle=makeAuraFill(M,pts,p.x,p.y,dark,g);g.fill();rs();});
+  g.filter='none';
 
-  ctx.filter=P.coreBlur>0?`blur(${P.coreBlur}px)`:'none';
+  g.filter=blur(P.coreBlur);
   geom.forEach(({p,dark,gs})=>{
     sc(gs);
-    ctx.beginPath();ctx.arc(p.x,p.y,P.coreR*U,0,Math.PI*2);
+    g.beginPath();g.arc(p.x,p.y,P.coreR*U,0,Math.PI*2);
     const coreLayer={color:P.coreColor,opacity:P.coreOpacity,color2:P.coreColor2,op2:P.coreOp2,gStop1:P.coreGStop1,gStop2:P.coreGStop2};
-    ctx.fillStyle=makeAuraFill(coreLayer,P.coreR*U,p.x,p.y,dark);ctx.fill();
+    g.fillStyle=makeAuraFill(coreLayer,P.coreR*U,p.x,p.y,dark,g);g.fill();
     rs();
   });
-  ctx.filter='none';
+  g.filter='none';
+  g.setTransform(1,0,0,1,0,0);
+  if(g===ctx) _drawnAt=t;
 }
+
+/* ── Miroir (vue d'export) ──
+   L'éditeur et la vue d'export ont chacun leur iframe. Celle de l'export recopie à chaque
+   image l'état de celle de l'éditeur (positions, horloge, gel) au lieu de simuler seule :
+   ce qu'on exporte est ce qu'on voyait. */
+window.__auraState=function(){
+  return {
+    W, H, U, elapsed, stage:_stage, cursor, smoothCursor,
+    particles:particles.map(p=>({x:p.x,y:p.y,vx:p.vx,vy:p.vy})),
+    dominance:dominance.slice(), blobAngles:_blobAngles.slice(),
+  };
+};
+// win = the aura window to mirror; null = run alone again, keeping the mirrored
+// proportions (the video export then drives it with its virtual cursor)
+window.__auraFollow=function(win){
+  _follow=win||null;
+  if(_follow && !followStep()) _follow=null;
+};
+function followStep(){
+  let st=null;
+  try{ st=_follow.__auraState(); }catch(e){}
+  if(!st || !st.W) return false;
+  if(!_pinned || st.W!==W || st.H!==H){
+    _pinned=true; W=st.W; H=st.H; U=st.U; RS=canvas.width/W; _drawnAt=null; sizeBlobs();
+  }
+  st.particles.forEach((q,i)=>Object.assign(particles[i],q));
+  dominance[0]=st.dominance[0]; dominance[1]=st.dominance[1];
+  _blobAngles[0]=st.blobAngles[0]; _blobAngles[1]=st.blobAngles[1];
+  cursor=st.cursor; smoothCursor=st.smoothCursor; elapsed=st.elapsed;
+  if(st.stage!==_stage) setStage(st.stage);
+  syncMorph();
+  if(elapsed!==_drawnAt) draw(elapsed);
+  updateBlobs(0);
+  return true;
+}
+
+// the CSS morph of the blobs (::after) runs on each page's own clock: align it too,
+// or a frozen export shows the blobs at another moment of their pulse
+function syncMorph(){
+  try{
+    const src=_follow.document.getAnimations();
+    document.getAnimations().forEach(a=>{
+      const e=a.effect;
+      if(!e || !e.target || e.pseudoElement!=='::after') return;
+      const m=src.find(b=>b.effect && b.effect.pseudoElement==='::after' && b.effect.target && b.effect.target.id===e.target.id);
+      if(m && m.currentTime!=null && a.currentTime!==m.currentTime) a.currentTime=m.currentTime;
+    });
+  }catch(e){}
+}
+
+/* ── Capture (export PNG) ──
+   Ce qu'on voit = 3 couches : 2 taches CSS floutées, le canvas #c à 75 %, le grain en
+   overlay. html2canvas ne voit rien de tout ça (iframe) : on les redessine sur un canvas
+   outW×outH, à l'échelle, dans l'état du moment (figé compris). */
+function cssRadius(v, S){
+  const parts=String(v||'0').trim().split(/\s+/);
+  const px=(t)=>{ const n=parseFloat(t)||0; return /%$/.test(t)?n/100*S:n/RS; };
+  return { h:px(parts[0]), v:px(parts[1]??parts[0]) };
+}
+function blobPath(g, S, el){
+  const st=getComputedStyle(el,'::after');
+  const tl=cssRadius(st.borderTopLeftRadius,S), tr=cssRadius(st.borderTopRightRadius,S);
+  const br=cssRadius(st.borderBottomRightRadius,S), bl=cssRadius(st.borderBottomLeftRadius,S);
+  // CSS: radii that overlap are all scaled down by the same factor
+  const f=Math.min(1, S/(tl.h+tr.h||1), S/(bl.h+br.h||1), S/(tl.v+bl.v||1), S/(tr.v+br.v||1));
+  [tl,tr,br,bl].forEach(r=>{ r.h=Math.max(0,r.h*f); r.v=Math.max(0,r.v*f); });
+  const x0=-S/2, y0=-S/2, x1=S/2, y1=S/2;
+  g.beginPath();
+  g.moveTo(x0+tl.h,y0);
+  g.lineTo(x1-tr.h,y0); g.ellipse(x1-tr.h,y0+tr.v,tr.h,tr.v,0,-Math.PI/2,0);
+  g.lineTo(x1,y1-br.v); g.ellipse(x1-br.h,y1-br.v,br.h,br.v,0,0,Math.PI/2);
+  g.lineTo(x0+bl.h,y1); g.ellipse(x0+bl.h,y1-bl.v,bl.h,bl.v,0,Math.PI/2,Math.PI);
+  g.lineTo(x0,y0+tl.v); g.ellipse(x0+tl.h,y0+tl.v,tl.h,tl.v,0,Math.PI,Math.PI*1.5);
+  g.closePath();
+}
+const CAN_FILTER='filter' in CanvasRenderingContext2D.prototype;
+function drawBlobs(g, s){
+  const S=CSS.scale, sx=(CSS.scaleX??100)/100, sy=(CSS.scaleY??100)/100;
+  _blobs.forEach((el,i)=>{
+    const p=particles[i];
+    const vx=W/2+(p.x-W/2)*GLOBAL_SCALES[i], vy=H/2+(p.y-H/2)*GLOBAL_SCALES[i];
+    const tf=getComputedStyle(el,'::after').transform;
+    const m=new DOMMatrix(tf && tf!=='none' ? tf : undefined);
+    g.save();
+    g.setTransform(s,0,0,s,0,0);
+    g.translate(vx,vy); g.rotate(_blobAngles[i]*Math.PI/180); g.scale(sx,sy);
+    g.transform(m.a,m.b,m.c,m.d,m.e/RS,m.f/RS);   // the morph pulse (scale) of ::after
+    // no canvas blur (Safari < 18): a hard border-radius edge would show — the radial
+    // fade alone is closer to the soft blob seen on screen
+    if(CAN_FILTER) blobPath(g,S,el); else { g.beginPath(); g.rect(-S,-S,2*S,2*S); }
+    const rgb=hexToRgba(CSS.color,1).slice(5,-3);
+    const grd=g.createRadialGradient(0,0,0,0,0,S*Math.SQRT1_2);   // circle, farthest-corner
+    grd.addColorStop(0,`rgba(${rgb},1)`);
+    if(CSS.radialFill) grd.addColorStop(0.6,`rgba(${rgb},1)`);
+    grd.addColorStop(CSS.radialFill?1:0.7,`rgba(${rgb},0)`);
+    g.fillStyle=grd;
+    g.globalAlpha=CSS.opacity;
+    // the CSS blur works in the blob's own space, stretched by its scaleX/Y
+    g.filter=CSS.blur>0?`blur(${CSS.blur*s*Math.sqrt(sx*sy)}px)`:'none';
+    g.fill();
+    g.restore();
+  });
+}
+let _grainTile=null;
+function grainTile(){
+  if(_grainTile) return _grainTile;
+  const c=document.createElement('canvas'); c.width=c.height=256;
+  const g=c.getContext('2d'), im=g.createImageData(256,256), d=im.data;
+  for(let i=0;i<d.length;i+=4){
+    d[i]=Math.random()*255; d[i+1]=Math.random()*255; d[i+2]=Math.random()*255;
+    d[i+3]=45+Math.random()*40;   // measured against the SVG grain in Chrome
+  }
+  g.putImageData(im,0,0);
+  return _grainTile=c;
+}
+window.__auraSnapshot=function(outW, outH){
+  const s=outW/W;
+  const out=document.createElement('canvas'); out.width=outW; out.height=outH;
+  const g=out.getContext('2d');
+  drawBlobs(g,s);
+  const cv=document.createElement('canvas'); cv.width=outW; cv.height=outH;
+  draw(elapsed, cv.getContext('2d'), s);
+  g.globalAlpha=0.75; g.drawImage(cv,0,0); g.globalAlpha=1;
+  // the grain blends with the auras only: the iframe is its own group, over a transparent page
+  const pat=g.createPattern(grainTile(),'repeat');
+  pat.setTransform(new DOMMatrix([s,0,0,s,0,0]));
+  g.globalAlpha=0.12; g.globalCompositeOperation='overlay';
+  g.fillStyle=pat; g.fillRect(0,0,outW,outH);
+  g.globalAlpha=1; g.globalCompositeOperation='source-over';
+  return out;
+};
 
 function loop(ts){
   const dt=lastTs===null?0.016:Math.min((ts-lastTs)/1000,0.05);
   lastTs=ts;
-  if(_stage===0){ physics(dt); collide(); bounceWalls(); }   // movement
-  if(_stage<2){ elapsed+=dt; draw(elapsed); updateBlobs(dt); } // pulse / morph
+  if(_follow && !followStep()) _follow=null;                  // source gone → run alone
+  if(!_follow){
+    if(_stage===0){ physics(dt); collide(); bounceWalls(); }   // movement
+    if(_stage<2){ elapsed+=dt; draw(elapsed); updateBlobs(dt); } // pulse / morph
+    else if(_drawnAt===null){ draw(elapsed); updateBlobs(0); }  // frozen, but resized
+  }
   requestAnimationFrame(loop);
 }
 
